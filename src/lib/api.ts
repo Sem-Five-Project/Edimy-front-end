@@ -46,19 +46,7 @@ export const refreshAccessToken = async () => {
   }
 };
 
-export const refreshAccessTokenn = async () => {
-  try {
-      const response = await axios.post('http://localhost:8083/api/auth/refresh');
-      // Include any necessary data for refreshing the token
-    
-        console.log('Refreshed access token:', response);
 
-    return response.data; // Assuming the response contains the new token
-  } catch (error) {
-    console.error('Failed to refresh access token:', error);
-    throw error;
-  }
-};
 
 export const authAPI = {
   // Check username availability with debouncing
@@ -326,41 +314,75 @@ export const tutorAPI = {
   //     };
   //   }
   // },
-searchTutors: async (
+// searchTutors: async (
+//   filters: FilterOptions,
+//   page: number = 1,
+//   limit: number = 12
+// ): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
+
+//   // Always generate mock tutors
+//   const mockTutors: Tutor[] = Array.from({ length: limit }, (_, i) => ({
+//     id: `tutor-${page}-${i}`,
+//     firstName: `Tutor`,
+//     lastName: `${page}-${i + 1}`,
+//     username: `tutor${page}${i}`,
+//     email: `tutor${page}${i}@example.com`,
+//     role: 'TUTOR',
+//     isVerified: true,
+//     createdAt: new Date().toISOString(),
+//     subjects: ['Mathematics', 'Physics', 'Chemistry'].slice(0, Math.floor(Math.random() * 3) + 1),
+//     experience: Math.floor(Math.random() * 10) + 1,
+//     rating: 4 + Math.random(),
+//     classCompletionRate: 85 + Math.random() * 15,
+//     bio: 'Experienced tutor with excellent teaching skills.',
+//     hourlyRate: 25 + Math.floor(Math.random() * 75),
+//     totalClasses: Math.floor(Math.random() * 1000) + 100,
+//     completedClasses: Math.floor(Math.random() * 800) + 80,
+//   }));
+
+//   return {
+//     success: true,
+//     data: {
+//       tutors: mockTutors,
+//       total: 150,
+//       totalPages: Math.ceil(150 / limit),
+//     },
+//   };
+// },
+  searchTutors: async (
   filters: FilterOptions,
   page: number = 1,
   limit: number = 12
 ): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
-
-  // Always generate mock tutors
-  const mockTutors: Tutor[] = Array.from({ length: limit }, (_, i) => ({
-    id: `tutor-${page}-${i}`,
-    firstName: `Tutor`,
-    lastName: `${page}-${i + 1}`,
-    username: `tutor${page}${i}`,
-    email: `tutor${page}${i}@example.com`,
-    role: 'TUTOR',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-    subjects: ['Mathematics', 'Physics', 'Chemistry'].slice(0, Math.floor(Math.random() * 3) + 1),
-    experience: Math.floor(Math.random() * 10) + 1,
-    rating: 4 + Math.random(),
-    classCompletionRate: 85 + Math.random() * 15,
-    bio: 'Experienced tutor with excellent teaching skills.',
-    hourlyRate: 25 + Math.floor(Math.random() * 75),
-    totalClasses: Math.floor(Math.random() * 1000) + 100,
-    completedClasses: Math.floor(Math.random() * 800) + 80,
-  }));
-
-  return {
-    success: true,
-    data: {
-      tutors: mockTutors,
-      total: 150,
-      totalPages: Math.ceil(150 / limit),
-    },
-  };
+  try {
+    const params: any = { page, limit, ...filters };
+    console.log("params of search tutors:", api);
+    const response = await api.get('/tutors/search');
+    console.log("response of search tutors:", response);
+    return response;
+  } catch (error: any) {
+    console.error('Error fetching tutors:', error);
+    return { success: false, data: { tutors: [], total: 0, totalPages: 0 } };
+  }
 },
+
+  searchTutorss : async (
+    filters: FilterOptions,
+    page: number = 1,
+    limit: number = 12
+  ): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
+    try {
+      const params: any = { page, limit, ...filters }; // spread filters into query params
+      //const response = await api.post('/auth/refresh'); 
+
+      const response = await axios.get(`tutors/search`);
+      console.log("response of search tutors :",response)
+      return response.data; // should match ApiResponse<{ tutors: Tutor[]; ... }>
+    } catch (error: any) {
+      console.error('Error fetching tutors:', error);
+      return { success: false, data: { tutors: [], total: 0, totalPages: 0 } };
+    }
+  },
 
   getTutorById: async (id: string): Promise<ApiResponse<Tutor>> => {
     try {

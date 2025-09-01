@@ -107,7 +107,7 @@ import React, {
 } from 'react';
 import { User } from '@/types';
 import { refreshAccessToken, authAPI } from '@/lib/api';
-import { setAuthToken } from '@/lib/auth';
+import { setAuthToken } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -216,6 +216,7 @@ console.log("userrrrrrrrrrrrrrr :",user)  }, [user]);
     } finally {
       setUser(null);
       setToken(null);
+      setAuthToken(null); // Clear authorization header
     }
   };
 

@@ -72,28 +72,31 @@ export const TutorSearch: React.FC = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const debouncedFilters = useDebounce(filters, 500);
+const searchTutors = useCallback(async (page: number = 1) => {
+  setIsLoading(true);
+  try {
+    const searchFilters = {
+      ...debouncedFilters,
+      search: debouncedSearchTerm,
+    };
 
-  const searchTutors = useCallback(async (page: number = 1) => {
-    setIsLoading(true);
-    try {
-      const searchFilters = {
-        ...debouncedFilters,
-        search: debouncedSearchTerm,
-      };
+    const response = await tutorAPI.searchTutors(searchFilters, page, itemsPerPage);
 
-      const response = await tutorAPI.searchTutors(searchFilters, page, itemsPerPage);
-      console.log("searchTutors response:", response);
-      if (response.success) {
-        setTutors(response.data.tutors);
-        setTotalPages(response.data.totalPages);
-        setTotalResults(response.data.total);
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setIsLoading(false);
+    if (response.status === 200 && response.data) {
+      // Use `content` array from API response
+      setTutors(response.data.content);
+
+      // Pagination
+      setTotalPages(response.data.totalPages);
+      setTotalResults(response.data.totalElements);
     }
-  }, [debouncedSearchTerm, debouncedFilters, itemsPerPage]);
+  } catch (error) {
+    console.error('Search failed:', error);
+  } finally {
+    setIsLoading(false);
+  }
+}, [debouncedSearchTerm, debouncedFilters, itemsPerPage]);
+
 
   useEffect(() => {
     searchTutors(1);
