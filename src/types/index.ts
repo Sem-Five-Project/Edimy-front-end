@@ -19,26 +19,50 @@ export interface User {
   updatedAt?: string;
 }
 
+export interface Subject {
+  subjectId: number;
+  subjectName: string;
+  hourlyRate: number;
+}
+
+export interface Language {
+  languageId: number;
+  languageName: string;
+}
+
 export interface Tutor extends User {
-  subjects: string[];
+  tutorProfileId: number;
+  subjects: Subject[];
+  languages: Language[];
   experience: number;
   rating: number;
   classCompletionRate: number;
-  bio: string;
-  hourlyRate: number;
-  totalClasses: number;
-  completedClasses: number;
+  bio: string | null;
+  hourlyRate: number; // base rate, subjects have their own rates
+  totalClasses?: number;
+  completedClasses?: number;
 }
 
 export interface TimeSlot {
-  id: string;
-  tutorId: string;
-  date: string;
+  slotId: number;
+  availabilityId: number;
+  tutorId: number;
+  tutorName: string;
+  slotDate: string;
+  dayOfWeek: string;
   startTime: string;
   endTime: string;
-  status: 'available' | 'in_progress' | 'booked';
-  price: number;
+  status: 'AVAILABLE' | 'BOOKED' | 'IN_PROGRESS';
+  hourlyRate: number | null;
+  tutorBio: string | null;
+  tutorExperience: number;
+  isRecurring: boolean;
+  subjectName: string | null;
+  rating: number;
   lockExpiry?: string;
+  // For compatibility with existing code
+  id?: string;
+  price?: number;
 }
 
 export interface Booking {
@@ -83,4 +107,17 @@ export interface FilterOptions {
   experience?: number;
   sortBy?: 'rating' | 'price' | 'experience' | 'completion_rate';
   sortOrder?: 'asc' | 'desc';
+}
+
+// Spring Boot pagination response structure
+export interface PageableResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+  numberOfElements: number;
 }
