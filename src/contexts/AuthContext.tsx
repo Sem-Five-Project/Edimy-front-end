@@ -106,8 +106,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { User } from '@/types';
-import { refreshAccessToken, authAPI } from '@/lib/api';
-import { setAuthToken } from '@/lib/auth';
+import { refreshAccessToken, authAPI, setAuthToken, setTokenRefreshCallback } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -130,11 +129,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Function to update token from API interceptor
+  const updateTokenFromInterceptor = (newToken: string) => {
+    setToken(newToken);
+  };
+
   useEffect(() => {
+    // Register callback for token updates from API interceptor
+    setTokenRefreshCallback(updateTokenFromInterceptor);
     checkAuthStatus();
   }, []);
-    useEffect(() => {
-console.log("userrrrrrrrrrrrrrr :",user)  }, [user]);
+
+  useEffect(() => {
+  }, [user]);
 
   // const checkAuthStatus = async () => {
   //   try {
@@ -158,7 +165,6 @@ console.log("userrrrrrrrrrrrrrr :",user)  }, [user]);
     try {
       // try to silently refresh on page load
       const newToken = await refreshAccessToken(); 
-      console.log("Silent refresh token:", newToken.accessToken);
       setToken(newToken.accessToken);
       setAuthToken(newToken.accessToken); // attach to axios
       const response = await authAPI.getCurrentUser(newToken.accessToken);
@@ -166,7 +172,6 @@ console.log("userrrrrrrrrrrrrrr :",user)  }, [user]);
         setUser(response.data.user);
       }
     } catch (err) {
-      console.error("Silent refresh failed:", err);
       setUser(null);
       setToken(null);
     } finally {
@@ -181,41 +186,18 @@ console.log("userrrrrrrrrrrrrrr :",user)  }, [user]);
     setAuthToken(newToken); // attach to axios globally
   };
   useEffect(() => {
-    console.log('Auth state changed - user:', user, 'token:', token);
   }, [token]);
 
-  const refreshToken = async () => {
-    try {
-      const newToken = await refreshAccessToken();
-      setToken(newToken);
-      setAuthToken(newToken);
-      console.log('Token refreshed successfully:', newToken);
-    } catch (error) {
-      console.error('Failed to refresh token:', error);
-      logout(); // Log out if refresh fails
-    }
-  };
-
-  useEffect(() => {
-    console.log("Setting up token refresh interval. Current token:", token);
-    // Check if we have a token and refresh it periodically
-    if (token) {
-      const interval = setInterval(() => {
-        refreshToken(); // Refresh token every 15 minutes
-      }, 15 * 60 * 1000); // 15 minutes
-
-      return () => clearInterval(interval);
-    }
-  }, [token]);
+  // No need for manual refresh since API interceptor handles it automatically
 
   const logout = async () => {
     try {
       await authAPI.logout();
     } catch (error) {
-      console.error('Logout API call failed:', error);
     } finally {
       setUser(null);
       setToken(null);
+      setAuthToken(null); // Clear authorization header
     }
   };
 

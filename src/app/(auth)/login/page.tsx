@@ -60,13 +60,13 @@ export default function LoginPage() {
 
     try {
       const response = await authAPI.login(credentials);
-      console.log('Login response:', response);
+      console.log('response.data.success:', response);
 
 
-       if (response.success) {
+    if (response.success) {
     const user = response.data.user;
     // For now, use a mock token since the API response doesn't include it
-    const token = 'mock-token'; // In a real app, this would come from the API response
+    const token = response.data.accessToken;
     console.log('Login response token:', token);
     // Set user and token in AuthContext
     login(token, user);
