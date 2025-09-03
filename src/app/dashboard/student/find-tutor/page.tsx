@@ -8,20 +8,22 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Search, 
-  Filter, 
-  Star, 
-  Clock, 
-  BookOpen, 
-  ChevronLeft, 
+import {
+  Search,
+  Filter,
+  Star,
+  Clock,
+  BookOpen,
+  ChevronLeft,
   ChevronRight,
   Loader2,
   MapPin,
-  Award
+  Award,
+  Globe,
+  DollarSign
 } from 'lucide-react';
 import { tutorAPI } from '@/lib/api';
-import { Tutor, FilterOptions } from '@/types';
+import { Tutor, FilterOptions, Subject, Language } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { TutorBookingModal } from './TutorBookingModal';
 
@@ -72,28 +74,34 @@ export const TutorSearch: React.FC = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const debouncedFilters = useDebounce(filters, 500);
+const searchTutors = useCallback(async (page: number = 1) => {
+  setIsLoading(true);
+  try {
+    const searchFilters = {
+      ...debouncedFilters,
+      search: debouncedSearchTerm,
+    };
 
-  const searchTutors = useCallback(async (page: number = 1) => {
-    setIsLoading(true);
-    try {
-      const searchFilters = {
-        ...debouncedFilters,
-        search: debouncedSearchTerm,
-      };
+    const response = await tutorAPI.searchTutors(searchFilters, page, itemsPerPage);
+    console.log("response of search tutors in component:", response);
+    
+    if (response.success) {
+      console.log("response offfff:", response.data.content);
 
-      const response = await tutorAPI.searchTutors(searchFilters, page, itemsPerPage);
-      console.log("searchTutors response:", response);
-      if (response.success) {
-        setTutors(response.data.tutors);
-        setTotalPages(response.data.totalPages);
-        setTotalResults(response.data.total);
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setIsLoading(false);
+      // Use the correct property names from API response
+      setTutors(response.data.content || []);
+
+      // Pagination
+      setTotalPages(response.data.totalPages || 1);
+      setTotalResults(response.data.totalElements || 0);
     }
-  }, [debouncedSearchTerm, debouncedFilters, itemsPerPage]);
+  } catch (error) {
+    console.error('Search failed:', error);
+  } finally {
+    setIsLoading(false);
+  }
+}, [debouncedSearchTerm, debouncedFilters, itemsPerPage]);
+
 
   useEffect(() => {
     searchTutors(1);
@@ -358,78 +366,112 @@ export const TutorSearch: React.FC = () => {
 
           {/* Tutor Cards Grid */}
           {!isLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {tutors.map((tutor) => (
-                <Card key={tutor.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4 mb-4">
-                      <Avatar className="h-16 w-16">
+                <Card key={String(tutor.id)} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <div className="flex items-start space-x-3 sm:space-x-4 mb-4">
+                      <Avatar className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 flex-shrink-0">
                         <AvatarImage src={tutor.profileImage} />
-                        <AvatarFallback>
+                        <AvatarFallback className="text-xs sm:text-sm">
                           {`${tutor.firstName} ${tutor.lastName}`.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{tutor.firstName} {tutor.lastName}</h3>
-                        <div className="flex items-center space-x-1 mb-2">
-                          {renderStars(tutor.rating)}
-                          <span className="text-sm text-muted-foreground ml-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm sm:text-base md:text-lg truncate">
+                          {tutor.firstName} {tutor.lastName}
+                        </h3>
+                        <div className="flex items-center space-x-1 mb-1 sm:mb-2">
+                          <div className="flex">
+                            {renderStars(tutor.rating)}
+                          </div>
+                          <span className="text-xs sm:text-sm text-muted-foreground ml-1 sm:ml-2">
                             ({tutor.rating.toFixed(1)})
                           </span>
                         </div>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {tutor.experience} years experience
+                        <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <span className="truncate">{tutor.experience} years experience</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
+                      {/* Languages */}
+                      {tutor.languages && tutor.languages.length > 0 && (
+                        <div>
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Languages:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {tutor.languages.slice(0, 2).map((language, index) => (
+                              <Badge key={`${tutor.id}-lang-${index}`} variant="outline" className="text-xs">
+                                <Globe className="h-3 w-3 mr-1" />
+                                <span className="truncate max-w-[80px] sm:max-w-none">
+                                  {language.languageName}
+                                </span>
+                              </Badge>
+                            ))}
+                            {tutor.languages.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{tutor.languages.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Subjects with individual rates */}
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">Subjects:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {tutor.subjects.slice(0, 3).map((subject) => (
-                            <Badge key={subject} variant="secondary" className="text-xs">
-                              {subject}
-                            </Badge>
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Subjects & Rates:</p>
+                        <div className="space-y-1">
+                          {tutor.subjects.slice(0, 2).map((subject, index) => (
+                            <div key={`${tutor.id}-subject-${index}`} className="flex items-center justify-between text-xs gap-2">
+                              <Badge variant="secondary" className="text-xs truncate flex-shrink max-w-[120px] sm:max-w-[150px]">
+                                {subject.subjectName}
+                              </Badge>
+                              <span className="text-green-600 font-medium flex items-center flex-shrink-0 text-xs sm:text-sm">
+                                <DollarSign className="h-3 w-3" />
+                                {subject.hourlyRate}/hr
+                              </span>
+                            </div>
                           ))}
-                          {tutor.subjects.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{tutor.subjects.length - 3} more
-                            </Badge>
+                          {tutor.subjects.length > 2 && (
+                            <div className="text-xs text-muted-foreground">
+                              +{tutor.subjects.length - 2} more subjects...
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between text-sm">
+                      {tutor.bio && (
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-2 sm:mb-3">
+                          {tutor.bio}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-center text-xs sm:text-sm border-t pt-2">
                         <div className="flex items-center text-muted-foreground">
-                          <Award className="h-4 w-4 mr-1" />
-                          {tutor.classCompletionRate.toFixed(0)}% completion
-                        </div>
-                        <div className="font-semibold text-lg">
-                          ${tutor.hourlyRate}/hr
+                          <Award className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <span className="truncate">{tutor.classCompletionRate.toFixed(0)}% completion</span>
                         </div>
                       </div>
 
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {tutor.bio}
-                      </p>
-
-                      <div className="flex space-x-2 pt-2">
+                      <div className="flex space-x-1 sm:space-x-2 pt-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1"
+                          className="flex-1 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
                           onClick={() => handleViewProfile(tutor)}
                         >
-                          View Profile
+                          <span className="hidden sm:inline">View Profile</span>
+                          <span className="sm:hidden">Profile</span>
                         </Button>
                         <Button
                           size="sm"
-                          className="flex-1"
+                          className="flex-1 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
                           onClick={() => handleBookTutor(tutor)}
                         >
-                          Book Class
+                          <span className="hidden sm:inline">Book Class</span>
+                          <span className="sm:hidden">Book</span>
                         </Button>
                       </div>
                     </div>

@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse } from '@/types';
+import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse, PageableResponse } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,64 +11,152 @@ const api = axios.create({
   },
   withCredentials: true, // Enable cookie-based authentication
 });
-
+const plainAxios = axios.create({
+  baseURL: API_BASE_URL, // Use the same base URL as main api
+  withCredentials: true, // Enable cookie-based authentication
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 export const setAuthToken = (token: string | null) => {
   if (token) {
-    console.log("token:", token);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
     delete api.defaults.headers.common['Authorization'];
   }
 };
 api.interceptors.request.use((config) => {
-  console.log("Outgoing request headers:", config.headers);
   return config;
 });
-// Handle response errors - updated for cookie auth
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Redirect to login on 401 - server will clear invalid cookies
-      window.location.href = '/login';
+// Global variable to track if we're currently refreshing token
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (error?: any) => void;
+}> = [];
+
+// Callback to update AuthContext when token is refreshed
+let onTokenRefreshCallback: ((token: string) => void) | null = null;
+
+export const setTokenRefreshCallback = (callback: (token: string) => void) => {
+  onTokenRefreshCallback = callback;
+};
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
     }
-    return Promise.reject(error);
-  }
-);
-export const refreshAccessToken = async () => {
-  try {
-    const response = await api.post('/auth/refresh'); 
-    console.log('Refreshed access token:', response);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to refresh access token:', error);
-    throw error;
-  }
+  });
+  
+  failedQueue = [];
 };
 
-export const refreshAccessTokenn = async () => {
-  try {
-      const response = await axios.post('http://localhost:8083/api/auth/refresh');
-      // Include any necessary data for refreshing the token
-    
-        console.log('Refreshed access token:', response);
+// Enhanced response interceptor with token refresh
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+      
+      // Check if it's a 401 error with TOKEN_EXPIRED
+      if (error.response?.status === 401) {
+        const errorData = error.response.data;
+        
+        // Check if it's specifically TOKEN_EXPIRED
+        if (errorData?.error === 'TOKEN_EXPIRED' || errorData?.message?.includes('expired')) {
+          console.log('Token expired, attempting to refresh...');
+          
+          // Prevent infinite loops
+          if (originalRequest._retry) {
+            console.log('Token refresh already attempted, logging out...');
+            window.location.href = '/login';
+            return Promise.reject(error);
+          }
+          
+          if (isRefreshing) {
+            // If we're already refreshing, queue this request
+            console.log('Token refresh in progress, queuing request...');
+            return new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            }).then(token => {
+              originalRequest.headers['Authorization'] = 'Bearer ' + token;
+              return api(originalRequest);
+            }).catch(err => {
+              return Promise.reject(err);
+            });
+          }
 
-    return response.data; // Assuming the response contains the new token
-  } catch (error) {
-    console.error('Failed to refresh access token:', error);
-    throw error;
-  }
-};
+          originalRequest._retry = true;
+          isRefreshing = true;
+
+          try {
+            console.log('Attempting token refresh...');
+            const refreshResponse = await refreshAccessToken();
+            const newAccessToken = refreshResponse.accessToken;
+            
+            console.log('Token refreshed successfully:', newAccessToken);
+            
+            // Update the global auth token for future requests
+            setAuthToken(newAccessToken);
+            
+            // Update AuthContext state through callback
+            if (onTokenRefreshCallback) {
+              onTokenRefreshCallback(newAccessToken);
+            }
+            
+            // Process the failed queue
+            processQueue(null, newAccessToken);
+            
+            // Retry the original request with new token
+            originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+            
+            return api(originalRequest);
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+            
+            // Process queue with error
+            processQueue(refreshError, null);
+            
+            // Clear auth state and redirect to login
+            setAuthToken(null);
+            window.location.href = '/login';
+            
+            return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
+          }
+        } else {
+          // For other 401 errors (invalid credentials, etc.), redirect to login
+          console.log('Non-token related 401 error, redirecting to login...');
+          window.location.href = '/login';
+        }
+      }
+      
+      return Promise.reject(error);
+    }
+  );
+  export const refreshAccessToken = async () => {
+    try {
+      const response = await plainAxios.post('/auth/refresh'); 
+      console.log('Refreshed access token', response);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+
 
 export const authAPI = {
   // Check username availability with debouncing
   checkUsernamee: async (username: string): Promise<ApiResponse<{ available: boolean }>> => {
-    console.log("Checking username availability for:", username);
     try {
       const response = await api.get(`/auth/check-username/${username}`);
       return response.data;
     } catch (error) {
-      console.error('Username check failed:', error);
       // Mock response for frontend testing
       return {
         success: true,
@@ -77,16 +165,13 @@ export const authAPI = {
     }
   },
  checkUsername: async (username: string): Promise<ApiResponse<{ available: boolean }>> => {
-    console.log("Checking username availability for:", username);
     try {
       // Send username as a query param
       const response = await api.get(`/auth/check-username`, {
         params: { username }, // This will construct ?username=john123
       });
-      console.log("response of cjeck user name :",response)
       return response.data;
     } catch (error) {
-      console.error('Username check failed:', error);
       // Mock response for frontend testing
       return {
         success: true,
@@ -326,41 +411,91 @@ export const tutorAPI = {
   //     };
   //   }
   // },
-searchTutors: async (
+// searchTutors: async (
+//   filters: FilterOptions,
+//   page: number = 1,
+//   limit: number = 12
+// ): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
+
+//   // Always generate mock tutors
+//   const mockTutors: Tutor[] = Array.from({ length: limit }, (_, i) => ({
+//     id: `tutor-${page}-${i}`,
+//     firstName: `Tutor`,
+//     lastName: `${page}-${i + 1}`,
+//     username: `tutor${page}${i}`,
+//     email: `tutor${page}${i}@example.com`,
+//     role: 'TUTOR',
+//     isVerified: true,
+//     createdAt: new Date().toISOString(),
+//     subjects: ['Mathematics', 'Physics', 'Chemistry'].slice(0, Math.floor(Math.random() * 3) + 1),
+//     experience: Math.floor(Math.random() * 10) + 1,
+//     rating: 4 + Math.random(),
+//     classCompletionRate: 85 + Math.random() * 15,
+//     bio: 'Experienced tutor with excellent teaching skills.',
+//     hourlyRate: 25 + Math.floor(Math.random() * 75),
+//     totalClasses: Math.floor(Math.random() * 1000) + 100,
+//     completedClasses: Math.floor(Math.random() * 800) + 80,
+//   }));
+
+//   return {
+//     success: true,
+//     data: {
+//       tutors: mockTutors,
+//       total: 150,
+//       totalPages: Math.ceil(150 / limit),
+//     },
+//   };
+// },
+  searchTutors: async (
   filters: FilterOptions,
   page: number = 1,
   limit: number = 12
-): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
-
-  // Always generate mock tutors
-  const mockTutors: Tutor[] = Array.from({ length: limit }, (_, i) => ({
-    id: `tutor-${page}-${i}`,
-    firstName: `Tutor`,
-    lastName: `${page}-${i + 1}`,
-    username: `tutor${page}${i}`,
-    email: `tutor${page}${i}@example.com`,
-    role: 'TUTOR',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-    subjects: ['Mathematics', 'Physics', 'Chemistry'].slice(0, Math.floor(Math.random() * 3) + 1),
-    experience: Math.floor(Math.random() * 10) + 1,
-    rating: 4 + Math.random(),
-    classCompletionRate: 85 + Math.random() * 15,
-    bio: 'Experienced tutor with excellent teaching skills.',
-    hourlyRate: 25 + Math.floor(Math.random() * 75),
-    totalClasses: Math.floor(Math.random() * 1000) + 100,
-    completedClasses: Math.floor(Math.random() * 800) + 80,
-  }));
-
-  return {
-    success: true,
-    data: {
-      tutors: mockTutors,
-      total: 150,
-      totalPages: Math.ceil(150 / limit),
-    },
-  };
+): Promise<ApiResponse<PageableResponse<Tutor>>> => {
+  try {
+    const params: any = { page, limit, ...filters };
+    console.log("params of search tutors:", params);
+    const response = await api.get('/tutors/search');
+    console.log("response of search tutors:", response);
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error: any) {
+    console.error('Error fetching tutors:', error);
+    return {
+      success: false,
+      data: {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: limit,
+        number: page,
+        first: true,
+        last: true,
+        empty: true,
+        numberOfElements: 0
+      }
+    };
+  }
 },
+
+  searchTutorss : async (
+    filters: FilterOptions,
+    page: number = 1,
+    limit: number = 12
+  ): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
+    try {
+      const params: any = { page, limit, ...filters }; // spread filters into query params
+      //const response = await api.post('/auth/refresh'); 
+
+      const response = await axios.get(`tutors/search`,params);
+      console.log("response of search tutors :",response)
+      return response.data; // should match ApiResponse<{ tutors: Tutor[]; ... }>
+    } catch (error: any) {
+      console.error('Error fetching tutors:', error);
+      return { success: false, data: { tutors: [], total: 0, totalPages: 0 } };
+    }
+  },
 
   getTutorById: async (id: string): Promise<ApiResponse<Tutor>> => {
     try {
@@ -375,22 +510,51 @@ searchTutors: async (
       };
     }
   },
-
   getTutorSlots: async (tutorId: string, date?: string): Promise<ApiResponse<TimeSlot[]>> => {
+    console.log('Fetching slots for tutorId:', tutorId, 'on date:', date);
     try {
-      const params = date ? `?date=${date}` : '';
-      const response = await api.get(`/tutors/${tutorId}/slots${params}`);
-      return response.data;
+      // Use the real backend endpoint
+      const response = await api.get(`/student/bookings/slots`, {
+        params: {
+          tutorId: tutorId,
+          date: date || new Date().toISOString().split('T')[0]
+        }
+      });
+      console.log('Get tutor slots response:', response);
+      
+      // Transform the response to ensure compatibility
+      const slots = response.data.map((slot: any) => ({
+        ...slot,
+        // Add compatibility fields for existing UI code
+        id: slot.slotId.toString(),
+        price: slot.hourlyRate || 50, // Fallback to 50 if no hourly rate
+      }));
+      
+      return {
+        success: true,
+        data: slots,
+      };
     } catch (error) {
       console.error('Get tutor slots failed:', error);
-      // Mock slots data
-      const mockSlots: TimeSlot[] = Array.from({ length: 8 }, (_, i) => ({
+      // Mock slots data with new structure
+      const mockSlots: TimeSlot[] = Array.from({ length: 4 }, (_, i) => ({
+        slotId: i + 1,
+        availabilityId: i + 1,
+        tutorId: parseInt(tutorId),
+        tutorName: 'Mock Tutor',
+        slotDate: date || new Date().toISOString().split('T')[0],
+        dayOfWeek: 'MONDAY',
+        startTime: `${9 + i * 2}:00:00`,
+        endTime: `${11 + i * 2}:00:00`,
+        status: Math.random() > 0.7 ? 'BOOKED' : 'AVAILABLE',
+        hourlyRate: 50 + Math.floor(Math.random() * 50),
+        tutorBio: null,
+        tutorExperience: 0,
+        isRecurring: true,
+        subjectName: null,
+        rating: 0.0,
+        // Compatibility fields
         id: `slot-${tutorId}-${i}`,
-        tutorId,
-        date: new Date().toISOString().split('T')[0],
-        startTime: `${9 + i * 2}:00`,
-        endTime: `${11 + i * 2}:00`,
-        status: Math.random() > 0.7 ? 'booked' : 'available',
         price: 50 + Math.floor(Math.random() * 50),
       }));
       
@@ -442,7 +606,8 @@ export const bookingAPI = {
             role: 'TUTOR',
             isVerified: true,
             createdAt: new Date().toISOString(),
-            subjects: ['Mathematics'],
+            subjects: [{ subjectId: 1, subjectName: 'Mathematics', hourlyRate: 60 }],
+            languages: [{ languageId: 1, languageName: 'English' }],
             experience: 5,
             rating: 4.8,
             classCompletionRate: 95,
@@ -450,14 +615,26 @@ export const bookingAPI = {
             hourlyRate: 60,
             totalClasses: 500,
             completedClasses: 475,
+            tutorProfileId: 1,
           },
           slot: {
+            slotId: 1,
+            availabilityId: 1,
+            tutorId: 1,
+            tutorName: 'Dr. Sarah Johnson',
+            slotDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+            dayOfWeek: 'MONDAY',
+            startTime: '14:00:00',
+            endTime: '16:00:00',
+            status: 'BOOKED',
+            hourlyRate: 60,
+            tutorBio: null,
+            tutorExperience: 5,
+            isRecurring: true,
+            subjectName: 'Mathematics',
+            rating: 4.8,
+            // Compatibility fields
             id: 'slot-1',
-            tutorId: 'tutor-1',
-            date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-            startTime: '14:00',
-            endTime: '16:00',
-            status: 'booked',
             price: 60,
           },
         },

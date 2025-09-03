@@ -10,10 +10,8 @@ import { Toaster } from '@/components/ui/sonner';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  console.log("DashboardLayout render - isAuthenticated1111111111111111111111111111111111111111111:", isAuthenticated, "isLoading:", isLoading, "user:", user);
 
   useEffect(() => {
-    console.log("isAuthenticated:", isAuthenticated, "isLoading:", isLoading);
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
