@@ -12,12 +12,13 @@ import {
   Bell,
   Sparkles,
 } from "lucide-react";
-import { Tutor, TimeSlot } from "@/types";
+import { Tutor, TimeSlot, BookingPreferences } from "@/types";
 
 interface ConfirmationStepProps {
   tutor: Tutor;
   selectedDate: Date;
   selectedSlot: TimeSlot;
+  bookingPreferences: BookingPreferences;
   onClose: () => void;
 }
 
@@ -25,6 +26,7 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
   tutor,
   selectedDate,
   selectedSlot,
+  bookingPreferences,
   onClose,
 }) => {
   const formatTime = (time: string) =>
@@ -107,6 +109,28 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
                 )}`}
               </span>
             </div>
+
+            {selectedSlot.subjectName && (
+              <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Subject</span>
+                </div>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {selectedSlot.subjectName}
+                </span>
+              </div>
+            )}
+
+            {selectedSlot.isRecurring && (
+              <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Type</span>
+                </div>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  Recurring Session
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -483,7 +483,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { tutorAPI, bookingAPI } from "@/lib/api";
-import { Tutor, TimeSlot } from "@/types";
+import { Tutor, TimeSlot, BookingPreferences } from "@/types";
 import { SlotSelection } from "./SlotSelection";
 import { PaymentStep } from "./PaymentStep";
 import { ConfirmationStep } from "./ConfirmationStep";
@@ -507,13 +507,14 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
   const [bookingStep, setBookingStep] = useState<BookingStep>("slots");
   const [error, setError] = useState("");
   const [reservationTimer, setReservationTimer] = useState(0);
+  const [bookingPreferences, setBookingPreferences] = useState<BookingPreferences | null>(null);
 
   // Load available slots when date or tutor changes
   useEffect(() => {
     if (selectedDate) {
       loadAvailableSlots(selectedDate);
     }
-  }, [selectedDate, tutor.id]);
+  }, [selectedDate, tutor.tutorProfileId]);
 
   // Handle reservation timer countdown
   useEffect(() => {
@@ -539,8 +540,11 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
     setError("");
     try {
       const dateString = date.toISOString().split("T")[0];
-      const response = await tutorAPI.getTutorSlots(tutor.id, dateString);
+      console.log("Loading slots for tutor:", tutor);
+      const response = await tutorAPI.getTutorSlots(tutor.tutorProfileId.toString(), dateString);
+      console.log("Response from API:", response);
       if (response.success) {
+        console.log("Available slots:", response.data);
         setAvailableSlots(response.data);
       } else {
         setError("Failed to load available slots. Please try again.");
@@ -553,10 +557,18 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
     }
   };
 
-  const handleSlotSelection = (slot: TimeSlot) => {
+  const handleSlotSelection = (slot: TimeSlot, preferences: BookingPreferences) => {
     if (slot.status !== "AVAILABLE") return;
     
-    setSelectedSlot(slot);
+    // Map slotId to id for compatibility with existing components
+    const mappedSlot: TimeSlot = {
+      ...slot,
+      id: slot.slotId?.toString() || slot.id,
+      price: preferences.finalPrice || slot.hourlyRate || slot.price || 0
+    };
+    
+    setSelectedSlot(mappedSlot);
+    setBookingPreferences(preferences);
     setBookingStep("payment");
     setReservationTimer(300); // 5 minutes reservation
     setError("");
@@ -576,8 +588,8 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
     
     try {
       const response = await bookingAPI.processPayment("mock-booking-id", {
-        slotId: selectedSlot.id,
-        amount: selectedSlot.price,
+        slotId: selectedSlot.slotId || selectedSlot.id,
+        amount: selectedSlot.price || selectedSlot.hourlyRate || 0,
       });
       
       if (response.success) {
@@ -644,11 +656,12 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
             />
           )}
 
-          {bookingStep === "payment" && selectedSlot && (
+          {bookingStep === "payment" && selectedSlot && bookingPreferences && (
             <PaymentStep
               tutor={tutor}
               selectedDate={selectedDate}
               selectedSlot={selectedSlot}
+              bookingPreferences={bookingPreferences}
               reservationTimer={reservationTimer}
               isBooking={isBooking}
               onBack={handleBackToSlots}
@@ -656,12 +669,13 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
             />
           )}
 
-          {bookingStep === "confirmation" && selectedSlot && (
+          {bookingStep === "confirmation" && selectedSlot && bookingPreferences && (
             <ConfirmationStep
               tutor={tutor}
               selectedDate={selectedDate}
               selectedSlot={selectedSlot}
               onClose={onClose}
+              bookingPreferences={bookingPreferences}
             />
           )}
         </div>

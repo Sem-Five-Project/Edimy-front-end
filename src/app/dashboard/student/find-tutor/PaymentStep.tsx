@@ -14,12 +14,13 @@ import {
   User,
   DollarSign,
 } from "lucide-react";
-import { Tutor, TimeSlot } from "@/types";
+import { Tutor, TimeSlot, BookingPreferences } from "@/types";
 
 interface PaymentStepProps {
   tutor: Tutor;
   selectedDate: Date;
   selectedSlot: TimeSlot;
+  bookingPreferences: BookingPreferences;
   reservationTimer: number;
   isBooking: boolean;
   onBack: () => void;
@@ -30,6 +31,7 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
   tutor,
   selectedDate,
   selectedSlot,
+  bookingPreferences,
   reservationTimer,
   isBooking,
   onBack,
@@ -123,6 +125,28 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
                 </span>
               </div>
 
+              {selectedSlot.subjectName && (
+                <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Subject</span>
+                  </div>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {selectedSlot.subjectName}
+                  </span>
+                </div>
+              )}
+
+              {selectedSlot.isRecurring && (
+                <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Type</span>
+                  </div>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    Recurring Session
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Timer className="h-4 w-4 text-gray-500" />
@@ -136,7 +160,7 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
               <div className="flex items-center justify-between py-4 px-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <span className="text-lg font-semibold text-gray-900 dark:text-white">Total Amount</span>
                 <span className="text-2xl font-bold text-blue-600">
-                  ${selectedSlot.price}
+                  ${selectedSlot.price || selectedSlot.hourlyRate || tutor.hourlyRate || 0}
                 </span>
               </div>
             </div>
@@ -204,7 +228,7 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
           ) : (
             <>
               <CreditCard className="mr-2 h-5 w-5" />
-              Pay ${selectedSlot.price}
+              Pay ${bookingPreferences.finalPrice || selectedSlot.price || selectedSlot.hourlyRate || tutor.hourlyRate || 0}
             </>
           )}
         </Button>

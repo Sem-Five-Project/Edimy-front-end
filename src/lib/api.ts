@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse, PageableResponse } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -510,8 +510,8 @@ export const tutorAPI = {
       };
     }
   },
-
   getTutorSlots: async (tutorId: string, date?: string): Promise<ApiResponse<TimeSlot[]>> => {
+    console.log('Fetching slots for tutorId:', tutorId, 'on date:', date);
     try {
       // Use the real backend endpoint
       const response = await api.get(`/student/bookings/slots`, {

@@ -121,3 +121,41 @@ export interface PageableResponse<T> {
   empty: boolean;
   numberOfElements: number;
 }
+
+export interface ClassType {
+  id: string;
+  name: string;
+  description: string;
+  durationWeeks?: number;
+  priceMultiplier: number;
+}
+
+export interface BookingPreferences {
+  selectedLanguage: Language | null;
+  selectedSubject: Subject | null;
+  selectedClassType: ClassType | null;
+  finalPrice: number;
+}
+
+export const CLASS_TYPES: ClassType[] = [
+  {
+    id: 'lesson',
+    name: 'Single Lesson',
+    description: 'One-time tutoring session',
+    priceMultiplier: 1.0,
+  },
+  {
+    id: 'normal',
+    name: 'Regular Classes',
+    description: 'Weekly classes with flexible scheduling',
+    durationWeeks: 4,
+    priceMultiplier: 0.95,
+  },
+  {
+    id: 'monthly',
+    name: 'Monthly Recurring',
+    description: 'Committed monthly package with best rates',
+    durationWeeks: 12,
+    priceMultiplier: 0.85,
+  },
+];

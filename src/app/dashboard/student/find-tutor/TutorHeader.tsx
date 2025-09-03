@@ -69,7 +69,7 @@ export const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor }) => (
         <div className="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">
           {tutor.subjects.slice(0, 3).map((subject, index) => (
             <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded text-xs">
-              {subject}
+              {subject.subjectName}
             </span>
           ))}
           {tutor.subjects.length > 3 && (
