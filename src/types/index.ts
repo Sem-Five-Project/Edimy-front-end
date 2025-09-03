@@ -84,3 +84,31 @@ export interface FilterOptions {
   sortBy?: 'rating' | 'price' | 'experience' | 'completion_rate';
   sortOrder?: 'asc' | 'desc';
 }
+
+export interface Class{
+  classId?: number;      
+  className: string;
+  tutorId: number;
+  subjectId: number;
+  classTypeId: number;
+  comment?: string;      
+  startTime: string;    
+  endTime: string;       
+  date: string;         
+
+}
+export interface ClassDoc {
+  docId?: number;       // optional, assigned by the backend
+  classId?: number;     // optional, may be null if not linked yet
+  docType: string;      // e.g., "pdf", "video"
+  link: string;         // URL or path to the document
+}
+
+export interface TutorAvailability {
+  availabilityId?: number;  // optional, assigned by backend
+  tutorId: number;
+  dayOfWeek?: string;       // optional if you want to allow null/unspecified
+  startTime: string;        // "HH:MM:SS" format
+  endTime: string;          // "HH:MM:SS" format
+  recurring: boolean;
+}
