@@ -12,18 +12,21 @@ const api = axios.create({
   withCredentials: true, // Enable cookie-based authentication
 });
 const plainAxios = axios.create({
-  baseURL: "http://localhost:8083/api", // same as your api baseURL
+  baseURL: API_BASE_URL, // Use the same base URL as main api
+  withCredentials: true, // Enable cookie-based authentication
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 export const setAuthToken = (token: string | null) => {
   if (token) {
-    console.log("token:", token);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
     delete api.defaults.headers.common['Authorization'];
   }
 };
 api.interceptors.request.use((config) => {
-  console.log("Outgoing request headers:", config.headers);
   return config;
 });
 // Global variable to track if we're currently refreshing token
@@ -53,110 +56,107 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 // Enhanced response interceptor with token refresh
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
-    // Check if it's a 401 error with TOKEN_EXPIRED
-    if (error.response?.status === 401) {
-      const errorData = error.response.data;
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
       
-      // Check if it's specifically TOKEN_EXPIRED
-      if (errorData?.error === 'TOKEN_EXPIRED' || errorData?.message?.includes('expired')) {
-        console.log('Token expired, attempting to refresh...');
+      // Check if it's a 401 error with TOKEN_EXPIRED
+      if (error.response?.status === 401) {
+        const errorData = error.response.data;
         
-        // Prevent infinite loops
-        if (originalRequest._retry) {
-          console.log('Token refresh already attempted, logging out...');
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
-        
-        if (isRefreshing) {
-          // If we're already refreshing, queue this request
-          console.log('Token refresh in progress, queuing request...');
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          }).then(token => {
-            originalRequest.headers['Authorization'] = 'Bearer ' + token;
-            return api(originalRequest);
-          }).catch(err => {
-            return Promise.reject(err);
-          });
-        }
-
-        originalRequest._retry = true;
-        isRefreshing = true;
-
-        try {
-          console.log('Attempting token refresh...');
-          const refreshResponse = await refreshAccessToken();
-          const newAccessToken = refreshResponse.accessToken;
+        // Check if it's specifically TOKEN_EXPIRED
+        if (errorData?.error === 'TOKEN_EXPIRED' || errorData?.message?.includes('expired')) {
+          console.log('Token expired, attempting to refresh...');
           
-          console.log('Token refreshed successfully:', newAccessToken);
-          
-          // Update the global auth token for future requests
-          setAuthToken(newAccessToken);
-          
-          // Update AuthContext state through callback
-          if (onTokenRefreshCallback) {
-            onTokenRefreshCallback(newAccessToken);
+          // Prevent infinite loops
+          if (originalRequest._retry) {
+            console.log('Token refresh already attempted, logging out...');
+            window.location.href = '/login';
+            return Promise.reject(error);
           }
           
-          // Process the failed queue
-          processQueue(null, newAccessToken);
-          
-          // Retry the original request with new token
-          originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
-          
-          return api(originalRequest);
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          
-          // Process queue with error
-          processQueue(refreshError, null);
-          
-          // Clear auth state and redirect to login
-          setAuthToken(null);
+          if (isRefreshing) {
+            // If we're already refreshing, queue this request
+            console.log('Token refresh in progress, queuing request...');
+            return new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            }).then(token => {
+              originalRequest.headers['Authorization'] = 'Bearer ' + token;
+              return api(originalRequest);
+            }).catch(err => {
+              return Promise.reject(err);
+            });
+          }
+
+          originalRequest._retry = true;
+          isRefreshing = true;
+
+          try {
+            console.log('Attempting token refresh...');
+            const refreshResponse = await refreshAccessToken();
+            const newAccessToken = refreshResponse.accessToken;
+            
+            console.log('Token refreshed successfully:', newAccessToken);
+            
+            // Update the global auth token for future requests
+            setAuthToken(newAccessToken);
+            
+            // Update AuthContext state through callback
+            if (onTokenRefreshCallback) {
+              onTokenRefreshCallback(newAccessToken);
+            }
+            
+            // Process the failed queue
+            processQueue(null, newAccessToken);
+            
+            // Retry the original request with new token
+            originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+            
+            return api(originalRequest);
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+            
+            // Process queue with error
+            processQueue(refreshError, null);
+            
+            // Clear auth state and redirect to login
+            setAuthToken(null);
+            window.location.href = '/login';
+            
+            return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
+          }
+        } else {
+          // For other 401 errors (invalid credentials, etc.), redirect to login
+          console.log('Non-token related 401 error, redirecting to login...');
           window.location.href = '/login';
-          
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
         }
-      } else {
-        // For other 401 errors (invalid credentials, etc.), redirect to login
-        console.log('Non-token related 401 error, redirecting to login...');
-        window.location.href = '/login';
       }
+      
+      return Promise.reject(error);
     }
-    
-    return Promise.reject(error);
-  }
-);
-export const refreshAccessToken = async () => {
-  try {
-    const response = await plainAxios.post('/auth/refresh'); 
-    console.log('Refreshed access token11111:', response);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to refresh access token:', error);
-    throw error;
-  }
-};
+  );
+  export const refreshAccessToken = async () => {
+    try {
+      const response = await plainAxios.post('/auth/refresh'); 
+      console.log('Refreshed access token', response);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
 
 
 
 export const authAPI = {
   // Check username availability with debouncing
   checkUsernamee: async (username: string): Promise<ApiResponse<{ available: boolean }>> => {
-    console.log("Checking username availability for:", username);
     try {
       const response = await api.get(`/auth/check-username/${username}`);
       return response.data;
     } catch (error) {
-      console.error('Username check failed:', error);
       // Mock response for frontend testing
       return {
         success: true,
@@ -165,16 +165,13 @@ export const authAPI = {
     }
   },
  checkUsername: async (username: string): Promise<ApiResponse<{ available: boolean }>> => {
-    console.log("Checking username availability for:", username);
     try {
       // Send username as a query param
       const response = await api.get(`/auth/check-username`, {
         params: { username }, // This will construct ?username=john123
       });
-      console.log("response of cjeck user name :",response)
       return response.data;
     } catch (error) {
-      console.error('Username check failed:', error);
       // Mock response for frontend testing
       return {
         success: true,

@@ -131,7 +131,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Function to update token from API interceptor
   const updateTokenFromInterceptor = (newToken: string) => {
-    console.log('Updating token from API interceptor:', newToken);
     setToken(newToken);
   };
 
@@ -142,7 +141,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    console.log("userrrrrrrrrrrrrrr :",user)
   }, [user]);
 
   // const checkAuthStatus = async () => {
@@ -167,7 +165,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // try to silently refresh on page load
       const newToken = await refreshAccessToken(); 
-      console.log("Silent refresh token:", newToken.accessToken);
       setToken(newToken.accessToken);
       setAuthToken(newToken.accessToken); // attach to axios
       const response = await authAPI.getCurrentUser(newToken.accessToken);
@@ -175,7 +172,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.data.user);
       }
     } catch (err) {
-      console.error("Silent refresh failed:", err);
       setUser(null);
       setToken(null);
     } finally {
@@ -190,7 +186,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthToken(newToken); // attach to axios globally
   };
   useEffect(() => {
-    console.log('Auth state changed - user:', user, 'token:', token);
   }, [token]);
 
   // No need for manual refresh since API interceptor handles it automatically
@@ -199,7 +194,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authAPI.logout();
     } catch (error) {
-      console.error('Logout API call failed:', error);
     } finally {
       setUser(null);
       setToken(null);
