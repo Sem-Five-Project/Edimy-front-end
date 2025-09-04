@@ -180,10 +180,17 @@ export interface ClassDoc {
 }
 
 export interface TutorAvailability {
-  availabilityId?: number;  // optional, assigned by backend
+  availabilityId?: number;   // assigned by backend
   tutorId: number;
-  dayOfWeek?: string;       // optional if you want to allow null/unspecified
-  startTime: string;        // "HH:MM:SS" format
-  endTime: string;          // "HH:MM:SS" format
+  dayOfWeek?: string;        // e.g. "Mon", "Tue"
+  startTime: string;         // "HH:mm:ss"
+  endTime: string;           // "HH:mm:ss"
+  date?: string;             // "YYYY-MM-DD" if you want specific date
   recurring: boolean;
+}
+
+
+export interface Subject {
+  subjectId: number;
+  subjectName: string;
 }

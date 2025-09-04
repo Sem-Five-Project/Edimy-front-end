@@ -31,9 +31,9 @@ export default function RootLayout({
       >
         {/* Wrap all children with providers */}
         <AuthProvider>
-          <ThemeProvider>
+          {/* <ThemeProvider> */}
             {children}
-          </ThemeProvider>
+          {/* </ThemeProvider> */}
         </AuthProvider>
       </body>
     </html>

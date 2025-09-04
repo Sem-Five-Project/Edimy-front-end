@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse } from '@/types';
+import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
 
@@ -204,7 +204,9 @@ export const authAPI = {
     }
   },
 
-  login: async (credentials: LoginCredentials): Promise<ApiResponse<{ user: User }>> => {
+  login: async (credentials: LoginCredentials): Promise<ApiResponse<{
+    [x: string]: any; user: User 
+}>> => {
     try {
       const response = await api.post('/auth/login', credentials);
             console.log("login response main :",response.data)
@@ -696,16 +698,26 @@ export const classAPI = {
     }
   },
   //get class a of a tutor when tutorId is given
-  getClassesByTutorId: async (tutorId: number): Promise<ApiResponse<Class[]>> => {
+  getClassesByTutorId: async (tutorId: number): Promise<Class[]> => {
     try {
       const response = await api.get(`/classes/tutor/${tutorId}`);
       return response.data;
     } catch (error) {
       console.error('Get classes by tutor ID failed:', error);
+      return [];
+    }
+  },
+  //delete a class by classId and tutorId
+  deleteClass: async (classId: number | undefined, tutorId: number): Promise<any> => {
+    try {
+      const response = await api.delete(`/classes/delete?classId=${classId}&tutorId=${tutorId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete class failed:', error);
       return {
         success: false,
-        data: [],
-        error: 'Failed to get classes by tutor ID',
+        data: {},
+        error: 'Failed to delete class',
       };
     }
   },
@@ -727,17 +739,13 @@ export const classDocAPI ={
     }
   },
   //get docs by classId
-  getClassDocsByClassId: async (classId: number): Promise<ApiResponse<ClassDoc[]>> => {
+  getClassDocsByClassId: async (classId: number): Promise<ClassDoc[]> => {
     try {
       const response = await api.get(`/class-docs/class/${classId}`);
       return response.data;
     } catch (error) {
       console.error('Get class docs by class ID failed:', error);
-      return {
-        success: false,
-        data: [],
-        error: 'Failed to get class docs by class ID',
-      };
+      return [];
     }
   },
   //delete a doc by docId
@@ -774,7 +782,7 @@ export const tutorAvailabilityAPI = {
   //delete availability by availabilityId
   deleteAvailability: async (availabilityId: number): Promise<ApiResponse<any>> => {
     try {
-      const response = await api.delete(`/tutor-availability/${availabilityId}`);
+      const response = await api.delete(`/tutor-availability/delete/${availabilityId}`);
       return response.data;
     } catch (error) {
       console.error('Delete availability failed:', error);
@@ -789,7 +797,7 @@ export const tutorAvailabilityAPI = {
   //update availability by the id
   updateAvailability: async (availabilityData: TutorAvailability): Promise<ApiResponse<TutorAvailability>> => {
     try {
-      const response = await api.put(`/tutor-availability/${availabilityData.availabilityId}`, availabilityData);
+      const response = await api.put(`/tutor-availability/update/${availabilityData.availabilityId}`, availabilityData);
       return response.data;
     } catch (error) {
       console.error('Update availability failed:', error);
@@ -801,34 +809,27 @@ export const tutorAvailabilityAPI = {
     }
   },
   //get availability of a tutor by tutor id
-  getAvailabilityByTutorId: async (tutorId: number): Promise<ApiResponse<TutorAvailability[]>> => {
+  getAvailabilityByTutorId: async (tutorId: number): Promise<TutorAvailability[]> => {
     try {
       const response = await api.get(`/tutor-availability/tutor/${tutorId}`);
+      console.log('Tutor availability:', response.data);
       return response.data;
     } catch (error) {
       console.error('Get availability by tutor ID failed:', error);
-      return {
-        success: false,
-        data: [],
-        error: 'Failed to get availability by tutor ID',
-      };
+      return [];
     }
   },
 }
 
 export const subjectAPI = {
   //get the subjects of a tutor when the tutorid is given
-  getSubjectsByTutorId: async (tutorId: number): Promise<ApiResponse<string[]>> => {
+  getSubjectsByTutorId: async (tutorId: number): Promise<Subject[]> => {
     try {
-      const response = await api.get(`/tutor/${tutorId}/subjects`);
+      const response = await api.get(`/tutors/${tutorId}/subjects`);
       return response.data;
     } catch (error) {
       console.error('Get subjects by tutor ID failed:', error);
-      return {
-        success: false,
-        data: [],
-        error: 'Failed to get subjects by tutor ID',
-      };
+      return [];
     }
   },
 }
