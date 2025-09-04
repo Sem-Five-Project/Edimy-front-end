@@ -159,3 +159,38 @@ export const CLASS_TYPES: ClassType[] = [
     priceMultiplier: 0.85,
   },
 ];
+
+export interface Class{
+  classId?: number;      
+  className: string;
+  tutorId: number;
+  subjectId: number;
+  classTypeId: number;
+  comment?: string;      
+  startTime: string;    
+  endTime: string;       
+  date: string;         
+
+}
+export interface ClassDoc {
+  docId?: number;       // optional, assigned by the backend
+  classId?: number;     // optional, may be null if not linked yet
+  docType: string;      // e.g., "pdf", "video"
+  link: string;         // URL or path to the document
+}
+
+export interface TutorAvailability {
+  availabilityId?: number;   // assigned by backend
+  tutorId: number;
+  dayOfWeek?: string;        // e.g. "Mon", "Tue"
+  startTime: string;         // "HH:mm:ss"
+  endTime: string;           // "HH:mm:ss"
+  date?: string;             // "YYYY-MM-DD" if you want specific date
+  recurring: boolean;
+}
+
+
+export interface Subject {
+  subjectId: number;
+  subjectName: string;
+}
