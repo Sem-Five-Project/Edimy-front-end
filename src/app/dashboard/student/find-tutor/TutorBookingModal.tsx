@@ -485,7 +485,7 @@ import { AlertCircle } from "lucide-react";
 import { tutorAPI, bookingAPI } from "@/lib/api";
 import { Tutor, TimeSlot, BookingPreferences } from "@/types";
 import { SlotSelection } from "./SlotSelection";
-import { PaymentStep } from "./PaymentStep";
+import { PayHerePayment } from "./PayHerePayment";
 import { ConfirmationStep } from "./ConfirmationStep";
 
 interface TutorBookingModalProps {
@@ -580,32 +580,14 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
     setError("Slot reservation expired. Please select a new slot.");
   };
 
-  const handlePayment = async () => {
-    if (!selectedSlot) return;
-    
-    setIsBooking(true);
+  const handlePaymentSuccess = () => {
+    setBookingStep("confirmation");
+    setReservationTimer(0);
     setError("");
-    
-    try {
-      const response = await bookingAPI.processPayment("mock-booking-id", {
-        slotId: selectedSlot.slotId || selectedSlot.id,
-        amount: selectedSlot.price || selectedSlot.hourlyRate || 0,
-      });
-      
-      if (response.success) {
-        setBookingStep("confirmation");
-        setReservationTimer(0);
-      } else {
-        setError("Payment failed. Please try again.");
-      }
-    } catch (err: unknown) {
-      console.error("Payment error:", err);
-      setError(
-        err instanceof Error ? err.message : "Booking failed. Please try again."
-      );
-    } finally {
-      setIsBooking(false);
-    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    setError(error);
   };
 
   const handleBackToSlots = () => {
@@ -655,7 +637,19 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
               onSelectSlot={handleSlotSelection}
             />
           )}
-
+          {bookingStep === "payment" && selectedSlot && bookingPreferences && (
+            <PayHerePayment
+              tutor={tutor}
+              selectedDate={selectedDate}
+              selectedSlot={selectedSlot}
+              bookingPreferences={bookingPreferences}
+              reservationTimer={reservationTimer}
+              onBack={handleBackToSlots}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+            />
+          )}
+{/* 
           {bookingStep === "payment" && selectedSlot && bookingPreferences && (
             <PaymentStep
               tutor={tutor}
@@ -667,7 +661,7 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
               onBack={handleBackToSlots}
               onPay={handlePayment}
             />
-          )}
+          )} */}
 
           {bookingStep === "confirmation" && selectedSlot && bookingPreferences && (
             <ConfirmationStep

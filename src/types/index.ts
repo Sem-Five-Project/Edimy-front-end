@@ -159,3 +159,38 @@ export const CLASS_TYPES: ClassType[] = [
     priceMultiplier: 0.85,
   },
 ];
+
+export interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+  rate: number; // Conversion rate from LKR
+}
+
+export const CURRENCIES: Currency[] = [
+  {
+    code: 'LKR',
+    symbol: 'Rs.',
+    name: 'Sri Lankan Rupee',
+    rate: 1.0,
+  },
+  {
+    code: 'USD',
+    symbol: '$',
+    name: 'US Dollar',
+    rate: 0.003, // Example rate: 1 LKR = 0.003 USD
+  },
+  {
+    code: 'INR',
+    symbol: '₹',
+    name: 'Indian Rupee',
+    rate: 0.25, // Example rate: 1 LKR = 0.25 INR
+  },
+];
+
+export interface CurrencyContextType {
+  selectedCurrency: Currency;
+  setCurrency: (currency: Currency) => void;
+  convertPrice: (lkrPrice: number) => number;
+  formatPrice: (lkrPrice: number) => string;
+}

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Tutor, TimeSlot, Language, Subject, ClassType, BookingPreferences, CLASS_TYPES } from "@/types";
 import { TutorHeader } from "./TutorHeader";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { DateCalendar } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -41,9 +42,11 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
   isLoadingSlots,
   onSelectSlot,
 }) => {
+  const { formatPrice } = useCurrency();
+  
   const [bookingPreferences, setBookingPreferences] = useState<BookingPreferences>({
-    selectedLanguage: null,
-    selectedSubject: null,
+    selectedLanguage: tutor.languages.length === 1 ? tutor.languages[0] : null,
+    selectedSubject: tutor.subjects.length === 1 ? tutor.subjects[0] : null,
     selectedClassType: null,
     finalPrice: 0,
   });
@@ -57,6 +60,39 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
       minute: "2-digit",
       hour12: true,
     });
+
+  // Calculate duration between start and end time
+  const calculateDuration = (startTime: string, endTime: string): number => {
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    return (end.getTime() - start.getTime()) / (1000 * 60 * 60); // Convert to hours
+  };
+
+  // Calculate final price based on selections with duration
+  const calculatePrice = (slot?: TimeSlot): number => {
+    const subject = bookingPreferences.selectedSubject;
+    const classType = bookingPreferences.selectedClassType;
+    
+    let basePrice = subject?.hourlyRate || tutor.hourlyRate || 0;
+    let multiplier = classType?.priceMultiplier || 1.0;
+    
+    // Calculate duration in hours if slot is provided
+    let duration = 1; // Default 1 hour
+    if (slot) {
+      duration = calculateDuration(slot.startTime, slot.endTime);
+    } else if (selectedSlot) {
+      duration = calculateDuration(selectedSlot.startTime, selectedSlot.endTime);
+    }
+    
+    const finalPrice = basePrice * multiplier * duration;
+    return Math.round(finalPrice * 100) / 100;
+  };
+
+  // Update final price when preferences or slot change
+  useEffect(() => {
+    const price = calculatePrice();
+    setBookingPreferences(prev => ({ ...prev, finalPrice: price }));
+  }, [bookingPreferences.selectedSubject, bookingPreferences.selectedClassType, selectedSlot, tutor.hourlyRate]);
 
   // Filter out past time slots for today
   const getFilteredSlots = () => {
@@ -76,24 +112,6 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
       return slotTime > currentTime;
     });
   };
-
-  // Calculate final price based on selections
-  const calculatePrice = () => {
-    if (!bookingPreferences.selectedSubject && !bookingPreferences.selectedClassType) {
-      return tutor.hourlyRate || 0;
-    }
-
-    let basePrice = bookingPreferences.selectedSubject?.hourlyRate || tutor.hourlyRate || 0;
-    let multiplier = bookingPreferences.selectedClassType?.priceMultiplier || 1.0;
-    
-    return Math.round(basePrice * multiplier * 100) / 100;
-  };
-
-  // Update final price when preferences change
-  useEffect(() => {
-    const price = calculatePrice();
-    setBookingPreferences(prev => ({ ...prev, finalPrice: price }));
-  }, [bookingPreferences.selectedSubject, bookingPreferences.selectedClassType, tutor.hourlyRate]);
 
   // Validation
   const validateSelections = (): string[] => {
@@ -132,15 +150,20 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
     }
     
     if (selectedSlot) {
-      onSelectSlot(selectedSlot, bookingPreferences);
+      const finalPreferences = {
+        ...bookingPreferences,
+        finalPrice: calculatePrice(selectedSlot)
+      };
+      onSelectSlot(selectedSlot, finalPreferences);
     }
   };
 
   const filteredSlots = getFilteredSlots();
+  const canProceed = validateSelections().length === 0;
 
   return (
     <div className="space-y-8">
-      <TutorHeader tutor={tutor} />
+      <TutorHeader tutor={tutor} bookingPreferences={bookingPreferences} />
 
       {/* Booking Preferences Section */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
@@ -210,7 +233,7 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
                 <SelectValue 
                   placeholder={
                     tutor.subjects.length <= 1 
-                      ? `${tutor.subjects[0]?.subjectName || "Subject"} ($${tutor.subjects[0]?.hourlyRate || tutor.hourlyRate}/hr)`
+                      ? `${tutor.subjects[0]?.subjectName || "Subject"} (${formatPrice(tutor.subjects[0]?.hourlyRate || tutor.hourlyRate)}/hr)`
                       : "Select subject..."
                   } 
                 />
@@ -223,7 +246,7 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
                         <BookOpen className="h-4 w-4" />
                         {subject.subjectName}
                       </div>
-                      <span className="text-sm text-gray-600 ml-2">${subject.hourlyRate}/hr</span>
+                      <span className="text-sm text-green-600 ml-2 font-semibold">{formatPrice(subject.hourlyRate)}/hr</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -258,7 +281,7 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{classType.name}</span>
                         {classType.priceMultiplier < 1.0 && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
                             {Math.round((1 - classType.priceMultiplier) * 100)}% OFF
                           </Badge>
                         )}
@@ -272,27 +295,26 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
           </div>
         </CardContent>
 
-        {/* Price Display */}
-        {bookingPreferences.finalPrice > 0 && (
+        {/* Live Price Display */}
+        {(bookingPreferences.selectedSubject || bookingPreferences.selectedClassType) && (
           <div className="px-6 pb-6">
-            <div className="bg-white dark:bg-gray-900 rounded-lg border-2 border-blue-200 dark:border-blue-700 p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border-2 border-green-200 dark:border-green-700 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-green-600" />
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Session Price:</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Current Hourly Rate:</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-green-600">
-                    ${bookingPreferences.finalPrice}
+                  <div className="text-xl font-bold text-green-600">
+                    {formatPrice((bookingPreferences.selectedSubject?.hourlyRate || tutor.hourlyRate) * (bookingPreferences.selectedClassType?.priceMultiplier || 1.0))}
                   </div>
+                  <div className="text-xs text-gray-500">per hour</div>
                   {bookingPreferences.selectedClassType?.priceMultiplier !== 1.0 && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-green-600 font-medium">
                       {bookingPreferences.selectedClassType?.priceMultiplier && bookingPreferences.selectedClassType.priceMultiplier < 1.0 ? (
-                        <span className="text-green-600">
-                          Save {Math.round((1 - bookingPreferences.selectedClassType.priceMultiplier) * 100)}%
-                        </span>
+                        `Save ${Math.round((1 - bookingPreferences.selectedClassType.priceMultiplier) * 100)}%`
                       ) : (
-                        <span>Premium rate</span>
+                        "Premium rate"
                       )}
                     </div>
                   )}
@@ -415,94 +437,114 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
                   {filteredSlots.length > 0 ? (
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
-                        {filteredSlots.map((slot) => (
-                          <Button
-                            key={slot.slotId}
-                            variant={
-                              selectedSlot?.slotId === slot.slotId
-                                ? "default"
-                                : slot.status === "AVAILABLE" 
-                                ? "outline" 
-                                : "secondary"
-                            }
-                            size="sm"
-                            disabled={slot.status !== "AVAILABLE"}
-                            onClick={() => handleSlotClick(slot)}
-                            className={`h-auto p-4 flex flex-col items-center space-y-2 transition-all duration-200 relative ${
-                              selectedSlot?.slotId === slot.slotId
-                                ? "bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105"
-                                : slot.status === "AVAILABLE"
-                                ? "hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm border-2"
-                                : "opacity-50 cursor-not-allowed"
-                            }`}
-                          >
-                            {selectedSlot?.slotId === slot.slotId && (
-                              <CheckCircle className="absolute -top-2 -right-2 h-5 w-5 bg-green-500 text-white rounded-full" />
-                            )}
-                            <div className="text-center w-full">
-                              <div className="font-semibold text-sm">
-                                {formatTime(slot.startTime)}
-                              </div>
-                              <div className="text-xs opacity-75">
-                                to {formatTime(slot.endTime)}
-                              </div>
-                              <div className="text-xs opacity-75 mt-1">
-                                {slot.dayOfWeek}
-                              </div>
-                              
-                              {slot.subjectName && (
-                                <Badge variant="secondary" className="text-xs mt-2">
-                                  {slot.subjectName}
-                                </Badge>
+                        {filteredSlots.map((slot) => {
+                          const duration = calculateDuration(slot.startTime, slot.endTime);
+                          const totalPrice = calculatePrice(slot);
+                          
+                          return (
+                            <Button
+                              key={slot.slotId}
+                              variant={
+                                selectedSlot?.slotId === slot.slotId
+                                  ? "default"
+                                  : slot.status === "AVAILABLE" 
+                                  ? "outline" 
+                                  : "secondary"
+                              }
+                              size="sm"
+                              disabled={slot.status !== "AVAILABLE"}
+                              onClick={() => handleSlotClick(slot)}
+                              className={`h-auto p-4 flex flex-col items-center space-y-2 transition-all duration-200 relative ${
+                                selectedSlot?.slotId === slot.slotId
+                                  ? "bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105"
+                                  : slot.status === "AVAILABLE"
+                                  ? "hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm border-2"
+                                  : "opacity-50 cursor-not-allowed"
+                              }`}
+                            >
+                              {selectedSlot?.slotId === slot.slotId && (
+                                <CheckCircle className="absolute -top-2 -right-2 h-5 w-5 bg-green-500 text-white rounded-full" />
                               )}
-                              
-                              <div className="flex flex-wrap gap-1 mt-2 justify-center">
-                                {slot.isRecurring && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Recurring
-                                  </Badge>
-                                )}
-                                {slot.status === "BOOKED" && (
-                                  <Badge variant="destructive" className="text-xs">
-                                    Booked
-                                  </Badge>
-                                )}
-                                {slot.status === "IN_PROGRESS" && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    In Progress
-                                  </Badge>
-                                )}
-                              </div>
-                              
-                              {slot.status === "AVAILABLE" && (
-                                <div className="text-xs mt-2 space-y-1">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                                    <span>{slot.rating}/5</span>
-                                    <span className="text-gray-500">·</span>
-                                    <span>{slot.tutorExperience}+ yrs</span>
-                                  </div>
+                              <div className="text-center w-full">
+                                <div className="font-semibold text-sm">
+                                  {formatTime(slot.startTime)}
                                 </div>
-                              )}
-                            </div>
-                          </Button>
-                        ))}
+                                <div className="text-xs opacity-75">
+                                  to {formatTime(slot.endTime)}
+                                </div>
+                                <div className="text-xs opacity-75 mt-1">
+                                  {slot.dayOfWeek} • {duration}h session
+                                </div>
+                                
+                                {slot.subjectName && (
+                                  <Badge variant="secondary" className="text-xs mt-2">
+                                    {slot.subjectName}
+                                  </Badge>
+                                )}
+                                
+                                <div className="flex flex-wrap gap-1 mt-2 justify-center">
+                                  {slot.isRecurring && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Recurring
+                                    </Badge>
+                                  )}
+                                  {slot.status === "BOOKED" && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      Booked
+                                    </Badge>
+                                  )}
+                                  {slot.status === "IN_PROGRESS" && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      In Progress
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                {slot.status === "AVAILABLE" && (
+                                  <div className="text-xs mt-2 space-y-1">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                                      <span>{slot.rating}/5</span>
+                                      <span className="text-gray-500">·</span>
+                                      <span>{slot.tutorExperience}+ yrs</span>
+                                    </div>
+                                    {/* Show total payable amount for this slot */}
+                                    {bookingPreferences.selectedSubject && bookingPreferences.selectedClassType && (
+                                      <div className="font-bold text-green-600 mt-2 p-1 bg-green-50 dark:bg-green-950/20 rounded">
+                                        Total: {formatPrice(totalPrice)}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </Button>
+                          );
+                        })}
                       </div>
                       
                       {/* Proceed Button */}
                       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                         <Button
                           onClick={handleProceedToPayment}
-                          disabled={!selectedSlot || validationErrors.length > 0}
-                          className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                          disabled={!canProceed}
+                          className={`w-full h-14 text-lg font-semibold transition-all duration-300 ${
+                            canProceed 
+                              ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg" 
+                              : "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                          }`}
                         >
-                          {selectedSlot ? (
+                          {canProceed && selectedSlot ? (
                             <div className="flex items-center gap-2">
                               <CheckCircle className="h-5 w-5" />
-                              Proceed to Payment - ${bookingPreferences.finalPrice}
+                              <div className="flex flex-col">
+                                <span>Proceed to Payment</span>
+                                <span className="text-sm font-normal opacity-90">
+                                  Total: {formatPrice(calculatePrice(selectedSlot))} for {calculateDuration(selectedSlot.startTime, selectedSlot.endTime)}h session
+                                </span>
+                              </div>
                             </div>
                           ) : (
-                            "Select a Time Slot to Continue"
+                            "Complete All Selections to Continue"
                           )}
                         </Button>
                       </div>

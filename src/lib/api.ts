@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse, PageableResponse } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -511,7 +511,6 @@ export const tutorAPI = {
     }
   },
   getTutorSlots: async (tutorId: string, date?: string): Promise<ApiResponse<TimeSlot[]>> => {
-    console.log('Fetching slots for tutorId:', tutorId, 'on date:', date);
     try {
       // Use the real backend endpoint
       const response = await api.get(`/student/bookings/slots`, {
@@ -578,6 +577,103 @@ export const bookingAPI = {
         data: { booking: {} as Booking, paymentUrl: '' },
         error: 'Failed to create booking',
       };
+    }
+  },
+
+  // Generate PayHere hash for payment
+  generatePayHereHash: async (orderId: string, amount: number, currency: string = "LKR"): Promise<ApiResponse<{ hash: string }>> => {
+    try {
+      const response = await api.post('/payment/hash', {
+        orderId,
+        amount,
+        currency
+      });
+      console.log('Generate PayHere hash response:', response);
+      return response;
+    } catch (error) {
+      console.error('Generate PayHere hash failed:', error);
+      return {
+        success: false,
+        data: { hash: '' },
+        error: 'Failed to generate payment hash',
+      };
+    }
+  },
+
+  // Reserve a slot for up to 15 minutes to avoid double booking
+  reserveSlot: async (slotId: number): Promise<ApiResponse<{ reservationId: string; expiresAt: string }>> => {
+    try {
+      const response = await api.post('/bookings/reserve', { slotId });
+      return response.data;
+    } catch (error) {
+      console.error('Reserve slot failed:', error);
+      return {
+        success: false,
+        data: { reservationId: '', expiresAt: '' },
+        error: 'Failed to reserve slot',
+      } as unknown as ApiResponse<{ reservationId: string; expiresAt: string }>;
+    }
+  },
+
+  // Release a previously reserved slot (on cancellation, timeout, or failure)
+  releaseReservation: async (reservationId: string): Promise<ApiResponse<{ released: boolean }>> => {
+    try {
+      const response = await api.post('/bookings/release', { reservationId });
+      return response.data;
+    } catch (error) {
+      console.error('Release reservation failed:', error);
+      return {
+        success: false,
+        data: { released: false },
+        error: 'Failed to release reservation',
+      };
+    }
+  },
+
+  // Confirm PayHere payment and finalize booking, updating all related tables
+  confirmPayHerePayment: async (payload: {
+    orderId: string;
+    slotId: number;
+    tutorId: number;
+    amount: number;
+    currency: string;
+    paymentStatus: 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    paymentMethod: 'PAYHERE';
+    paymentTime: string; // ISO string
+    reservationId?: string;
+    studentId?: number;
+    classId?: number;
+  }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
+    try {
+      const response = await api.post('/payments/payhere/confirm', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Confirm PayHere payment failed:', error);
+      return {
+        success: false,
+        data: { success: false },
+        error: 'Failed to confirm payment',
+      } as unknown as ApiResponse<{ success: boolean }>;
+    }
+  },
+  // Initialize PayHere payment. Backend must generate hash and return full payment payload
+  initPayHere: async (payload: {
+    bookingId: string;
+    returnUrl: string;
+    cancelUrl: string;
+    // notifyUrl should be configured on backend; can be overridden for testing
+    notifyUrl?: string;
+  }): Promise<ApiResponse<{ payment: Record<string, unknown> }>> => {
+    try {
+      const response = await api.post('/payments/payhere/init', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Init PayHere failed:', error);
+      return {
+        success: false,
+        data: { payment: {} },
+        error: 'Failed to initialize PayHere',
+      } as unknown as ApiResponse<{ payment: Record<string, unknown> }>;
     }
   },
 

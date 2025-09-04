@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -30,14 +31,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen bg-background">
-        <DashboardSidebar userRole={user?.role} />
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-          <Toaster />
-        </main>
-      </div>
-    </SidebarProvider>
+    <CurrencyProvider>
+      <SidebarProvider>
+        <div className="flex min-h-screen bg-background">
+          <DashboardSidebar userRole={user?.role} />
+          <main className="flex-1 overflow-auto p-6">
+            {children}
+            <Toaster />
+          </main>
+        </div>
+      </SidebarProvider>
+    </CurrencyProvider>
   );
 }
