@@ -240,6 +240,16 @@ export const NAV_DATA = [
         ],
       },
       {
+        title: "Admin Profile",
+        icon: Icons.User,
+        items: [
+          {
+            title: "Profile Settings",
+            url: "/dashboard/admin/profile",
+          },
+        ],
+      },
+      {
         title: "Pages",
         icon: Icons.Alphabet,
         items: [
