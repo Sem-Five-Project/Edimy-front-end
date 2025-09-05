@@ -149,12 +149,12 @@ export const NAV_DATA = [
         icon: Icons.Table,
         items: [
           {
-            title: "Subjects & Categories",
-            url: "/dashboard/admin/content/subjects",
+            title: "Subject Management",
+            url: "/dashboard/admin/subjects",
           },
           {
-            title: "Tags & Filters",
-            url: "/dashboard/admin/content/tags",
+            title: "Tag Management",
+            url: "/dashboard/admin/tags",
           },
         ],
       },
