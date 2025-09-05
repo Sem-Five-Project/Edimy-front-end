@@ -164,11 +164,11 @@ export const NAV_DATA = [
         items: [
           {
             title: "Ratings & Reviews",
-            url: "/dashboard/admin/moderation/reviews",
+            url: "/dashboard/admin/ratings-reviews",
           },
           {
             title: "Complaints",
-            url: "/dashboard/admin/moderation/complaints",
+            url: "/dashboard/admin/complaints",
           },
         ],
       },
