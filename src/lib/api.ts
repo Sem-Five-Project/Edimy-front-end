@@ -667,3 +667,68 @@ export const bookingAPI = {
 };
 
 export default api;
+
+// FCM Token API functions
+export const fcmAPI = {
+  // Send FCM token to backend
+  sendToken: async (tokenData: {
+    token: string;
+    userId?: string;
+    deviceType: string;
+    timestamp?: string;
+  }): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/fcm/token', {
+        ...tokenData,
+        timestamp: tokenData.timestamp || new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token send failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to send FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Remove FCM token from backend
+  removeToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.delete('/fcm/token', {
+        data: { token },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token removal failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to remove FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Update FCM token
+  updateToken: async (oldToken: string, newToken: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.put('/fcm/token/update', {
+        oldToken,
+        newToken,
+        timestamp: new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token update failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to update FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+};
+
+// Helper function for backward compatibility
+export const sendFCMTokenToBackend = fcmAPI.sendToken;
