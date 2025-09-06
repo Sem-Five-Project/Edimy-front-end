@@ -19,6 +19,7 @@ export default function Home() {
       return;
     }
 
+    // Only request permission, don't send token yet
     async function requestPermission() {
       try {
         // Check if messaging is available (client-side only)
@@ -30,30 +31,7 @@ export default function Home() {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
           console.log("Notification permission granted");
-          
-          try {
-            const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-            if (currentToken) {
-              console.log("FCM Token:", currentToken);
-              
-              // Send token to backend
-              const result = await sendFCMTokenToBackend({
-                token: currentToken,
-                deviceType: 'web',
-              });
-              
-              if (result.success) {
-                console.log("FCM token successfully sent to backend");
-              } else {
-                console.error("Failed to send FCM token to backend:", result.error);
-              }
-              
-            } else {
-              console.log("No registration token available.");
-            }
-          } catch (err) {
-            console.error("Error getting FCM token:", err);
-          }
+          console.log("FCM token will be sent after user login");
         } else {
           console.log("Notification permission denied");
         }
@@ -62,7 +40,7 @@ export default function Home() {
       }
     }
 
-    // Request permission automatically when page loads
+    // Request permission when page loads
     requestPermission();
 
     // Listen for foreground messages
@@ -73,7 +51,6 @@ export default function Home() {
         
         // Show a custom notification or update UI
         if (payload.notification) {
-          // You can show a custom toast/notification here
           console.log("Notification title:", payload.notification.title);
           console.log("Notification body:", payload.notification.body);
         }

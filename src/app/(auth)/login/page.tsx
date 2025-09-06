@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { authAPI } from '@/lib/api';
+import { sendFCMTokenAfterLogin } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginCredentials } from '@/types';
 
@@ -71,18 +72,15 @@ export default function LoginPage() {
     // Set user and token in AuthContext
     login(token, user);
 
-    // if (response.user) {
-    //   const { user } = response.user;
-
-    //   console.log('Login response token:', response.accessToken);
-
-    // //   //Check if user is verified
-    // //   if (!user.isVerified) {
-    // //     router.push('/verify-email');
-    // //     return;
-    // //   }
-
-    //   login(user);
+    // Send FCM token after successful login
+    console.log("🔥 About to send FCM token for user:", user.email || user.username);
+    try {
+      await sendFCMTokenAfterLogin(user.email || user.username);
+      console.log("🔥 FCM token sending completed");
+    } catch (fcmError) {
+      console.error("🔥 FCM token sending failed:", fcmError);
+      // Don't block login flow for FCM errors
+    }
 
       // Reset attempt count on successful login
       setAttemptCount(0);
