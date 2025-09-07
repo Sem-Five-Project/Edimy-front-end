@@ -199,7 +199,7 @@
 //   );
 // };
 
-// export default DashboardSidebar;"use client";
+"use client";
 import React, { useState } from 'react';
 import { useRouter } from "next/navigation"; // ✅ import this
 import { Home, User, Search, BookOpen, Users, FileText, BarChart3, Menu, X, ChevronRight, LogOut, Settings } from 'lucide-react';
