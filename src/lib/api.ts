@@ -725,9 +725,10 @@ export const classAPI = {
 
 export const classDocAPI ={
   //add a doc
-  addClassDoc: async (classDocData: ClassDoc): Promise<ApiResponse<any>> => {
+  addClassDoc: async (classDocData: ClassDoc): Promise<any> => {
+    console.log('Adding class doc with data:*************', classDocData);
     try {
-      const response = await api.post(`/class-docs/docs`, classDocData);
+      const response = await api.post(`/class-docs/add`, classDocData);
       return response.data;
     } catch (error) {
       console.error('Add class doc failed:', error);

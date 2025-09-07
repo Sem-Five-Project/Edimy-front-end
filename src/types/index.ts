@@ -176,7 +176,7 @@ export interface ClassDoc {
   docId?: number;       // optional, assigned by the backend
   classId?: number;     // optional, may be null if not linked yet
   docType: string;      // e.g., "pdf", "video"
-  link: string;         // URL or path to the document
+  link: string | any;         // URL or path to the document
 }
 
 export interface TutorAvailability {
