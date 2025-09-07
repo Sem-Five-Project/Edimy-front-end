@@ -324,7 +324,6 @@ export default function StudentsPage() {
                   <TableHead>Registration Date</TableHead>
                   <TableHead>Last Login</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Sessions</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -375,24 +374,9 @@ export default function StudentsPage() {
                         <Badge className={getStatusColor(student.status)}>
                           {student.status}
                         </Badge>
-                        {student.flags && student.flags.length > 0 && (
-                          <div className="mt-1">
-                            {student.flags.map((flag, index) => (
-                              <Badge key={index} variant="outline" className="text-xs mr-1">
-                                {flag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
+
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>Total: {student.totalSessions}</div>
-                          <div className="text-muted-foreground">
-                            Upcoming: {student.upcomingSessions}
-                          </div>
-                        </div>
-                      </TableCell>
+                     
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

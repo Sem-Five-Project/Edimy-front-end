@@ -262,65 +262,7 @@ export default function OngoingSessionsPage() {
         </div>
       </div>
 
-      {/* Live Status Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Activity className="w-8 h-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Active Sessions</p>
-                <p className="text-2xl font-bold">{ongoingSessions.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <UserCheck className="w-8 h-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Both Joined</p>
-                <p className="text-2xl font-bold">
-                  {ongoingSessions.filter(s => s.attendanceStatus === 'both-joined').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Flag className="w-8 h-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Issues Reported</p>
-                <p className="text-2xl font-bold">
-                  {ongoingSessions.reduce((sum, s) => sum + s.flaggedComplaints, 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Avg Duration</p>
-                <p className="text-2xl font-bold">
-                  {ongoingSessions.length > 0 
-                    ? Math.round(ongoingSessions.reduce((sum, s) => sum + s.elapsedTime, 0) / ongoingSessions.length)
-                    : 0}m
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+      
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

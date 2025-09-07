@@ -33,10 +33,6 @@ export const NAV_DATA = [
             url: "/dashboard/admin/verification/pending",
           },
           {
-            title: "Verified Tutors",
-            url: "/dashboard/admin/verification/verified",
-          },
-          {
             title: "Re-verification",
             url: "/dashboard/admin/verification/re-verify",
           },
@@ -54,10 +50,7 @@ export const NAV_DATA = [
             title: "Ongoing Sessions",
             url: "/dashboard/admin/sessions/ongoing",
           },
-          {
-            title: "Session Reports",
-            url: "/dashboard/admin/sessions/reports",
-          },
+         
         ],
       },
       {
@@ -80,10 +73,7 @@ export const NAV_DATA = [
             title: "Pricing Policies",
             url: "/dashboard/admin/payments/pricing",
           },
-          {
-            title: "Financial Reports",
-            url: "/dashboard/admin/payments/reports",
-          },
+         
         ],
       },
       {
@@ -105,6 +95,14 @@ export const NAV_DATA = [
           {
             title: "User Analytics",
             url: "/dashboard/admin/analytics/users",
+          },
+           {
+            title: "Session Reports",
+            url: "/dashboard/admin/analytics/reports",
+          },
+           {
+            title: "Financial Reports",
+            url: "/dashboard/admin/analytics/financial",
           },
         ],
       },

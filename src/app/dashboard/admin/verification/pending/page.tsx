@@ -395,11 +395,7 @@ export default function PendingApprovalsPage() {
                             <div className="text-sm text-muted-foreground">
                               {tutor.email}
                             </div>
-                            {tutor.phone && (
-                              <div className="text-sm text-muted-foreground">
-                                {tutor.phone}
-                              </div>
-                            )}
+                           
                           </div>
                         </div>
                       </td>
@@ -409,9 +405,7 @@ export default function PendingApprovalsPage() {
                             <div key={index} className="text-sm">
                               <span className="font-medium">{subject.subject}</span>
                               <span className="text-muted-foreground"> - ${subject.proposedRate}/hr</span>
-                              <Badge variant="outline" className="ml-2 text-xs">
-                                {subject.experienceLevel}
-                              </Badge>
+                              
                             </div>
                           ))}
                           {tutor.subjects.length > 2 && (

@@ -489,22 +489,7 @@ export default function TutorsPage() {
                           >
                             {tutor.status}
                           </Badge>
-                          {tutor.isVerified && (
-                            <div>
-                              <Badge variant="outline" className="text-xs">
-                                Verified
-                              </Badge>
-                            </div>
-                          )}
-                          {tutor.flags && tutor.flags.length > 0 && (
-                            <div>
-                              {tutor.flags.map((flag, index) => (
-                                <Badge key={index} variant="outline" className="text-xs mr-1">
-                                  {flag}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
+                
                         </div>
                       </td>
                       <td className="p-4">
