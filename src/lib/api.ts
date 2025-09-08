@@ -851,3 +851,133 @@ export const subjectAPI = {
   },
 }
 export default api;
+
+// FCM Token API functions
+export const fcmAPI = {
+  // Send FCM token to backend
+  sendToken: async (tokenData: {
+    token: string;
+    userId?: string;
+    deviceType: string;
+    timestamp?: string;
+  }): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/auth/fcmtoken', tokenData.token, {
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
+      
+      // Handle different response structures
+      if (response.status >= 200 && response.status < 300) {
+        return {
+          success: true,
+          data: { message: 'FCM token sent successfully' },
+        };
+      } else {
+        return {
+          success: false,
+          data: { message: 'Failed to send FCM token' },
+          error: `HTTP ${response.status}`,
+        };
+      }
+    } catch (error) {
+      console.error('FCM token send failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to send FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Remove FCM token from backend
+  removeToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.delete('auth/fcmtoken', {
+        data: { token },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token removal failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to remove FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Update FCM token
+  updateToken: async (oldToken: string, newToken: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.put('auth/fcmtoken/update', {
+        oldToken,
+        newToken,
+        timestamp: new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token update failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to update FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+};
+
+// Helper function for backward compatibility
+export const sendFCMTokenToBackend = fcmAPI.sendToken;
+
+export const sendFCMTokenAfterLogin = async (userId: string): Promise<void> => {
+  console.log("🔥 sendFCMTokenAfterLogin called for user:", userId);
+  
+  try {
+    // Dynamic import to avoid SSR issues
+    const { messaging, getToken } = await import('./firebaseMessaging');
+    console.log("🔥 Firebase messaging imported, messaging available:", !!messaging);
+    
+    if (!messaging) {
+      console.log("❌ Firebase messaging not available");
+      return;
+    }
+
+    // Check if permission is granted
+    console.log("🔥 Checking notification permission:", Notification.permission);
+    if (Notification.permission !== 'granted') {
+      console.log("❌ Notification permission not granted, current permission:", Notification.permission);
+      return;
+    }
+
+    const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "";
+    console.log("🔥 Getting FCM token with VAPID key:", VAPID_KEY ? "Available" : "Missing");
+    
+    const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+    console.log("🔥 FCM token received:", currentToken ? "Available" : "None");
+    
+    if (currentToken) {
+      console.log("🔥 Sending FCM token after login:", currentToken);
+      
+      const result = await fcmAPI.sendToken({
+        token: currentToken,
+        userId: userId,
+        deviceType: 'web',
+      });
+      
+      console.log("🔥 FCM token send result:", result);
+      
+      if (result.success) {
+        console.log("✅ FCM token successfully sent after login");
+      } else {
+        console.error("❌ Failed to send FCM token after login. Error:", result.error || 'Unknown error');
+        console.error("❌ Response data:", result.data);
+      }
+    } else {
+      console.log("❌ No FCM token available to send");
+    }
+  } catch (error) {
+    console.error("💥 Error sending FCM token after login:", error);
+  }
+};
