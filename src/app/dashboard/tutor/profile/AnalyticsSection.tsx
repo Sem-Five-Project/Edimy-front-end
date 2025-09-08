@@ -1,12 +1,37 @@
 import React from "react";
 import { Award, Star, TrendingUp } from "lucide-react";
 import { Subject } from "@/types";
+import Modal from "@mui/material/Modal";
+import {
+  tutorAvailabilityAPI,
+  classAPI,
+  classDocAPI,
+  subjectAPI,
+} from "@/lib/api";
 
 interface AnalyticsSectionProps {
   subjects: Subject[];
 }
 
 const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [newSubject, setNewSubject] = React.useState<number | undefined>();
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setNewSubject(undefined);
+  };
+
+  const tutorId = 1;
+
+  const handleAddSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Add subject creation logic here
+    await subjectAPI.addSubjectsForTutor(tutorId, newSubject);
+    closeModal();
+
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Teaching Subjects */}
@@ -16,6 +41,51 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
             <Award className="mr-3 text-purple-600" size={24} />
             Teaching Subjects
           </h2>
+          <div className="mb-4">
+            <button
+              className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Add New Subject
+            </button>
+          </div>
+      {/*add a modal for adding new subjects */}
+      <Modal open={isModalOpen} onClose={closeModal}>
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "white",
+            borderRadius: "16px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.1)",
+            padding: "32px",
+            minWidth: "320px",
+            outline: "none",
+          }}
+        >
+          <h3 className="text-lg font-bold mb-4">Add New Subject</h3>
+          <form onSubmit={handleAddSubject}>
+            <input
+              type="number"
+              placeholder="Subject ID"
+              value={newSubject}
+              onChange={(e) => setNewSubject(Number(e.target.value) || undefined)}
+              required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          
+            <button
+              type="submit"
+              className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Add Subject
+            </button>
+          </form>
+        </div>
+      </Modal>
+
           {subjects.length > 0 ? (
             <div className="space-y-3">
               {subjects.map((subject, idx) => (

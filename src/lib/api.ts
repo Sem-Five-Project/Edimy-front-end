@@ -833,5 +833,21 @@ export const subjectAPI = {
       return [];
     }
   },
+
+  //add subjects for a tutor
+  addSubjectsForTutor: async (tutorId: number, subjectId:number | undefined): Promise<any> => {
+    try {
+      const response = await api.post(`/tutors/add?tutorId=${tutorId}&subjectId=${subjectId}`);
+      console.log('Add subjects for tutor response:*****', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Add subjects for tutor failed:', error);
+      return {
+        success: false,
+        data: { added: false },
+        error: 'Failed to add subjects for tutor',
+      };
+    }
+  },
 }
 export default api;
