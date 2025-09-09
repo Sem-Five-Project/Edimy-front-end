@@ -17,10 +17,15 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light'); // Changed 'system' to 'light'
-  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light');
 
+  const [theme, setTheme] = useState<Theme>('light'); // Changed 'system' to 'light'
+
+  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = useState(false);
+
+  // Handle mounting to prevent hydration mismatch
   useEffect(() => {
+    setMounted(true);
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
@@ -28,6 +33,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+
     const updateActualTheme = () => {
       if (theme === 'system') {
         const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -45,17 +52,21 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
-  }, [theme]);
+  }, [theme, mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
+    
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(actualTheme);
-  }, [actualTheme]);
+  }, [actualTheme, mounted]);
 
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    if (mounted) {
+      localStorage.setItem('theme', newTheme);
+    }
   };
 
   const value: ThemeContextType = {
@@ -63,6 +74,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     setTheme: handleSetTheme,
     actualTheme,
   };
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return <div style={{ visibility: 'hidden' }}>{children}</div>;
+  }
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };

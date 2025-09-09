@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,4 +49,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </BookingProvider>
     </CurrencyProvider>
   );
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+
 }

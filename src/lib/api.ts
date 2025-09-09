@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse, PageableResponse } from '@/types';
+import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -205,7 +205,9 @@ export const authAPI = {
     }
   },
 
-  login: async (credentials: LoginCredentials): Promise<ApiResponse<{ user: User }>> => {
+  login: async (credentials: LoginCredentials): Promise<ApiResponse<{
+    [x: string]: any; user: User 
+}>> => {
     try {
       const response = await api.post('/auth/login', credentials);
             console.log("login response main :",response.data)
@@ -808,4 +810,300 @@ export const bookingAPI = {
   },
 };
 
+export const classAPI = {
+  //create a class
+  createClass: async (classData: Class): Promise<ApiResponse<Class>> => {
+    try {
+      const response = await api.post('/classes/create', classData);
+      return response.data;
+    } catch (error) {
+      console.error('Create class failed:', error);
+      return {
+        success: false,
+        data: {} as Class,
+        error: 'Failed to create class',
+      };
+    }
+  },
+  //get a class by classId
+  getClassById: async (classId: number): Promise<ApiResponse<Class>> => {
+    try {
+      const response = await api.get(`/classes/${classId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get class by ID failed:', error);
+      return {
+        success: false,
+        data: {} as Class,
+        error: 'Failed to get class by ID',
+      };
+    }
+  },
+  //get class a of a tutor when tutorId is given
+  getClassesByTutorId: async (tutorId: number): Promise<Class[]> => {
+    try {
+      const response = await api.get(`/classes/tutor/${tutorId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get classes by tutor ID failed:', error);
+      return [];
+    }
+  },
+  //delete a class by classId and tutorId
+  deleteClass: async (classId: number | undefined, tutorId: number): Promise<any> => {
+    try {
+      const response = await api.delete(`/classes/delete?classId=${classId}&tutorId=${tutorId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete class failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to delete class',
+      };
+    }
+  },
+};
+
+export const classDocAPI ={
+  //add a doc
+  addClassDoc: async (classDocData: ClassDoc): Promise<any> => {
+    console.log('Adding class doc with data:*************', classDocData);
+    try {
+      const response = await api.post(`/class-docs/add`, classDocData);
+      return response.data;
+    } catch (error) {
+      console.error('Add class doc failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to add class doc',
+      };
+    }
+  },
+  //get docs by classId
+  getClassDocsByClassId: async (classId: number): Promise<ClassDoc[]> => {
+    try {
+      const response = await api.get(`/class-docs/class/${classId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get class docs by class ID failed:', error);
+      return [];
+    }
+  },
+  //delete a doc by docId
+  deleteClassDoc: async (docId: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.delete(`/class-docs/delete/${docId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete class doc failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to delete class doc',
+      };
+    }
+  },
+}
+
+export const tutorAvailabilityAPI = {
+  //create availability
+  createAvailability: async (availabilityData: TutorAvailability): Promise<ApiResponse<TutorAvailability>> => {
+    try {
+      const response = await api.post('/tutor-availability', availabilityData);
+      return response.data;
+    } catch (error) {
+      console.error('Create availability failed:', error);
+      return {
+        success: false,
+        data: {} as TutorAvailability,
+        error: 'Failed to create availability',
+      };
+    }
+  },
+  //delete availability by availabilityId
+  deleteAvailability: async (availabilityId: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.delete(`/tutor-availability/delete/${availabilityId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete availability failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to delete availability',
+      };
+    }
+  },
+
+  //update availability by the id
+  updateAvailability: async (availabilityData: TutorAvailability): Promise<ApiResponse<TutorAvailability>> => {
+    try {
+      const response = await api.put(`/tutor-availability/update/${availabilityData.availabilityId}`, availabilityData);
+      return response.data;
+    } catch (error) {
+      console.error('Update availability failed:', error);
+      return {
+        success: false,
+        data: {} as TutorAvailability,
+        error: 'Failed to update availability',
+      };
+    }
+  },
+  //get availability of a tutor by tutor id
+  getAvailabilityByTutorId: async (tutorId: number): Promise<TutorAvailability[]> => {
+    try {
+      const response = await api.get(`/tutor-availability/tutor/${tutorId}`);
+      console.log('Tutor availability:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get availability by tutor ID failed:', error);
+      return [];
+    }
+  },
+}
+
+export const subjectAPI = {
+  //get the subjects of a tutor when the tutorid is given
+  getSubjectsByTutorId: async (tutorId: number): Promise<Subject[]> => {
+    try {
+      const response = await api.get(`/tutors/${tutorId}/subjects`);
+      return response.data;
+    } catch (error) {
+      console.error('Get subjects by tutor ID failed:', error);
+      return [];
+    }
+  },
+}
 export default api;
+
+// FCM Token API functions
+export const fcmAPI = {
+  // Send FCM token to backend
+  sendToken: async (tokenData: {
+    token: string;
+    userId?: string;
+    deviceType: string;
+    timestamp?: string;
+  }): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/auth/fcmtoken', tokenData.token, {
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
+      
+      // Handle different response structures
+      if (response.status >= 200 && response.status < 300) {
+        return {
+          success: true,
+          data: { message: 'FCM token sent successfully' },
+        };
+      } else {
+        return {
+          success: false,
+          data: { message: 'Failed to send FCM token' },
+          error: `HTTP ${response.status}`,
+        };
+      }
+    } catch (error) {
+      console.error('FCM token send failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to send FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Remove FCM token from backend
+  removeToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.delete('auth/fcmtoken', {
+        data: { token },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token removal failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to remove FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Update FCM token
+  updateToken: async (oldToken: string, newToken: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.put('auth/fcmtoken/update', {
+        oldToken,
+        newToken,
+        timestamp: new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token update failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to update FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+};
+
+// Helper function for backward compatibility
+export const sendFCMTokenToBackend = fcmAPI.sendToken;
+
+export const sendFCMTokenAfterLogin = async (userId: string): Promise<void> => {
+  console.log("🔥 sendFCMTokenAfterLogin called for user:", userId);
+  
+  try {
+    // Dynamic import to avoid SSR issues
+    const { messaging, getToken } = await import('./firebaseMessaging');
+    console.log("🔥 Firebase messaging imported, messaging available:", !!messaging);
+    
+    if (!messaging) {
+      console.log("❌ Firebase messaging not available");
+      return;
+    }
+
+    // Check if permission is granted
+    console.log("🔥 Checking notification permission:", Notification.permission);
+    if (Notification.permission !== 'granted') {
+      console.log("❌ Notification permission not granted, current permission:", Notification.permission);
+      return;
+    }
+
+    const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "";
+    console.log("🔥 Getting FCM token with VAPID key:", VAPID_KEY ? "Available" : "Missing");
+    
+    const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+    console.log("🔥 FCM token received:", currentToken ? "Available" : "None");
+    
+    if (currentToken) {
+      console.log("🔥 Sending FCM token after login:", currentToken);
+      
+      const result = await fcmAPI.sendToken({
+        token: currentToken,
+        userId: userId,
+        deviceType: 'web',
+      });
+      
+      console.log("🔥 FCM token send result:", result);
+      
+      if (result.success) {
+        console.log("✅ FCM token successfully sent after login");
+      } else {
+        console.error("❌ Failed to send FCM token after login. Error:", result.error || 'Unknown error');
+        console.error("❌ Response data:", result.data);
+      }
+    } else {
+      console.log("❌ No FCM token available to send");
+    }
+  } catch (error) {
+    console.error("💥 Error sending FCM token after login:", error);
+  }
+};
