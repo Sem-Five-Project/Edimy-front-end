@@ -167,10 +167,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const newToken = await refreshAccessToken(); 
       setToken(newToken.accessToken);
       setAuthToken(newToken.accessToken); // attach to axios
-      console.log('newToken', newToken.accessToken);
-      
+      console.log('newToken8888888888888', newToken.accessToken);
+      //setUser(newUser);
+
       // Test the token first
-      console.log('Testing token validity...');
+      console.log('Testing token validity......');
       try {
         // const tokenTest = await authAPI.testToken();
         // console.log('Token test result:', tokenTest);
@@ -179,7 +180,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Token test failed (expected if endpoint doesn\'t exist):', testErr);
       }
       
-      // Don't pass token explicitly - let the interceptor handle it
       const response = await authAPI.getCurrentUser();
       if (response?.data?.user) {
         setUser(response.data.user);
