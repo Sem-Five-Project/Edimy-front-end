@@ -25,7 +25,11 @@ import {
 import { tutorAPI } from '@/lib/api';
 import { Tutor, FilterOptions, Subject, Language } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { TutorBookingModal } from './TutorBookingModal';
+import { useBooking } from '@/contexts/BookingContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { CurrencySelector } from '@/components/ui/currency-selector';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SUBJECTS = [
   'Mathematics',
@@ -48,12 +52,12 @@ const SORT_OPTIONS = [
 ];
 
 export const TutorSearch: React.FC = () => {
+  const { formatPrice, convertPrice, selectedCurrency } = useCurrency();
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,6 +78,117 @@ export const TutorSearch: React.FC = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const debouncedFilters = useDebounce(filters, 500);
+
+  const FiltersContent: React.FC = () => (
+    <Card>
+      <CardContent className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">Filters</h3>
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear All
+          </Button>
+        </div>
+
+        {/* Subjects */}
+        <div>
+          <h4 className="font-medium mb-3">Subjects</h4>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {SUBJECTS.map((subject) => (
+              <div key={subject} className="flex items-center space-x-2">
+                <Checkbox
+                  id={subject}
+                  checked={filters.subjects?.includes(subject)}
+                  onCheckedChange={(checked) =>
+                    handleSubjectChange(subject, checked as boolean)
+                  }
+                />
+                <label
+                  htmlFor={subject}
+                  className="text-sm cursor-pointer flex-1"
+                >
+                  {subject}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Price Range */}
+        <div>
+          <h4 className="font-medium mb-3">
+            Max Price: {formatPrice(filters.maxPrice || 200)}/hour
+          </h4>
+          <Slider
+            value={[filters.maxPrice || 200]}
+            onValueChange={([value]) =>
+              setFilters(prev => ({ ...prev, maxPrice: value }))
+            }
+            max={200}
+            min={10}
+            step={10}
+            className="w-full"
+          />
+        </div>
+
+        {/* Minimum Rating */}
+        <div>
+          <h4 className="font-medium mb-3">
+            Minimum Rating: {filters.minRating || 0}+
+          </h4>
+          <Slider
+            value={[filters.minRating || 0]}
+            onValueChange={([value]) =>
+              setFilters(prev => ({ ...prev, minRating: value }))
+            }
+            max={5}
+            min={0}
+            step={0.1}
+            className="w-full"
+          />
+        </div>
+
+        {/* Experience */}
+        <div>
+          <h4 className="font-medium mb-3">
+            Minimum Experience: {filters.experience || 0}+ years
+          </h4>
+          <Slider
+            value={[filters.experience || 0]}
+            onValueChange={([value]) =>
+              setFilters(prev => ({ ...prev, experience: value }))
+            }
+            max={20}
+            min={0}
+            step={1}
+            className="w-full"
+          />
+        </div>
+
+        {/* Sort By */}
+        <div>
+          <h4 className="font-medium mb-3">Sort By</h4>
+          <Select
+            value={filters.sortBy}
+            onValueChange={(value) =>
+              setFilters(prev => ({ ...prev, sortBy: value as FilterOptions['sortBy'] }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
 const searchTutors = useCallback(async (page: number = 1) => {
   setIsLoading(true);
   try {
@@ -86,7 +201,6 @@ const searchTutors = useCallback(async (page: number = 1) => {
     console.log("response of search tutors in component:", response);
     
     if (response.success) {
-      console.log("response offfff:", response.data.content);
 
       // Use the correct property names from API response
       setTutors(response.data.content || []);
@@ -123,9 +237,11 @@ const searchTutors = useCallback(async (page: number = 1) => {
     }));
   };
 
+  const { setTutor, setCurrentStep, proceedToStep } = useBooking();
+
   const handleBookTutor = (tutor: Tutor) => {
-    setSelectedTutor(tutor);
-    setShowBookingModal(true);
+    setTutor(tutor);
+    proceedToStep('slot-selection');
   };
 
   const handleViewProfile = (tutor: Tutor) => {
@@ -205,10 +321,13 @@ const searchTutors = useCallback(async (page: number = 1) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Search Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-4">Find Your Perfect Tutor</h1>
+        <div className="flex justify-between items-start mb-4">
+          <h1 className="text-2xl font-bold">Find Your Perfect Tutor</h1>
+          <CurrencySelector compact className="bg-white/10 backdrop-blur-sm rounded-lg" />
+        </div>
         
         <div className="flex gap-4">
           <div className="flex-1 relative">
@@ -220,133 +339,46 @@ const searchTutors = useCallback(async (page: number = 1) => {
               className="pl-10 bg-white text-black border-0"
             />
           </div>
-          <Button
-            variant="secondary"
-            onClick={() => setShowFilters(!showFilters)}
-            className="shrink-0"
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-          </Button>
+          {/* Desktop: toggle sidebar filters | Mobile: open sheet */}
+          <div className="shrink-0">
+            <div className="hidden sm:block">
+              <Button variant="secondary" onClick={() => setShowFilters(!showFilters)}>
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+              </Button>
+            </div>
+            <div className="sm:hidden">
+              <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="secondary">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4 space-y-6">
+                    <FiltersContent />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex gap-6 w-full">
         {/* Filters Sidebar */}
         {showFilters && (
-          <div className="w-80 space-y-6">
-            <Card>
-              <CardContent className="p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Filters</h3>
-                  <Button variant="ghost" size="sm" onClick={clearFilters}>
-                    Clear All
-                  </Button>
-                </div>
-
-                {/* Subjects */}
-                <div>
-                  <h4 className="font-medium mb-3">Subjects</h4>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {SUBJECTS.map((subject) => (
-                      <div key={subject} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={subject}
-                          checked={filters.subjects?.includes(subject)}
-                          onCheckedChange={(checked) => 
-                            handleSubjectChange(subject, checked as boolean)
-                          }
-                        />
-                        <label 
-                          htmlFor={subject} 
-                          className="text-sm cursor-pointer flex-1"
-                        >
-                          {subject}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <h4 className="font-medium mb-3">
-                    Max Price: ${filters.maxPrice}/hour
-                  </h4>
-                  <Slider
-                    value={[filters.maxPrice || 200]}
-                    onValueChange={([value]) => 
-                      setFilters(prev => ({ ...prev, maxPrice: value }))
-                    }
-                    max={200}
-                    min={10}
-                    step={10}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Minimum Rating */}
-                <div>
-                  <h4 className="font-medium mb-3">
-                    Minimum Rating: {filters.minRating || 0}+
-                  </h4>
-                  <Slider
-                    value={[filters.minRating || 0]}
-                    onValueChange={([value]) => 
-                      setFilters(prev => ({ ...prev, minRating: value }))
-                    }
-                    max={5}
-                    min={0}
-                    step={0.1}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Experience */}
-                <div>
-                  <h4 className="font-medium mb-3">
-                    Minimum Experience: {filters.experience || 0}+ years
-                  </h4>
-                  <Slider
-                    value={[filters.experience || 0]}
-                    onValueChange={([value]) => 
-                      setFilters(prev => ({ ...prev, experience: value }))
-                    }
-                    max={20}
-                    min={0}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Sort By */}
-                <div>
-                  <h4 className="font-medium mb-3">Sort By</h4>
-                  <Select
-                    value={filters.sortBy}
-                    onValueChange={(value) => 
-                      setFilters(prev => ({ ...prev, sortBy: value as FilterOptions['sortBy'] }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SORT_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="hidden sm:block w-80 space-y-6">
+            <FiltersContent />
           </div>
         )}
 
         {/* Results */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-6 w-full min-w-0">
           {/* Results Header */}
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
@@ -359,16 +391,34 @@ const searchTutors = useCallback(async (page: number = 1) => {
 
           {/* Loading State */}
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <Card key={idx} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-3 sm:p-4 md:p-6 space-y-4">
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <Skeleton className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-2/3" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-5/6" />
+                    <div className="flex space-x-2">
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
 
           {/* Tutor Cards Grid */}
           {!isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 w-full">
               {tutors.map((tutor) => (
-                <Card key={String(tutor.id)} className="hover:shadow-lg transition-shadow">
+                <Card key={String(tutor.id)} className="w-full hover:shadow-lg transition-shadow">
                   <CardContent className="p-3 sm:p-4 md:p-6">
                     <div className="flex items-start space-x-3 sm:space-x-4 mb-4">
                       <Avatar className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 flex-shrink-0">
@@ -391,8 +441,22 @@ const searchTutors = useCallback(async (page: number = 1) => {
                         </div>
                         <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                           <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span className="truncate">{tutor.experience} years experience</span>
+                          <span className="truncate">
+                            {(() => {
+                              const months = tutor.experience ?? 0;
+                              console.log("tutor experience:", months);
+                              if (months >= 12) {
+                                const years = Math.floor(months / 12);
+                                const remainingMonths = months % 12;
+                                return `${years} year${years > 1 ? "s" : ""}${
+                                  remainingMonths > 0 ? ` and ${remainingMonths} month${remainingMonths > 1 ? "s" : ""}` : ""
+                                } experience`;
+                              }
+                              return `${months} month${months !== 1 ? "s" : ""} experience`;
+                            })()}
+                          </span>
                         </div>
+
                       </div>
                     </div>
 
@@ -430,7 +494,7 @@ const searchTutors = useCallback(async (page: number = 1) => {
                               </Badge>
                               <span className="text-green-600 font-medium flex items-center flex-shrink-0 text-xs sm:text-sm">
                                 <DollarSign className="h-3 w-3" />
-                                {subject.hourlyRate}/hr
+                                {formatPrice(subject.hourlyRate)}/hr
                               </span>
                             </div>
                           ))}
@@ -498,16 +562,6 @@ const searchTutors = useCallback(async (page: number = 1) => {
         </div>
       </div>
 
-      {/* Booking Modal */}
-      {showBookingModal && selectedTutor && (
-        <TutorBookingModal
-          tutor={selectedTutor}
-          onClose={() => {
-            setShowBookingModal(false);
-            setSelectedTutor(null);
-          }}
-        />
-      )}
     </div>
   );
 };

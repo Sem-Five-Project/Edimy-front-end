@@ -62,8 +62,6 @@ export default function LoginPage() {
     try {
       const response = await authAPI.login(credentials);
       console.log('response.data.success:', response);
-
-
     if (response.success) {
     const user = response.data.user;
     // For now, use a mock token since the API response doesn't include it

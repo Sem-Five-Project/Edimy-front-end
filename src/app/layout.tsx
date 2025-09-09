@@ -29,7 +29,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* Wrap all children with providers */}
         <AuthProvider>
           {/* <ThemeProvider> */}
             {children}

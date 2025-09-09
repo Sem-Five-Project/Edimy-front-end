@@ -160,6 +160,167 @@ export const CLASS_TYPES: ClassType[] = [
   },
 ];
 
+
+export interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+  rate: number; // Conversion rate from LKR
+}
+
+export const CURRENCIES: Currency[] = [
+  {
+    code: 'LKR',
+    symbol: 'Rs.',
+    name: 'Sri Lankan Rupee',
+    rate: 1.0,
+  },
+  {
+    code: 'USD',
+    symbol: '$',
+    name: 'US Dollar',
+    rate: 0.0031,
+  },
+  {
+    code: 'EUR',
+    symbol: '€',
+    name: 'Euro',
+    rate: 0.0028,
+  },
+  {
+    code: 'GBP',
+    symbol: '£',
+    name: 'British Pound',
+    rate: 0.0024,
+  },
+  {
+    code: 'INR',
+    symbol: '₹',
+    name: 'Indian Rupee',
+    rate: 0.26,
+  },
+  {
+    code: 'AUD',
+    symbol: 'A$',
+    name: 'Australian Dollar',
+    rate: 0.0047,
+  },
+  {
+    code: 'CAD',
+    symbol: 'C$',
+    name: 'Canadian Dollar',
+    rate: 0.0042,
+  },
+  {
+    code: 'JPY',
+    symbol: '¥',
+    name: 'Japanese Yen',
+    rate: 0.46,
+  },
+  {
+    code: 'CNY',
+    symbol: '¥',
+    name: 'Chinese Yuan',
+    rate: 0.022,
+  },
+  {
+    code: 'SGD',
+    symbol: 'S$',
+    name: 'Singapore Dollar',
+    rate: 0.0041,
+  },
+  {
+    code: 'MYR',
+    symbol: 'RM',
+    name: 'Malaysian Ringgit',
+    rate: 0.014,
+  },
+  {
+    code: 'THB',
+    symbol: '฿',
+    name: 'Thai Baht',
+    rate: 0.11,
+  },
+  {
+    code: 'PKR',
+    symbol: '₨',
+    name: 'Pakistani Rupee',
+    rate: 0.88,
+  },
+  {
+    code: 'BDT',
+    symbol: '৳',
+    name: 'Bangladeshi Taka',
+    rate: 0.37,
+  },
+  {
+    code: 'AED',
+    symbol: 'د.إ',
+    name: 'UAE Dirham',
+    rate: 0.011,
+  },
+  {
+    code: 'SAR',
+    symbol: '﷼',
+    name: 'Saudi Riyal',
+    rate: 0.012,
+  },
+  {
+    code: 'QAR',
+    symbol: '﷼',
+    name: 'Qatari Riyal',
+    rate: 0.011,
+  },
+  {
+    code: 'KWD',
+    symbol: 'د.ك',
+    name: 'Kuwaiti Dinar',
+    rate: 0.00094,
+  },
+  {
+    code: 'CHF',
+    symbol: 'Fr.',
+    name: 'Swiss Franc',
+    rate: 0.0028,
+  },
+  {
+    code: 'SEK',
+    symbol: 'kr',
+    name: 'Swedish Krona',
+    rate: 0.033,
+  },
+  {
+    code: 'NOK',
+    symbol: 'kr',
+    name: 'Norwegian Krone',
+    rate: 0.034,
+  },
+  {
+    code: 'DKK',
+    symbol: 'kr',
+    name: 'Danish Krone',
+    rate: 0.021,
+  },
+  {
+    code: 'NZD',
+    symbol: 'NZ$',
+    name: 'New Zealand Dollar',
+    rate: 0.0051,
+  },
+  {
+    code: 'ZAR',
+    symbol: 'R',
+    name: 'South African Rand',
+    rate: 0.056,
+  },
+];
+
+export interface CurrencyContextType {
+  selectedCurrency: Currency;
+  setCurrency: (currency: Currency) => void;
+  convertPrice: (lkrPrice: number) => number;
+  formatPrice: (lkrPrice: number) => string;
+}
 export interface Class{
   classId?: number;      
   className: string;
@@ -194,3 +355,4 @@ export interface Subject {
   subjectId: number;
   subjectName: string;
 }
+
