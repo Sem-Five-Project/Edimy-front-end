@@ -25,7 +25,9 @@ import {
 import { tutorAPI } from '@/lib/api';
 import { Tutor, FilterOptions, Subject, Language } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { TutorBookingModal } from './TutorBookingModal';
+import { useBooking } from '@/contexts/BookingContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { CurrencySelector } from '@/components/ui/currency-selector';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -50,13 +52,12 @@ const SORT_OPTIONS = [
 ];
 
 export const TutorSearch: React.FC = () => {
+  const { formatPrice, convertPrice, selectedCurrency } = useCurrency();
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -115,7 +116,7 @@ export const TutorSearch: React.FC = () => {
         {/* Price Range */}
         <div>
           <h4 className="font-medium mb-3">
-            Max Price: ${filters.maxPrice}/hour
+            Max Price: {formatPrice(filters.maxPrice || 200)}/hour
           </h4>
           <Slider
             value={[filters.maxPrice || 200]}
@@ -200,7 +201,6 @@ const searchTutors = useCallback(async (page: number = 1) => {
     console.log("response of search tutors in component:", response);
     
     if (response.success) {
-      console.log("response offfff:", response.data.content);
 
       // Use the correct property names from API response
       setTutors(response.data.content || []);
@@ -237,9 +237,11 @@ const searchTutors = useCallback(async (page: number = 1) => {
     }));
   };
 
+  const { setTutor, setCurrentStep, proceedToStep } = useBooking();
+
   const handleBookTutor = (tutor: Tutor) => {
-    setSelectedTutor(tutor);
-    setShowBookingModal(true);
+    setTutor(tutor);
+    proceedToStep('slot-selection');
   };
 
   const handleViewProfile = (tutor: Tutor) => {
@@ -319,10 +321,13 @@ const searchTutors = useCallback(async (page: number = 1) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Search Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-4">Find Your Perfect Tutor</h1>
+        <div className="flex justify-between items-start mb-4">
+          <h1 className="text-2xl font-bold">Find Your Perfect Tutor</h1>
+          <CurrencySelector compact className="bg-white/10 backdrop-blur-sm rounded-lg" />
+        </div>
         
         <div className="flex gap-4">
           <div className="flex-1 relative">
@@ -364,7 +369,7 @@ const searchTutors = useCallback(async (page: number = 1) => {
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex gap-6 w-full">
         {/* Filters Sidebar */}
         {showFilters && (
           <div className="hidden sm:block w-80 space-y-6">
@@ -373,7 +378,7 @@ const searchTutors = useCallback(async (page: number = 1) => {
         )}
 
         {/* Results */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-6 w-full min-w-0">
           {/* Results Header */}
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
@@ -411,9 +416,9 @@ const searchTutors = useCallback(async (page: number = 1) => {
 
           {/* Tutor Cards Grid */}
           {!isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 w-full">
               {tutors.map((tutor) => (
-                <Card key={String(tutor.id)} className="hover:shadow-lg transition-shadow">
+                <Card key={String(tutor.id)} className="w-full hover:shadow-lg transition-shadow">
                   <CardContent className="p-3 sm:p-4 md:p-6">
                     <div className="flex items-start space-x-3 sm:space-x-4 mb-4">
                       <Avatar className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 flex-shrink-0">
@@ -436,8 +441,22 @@ const searchTutors = useCallback(async (page: number = 1) => {
                         </div>
                         <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                           <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span className="truncate">{tutor.experience} years experience</span>
+                          <span className="truncate">
+                            {(() => {
+                              const months = tutor.experience ?? 0;
+                              console.log("tutor experience:", months);
+                              if (months >= 12) {
+                                const years = Math.floor(months / 12);
+                                const remainingMonths = months % 12;
+                                return `${years} year${years > 1 ? "s" : ""}${
+                                  remainingMonths > 0 ? ` and ${remainingMonths} month${remainingMonths > 1 ? "s" : ""}` : ""
+                                } experience`;
+                              }
+                              return `${months} month${months !== 1 ? "s" : ""} experience`;
+                            })()}
+                          </span>
                         </div>
+
                       </div>
                     </div>
 
@@ -475,7 +494,7 @@ const searchTutors = useCallback(async (page: number = 1) => {
                               </Badge>
                               <span className="text-green-600 font-medium flex items-center flex-shrink-0 text-xs sm:text-sm">
                                 <DollarSign className="h-3 w-3" />
-                                {subject.hourlyRate}/hr
+                                {formatPrice(subject.hourlyRate)}/hr
                               </span>
                             </div>
                           ))}
@@ -543,16 +562,6 @@ const searchTutors = useCallback(async (page: number = 1) => {
         </div>
       </div>
 
-      {/* Booking Modal */}
-      {showBookingModal && selectedTutor && (
-        <TutorBookingModal
-          tutor={selectedTutor}
-          onClose={() => {
-            setShowBookingModal(false);
-            setSelectedTutor(null);
-          }}
-        />
-      )}
     </div>
   );
 };

@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { BookingProvider } from '@/contexts/BookingContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -32,15 +33,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <CurrencyProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen bg-background">
-          <DashboardSidebar userRole={user?.role} />
-          <main className="flex-1 overflow-auto p-6">
-            {children}
-            <Toaster />
-          </main>
-        </div>
-      </SidebarProvider>
+      <BookingProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full bg-background">
+            <DashboardSidebar userRole={user?.role} />
+              <main className="flex-1 overflow-auto p-4 sm:p-6">
+                <div className="container mx-auto max-w-7xl">
+                {children}
+                </div>    
+               <Toaster />
+            </main>
+          </div>
+        </SidebarProvider>
+      </BookingProvider>
     </CurrencyProvider>
   );
 }

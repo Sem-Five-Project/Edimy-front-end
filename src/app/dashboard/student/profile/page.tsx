@@ -79,10 +79,7 @@ const ProfilePage = () => {
 
   const quickStats = [
     { label: 'Classes Completed', value: '24', icon: Book, color: 'from-blue-500 to-blue-600' },
-    { label: 'Total Hours', value: '48', icon: Clock, color: 'from-green-500 to-green-600' },
-    { label: 'Average Rating', value: '4.8', icon: Star, color: 'from-yellow-500 to-yellow-600' },
-    { label: 'Total Spent', value: '$1,200', icon: CreditCard, color: 'from-purple-500 to-purple-600' }
-  ];
+    ];
 
   const quickActions = [
     {
