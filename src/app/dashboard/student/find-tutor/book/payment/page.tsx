@@ -26,6 +26,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useRouter } from "next/navigation";
 import { PayHerePayment } from "../../PayHerePayment";
+import { Slot } from "@radix-ui/react-slot";
 
 export default function BookingPaymentPage() {
   const router = useRouter();
@@ -64,7 +65,13 @@ export default function BookingPaymentPage() {
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
-
+ const handleBack = async () => {
+    // Make sure selectedSlot exists and has an ID
+    if (selectedSlot?.slotId) {
+      console.log('Going back, releasing slot:', selectedSlot.slotId);
+      await goBack();
+    }
+  };
   const calculateSlotHours = () => {
     if (!selectedSlot) return 0;
     const start = new Date(`2000-01-01T${selectedSlot.startTime}`);
@@ -80,6 +87,10 @@ export default function BookingPaymentPage() {
 
   const handlePaymentError = (errorMessage: string) => {
     setError(errorMessage);
+  };
+
+  const handleCancel = () => {
+    router.push('/dashboard/student/find-tutor');
   };
 
   if (!tutor || !selectedSlot || !bookingPreferences) {
@@ -102,7 +113,7 @@ export default function BookingPaymentPage() {
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
-            onClick={goBack}
+            onClick={handleBack}
             className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -302,9 +313,10 @@ export default function BookingPaymentPage() {
                 selectedSlot={selectedSlot}
                 bookingPreferences={bookingPreferences}
                 reservationTimer={reservationDetails?.timer || 0}
-                onBack={goBack}
+                onBack={handleBack}
                 onPaymentSuccess={handlePaymentSuccess}
                 onPaymentError={handlePaymentError}
+                onCancel={handleCancel}
               />
             </CardContent>
           </Card>

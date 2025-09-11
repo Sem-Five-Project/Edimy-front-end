@@ -23,8 +23,10 @@ import {
 } from "lucide-react";
 import { Tutor, TimeSlot, BookingPreferences } from "@/types";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { bookingAPI } from "@/lib/api";
-
+import { PaymentSuccess } from "@/components/ui/payment-success";
+import { useRouter } from 'next/navigation';
 // PayHere payment object interface
 declare global {
   interface Window {
@@ -61,8 +63,29 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   onCancel,
 }) => {
   const { formatPrice } = useCurrency();
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [payHereReady, setPayHereReady] = useState(false);
+  const router = useRouter();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{
+    orderId: string;
+    tutorName: string;
+    subject: string;
+    date: Date;
+    startTime: string;
+    endTime: string;
+    amount: number;
+  } | null>(null);
+
+  const handleViewBookings = () => {
+    router.push('/dashboard/student/bookings');
+  };
+
+  const handleClose = () => {
+    setShowSuccess(false);
+    router.push('/dashboard/student/find-tutor');
+  };
 
   const formatTime = (time: string) =>
     new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
@@ -86,6 +109,9 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   const duration = calculateDuration(selectedSlot.startTime, selectedSlot.endTime);
   const totalAmount = bookingPreferences.finalPrice || selectedSlot.price || 0;
 
+  useEffect(() => {
+    console.log('Payment page mounted with total amount:', totalAmount);
+  }, [totalAmount]);
   // Load PayHere script
   useEffect(() => {
     const existing = document.getElementById('payhere-script') as HTMLScriptElement | null;
@@ -129,9 +155,51 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   // Setup PayHere callbacks
   useEffect(() => {
     if (typeof window !== 'undefined' && window.payhere) {
-      window.payhere.onCompleted = function onCompleted(orderId: string) {
-        console.log("Payment completed. OrderID:" + orderId);
-        onPaymentSuccess();
+      window.payhere.onCompleted = async (orderId: string) => {
+        try {
+          setIsProcessing(true);
+          
+          // Store payment details for success display
+          const details = {
+            orderId,
+            tutorName: `${tutor.firstName} ${tutor.lastName}`,
+            subject: bookingPreferences.selectedSubject?.subjectName || 'Tutoring',
+            date: selectedDate,
+            startTime: selectedSlot.startTime,
+            endTime: selectedSlot.endTime,
+            amount: totalAmount
+          };
+          console.log('Payment completed. details:', details);
+          setPaymentDetails(details);
+
+          // Prepare payment confirmation data
+          const confirmationData = {
+            orderId: orderId,
+            studentId: user?.id ? Number(user.id) : undefined,
+            tutorId: tutor.tutorProfileId,
+            slotId: selectedSlot.slotId,
+            amount: totalAmount,
+            currency: "LKR",
+            paymentMethod: "PAYHERE" as const,
+            paymentStatus: "COMPLETED" as const,
+            paymentTime: new Date().toISOString(),
+          };
+
+          // Call the confirmation endpoint
+          const response = await bookingAPI.confirmPayHerePayment(confirmationData);
+
+          if (response?.success) {
+            setShowSuccess(true);
+            onPaymentSuccess();
+          } else {
+            throw new Error('Payment confirmation failed');
+          }
+        } catch (error) {
+          console.error('Error processing payment:', error);
+          onPaymentError('Payment successful but booking confirmation failed');
+        } finally {
+          setIsProcessing(false);
+        }
       };
 
       window.payhere.onDismissed = function onDismissed() {
@@ -145,7 +213,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         setIsProcessing(false);
       };
     }
-  }, [payHereReady, onPaymentSuccess, onPaymentError]);
+  }, [payHereReady, onPaymentSuccess, onPaymentError, totalAmount, tutor, selectedSlot, selectedDate, bookingPreferences, user]);
 
   const handlePayHerePayment = async () => {
     if (!payHereReady || !window.payhere) {
@@ -158,11 +226,14 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
 
     try {
       const orderId = `EDIMY_${Date.now()}_${selectedSlot.slotId}`;
-      const hashResponse = await bookingAPI.generatePayHereHash(orderId, totalAmount, "LKR");
+      const formattedAmount = totalAmount.toFixed(2); // "1500.00"
 
-      if (!hashResponse) {
-        throw new Error(hashResponse.error || "Failed to generate payment hash");
+      const hashResponse = await bookingAPI.generatePayHereHash(orderId, formattedAmount, "LKR");
+
+      if (!hashResponse || !hashResponse.success) {
+        throw new Error(hashResponse?.error || "Failed to generate payment hash");
       }
+      console.log("Generated hash response hashResponse.data.merchantId:", hashResponse.data.hash);
 
       const payment = {
         sandbox: true,
@@ -175,9 +246,9 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         amount: totalAmount.toFixed(2),
         currency: "LKR",
         hash: hashResponse.data.hash,
-        first_name: "Student",
-        last_name: "User",
-        email: "student@example.com",
+        first_name: user?.firstName || "Student",
+        last_name: user?.lastName || "User",
+        email: user?.email || "student@example.com",
         phone: "+94701234567",
         address: "Colombo",
         city: "Colombo",
@@ -204,7 +275,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
     }
   };
 
-return (
+  return (
   <div className="flex flex-col min-h-[calc(100vh-400px)] justify-between">
     {/* PayHere Gateway Section - Professional Design */}
      <div className="space-y-8">
@@ -322,7 +393,14 @@ return (
     {/* ...existing alerts... */}
   </div>
 </div>
+ {showSuccess && paymentDetails && (
+        <PaymentSuccess
+          bookingDetails={paymentDetails}
+          onViewBookings={handleViewBookings}
+          onClose={handleClose}
+        />
+      )}
     </div>
   </div>
-);    
+  );
 };

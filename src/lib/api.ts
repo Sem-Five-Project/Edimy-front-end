@@ -1,5 +1,25 @@
 import axios from 'axios';
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse, PageableResponse } from '@/types';
+interface BookingUpdateData {
+  orderId: string;
+  tutorId: string;
+  studentId: string;
+  slotId: string;
+  subjectId: string;
+  languageId: string;
+  classType: 'INDIVIDUAL' | 'MONTHLY' | 'LESSON';
+  amount: number;
+  startTime: string;
+  endTime: string;
+  date: Date;
+  duration: number;
+  paymentDetails: {
+    paymentId: string;
+    method: string;
+    currency: string;
+    status: 'SUCCESS' | 'FAILED'|'ROLLBACKED_PENDING_ADMIN'|'PENDING';
+  };
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -514,6 +534,7 @@ export const tutorAPI = {
   getTutorSlots: async (tutorId: string, date?: string): Promise<ApiResponse<TimeSlot[]>> => {
     try {
       // Use the real backend endpoint
+      console.log('Fetching slots for tutorId:', tutorId, 'on date:', date);
       const response = await api.get(`/student/bookings/slots`, {
         params: {
           tutorId: tutorId,
@@ -567,6 +588,7 @@ export const tutorAPI = {
 };
 
 export const bookingAPI = {
+  
   createBooking: async (slotId: string): Promise<ApiResponse<{ booking: Booking; paymentUrl: string }>> => {
     try {
       const response = await api.post('/bookings', { slotId });
@@ -626,7 +648,61 @@ export const bookingAPI = {
       };
     }
   },
+updateBookingDetails: async (data: BookingUpdateData): Promise<{ success: boolean; bookingId: string }> => {
+  try {
+    const response = await api.post('/api/bookings/confirm', {
 
+      body: JSON.stringify(data)
+    });
+
+    if (!response) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update booking details');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating booking details:', error);
+    throw error;
+  }
+},
+validateSlotAvailability: async (slotId: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`/api/slots/${slotId}/validate`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to validate slot availability');
+    }
+
+    const { isAvailable } = await response.json();
+    return isAvailable;
+  } catch (error) {
+    console.error('Error validating slot:', error);
+    throw error;
+  }
+},
+// releaseSlot : async (slotId: string): Promise<void> => {
+//   try {
+//     const response = await fetch(`/api/slots/${slotId}/release`, {
+//       method: 'POST',
+//       headers: {
+//         'Authorization': `Bearer ${localStorage.getItem('token')}`
+//       }
+//     });
+
+//     if (!response.ok) {
+//       throw new Error('Failed to release slot');
+//     }
+//   } catch (error) {
+//     console.error('Error releasing slot:', error);
+//     throw error;
+//   }
+// },
   // Reserve a slot for up to 15 minutes to avoid double booking
   // reserveSlot: async (slotId: number): Promise<ApiResponse<{ reservationId: string; expiresAt: string }>> => {
   //   try {
@@ -641,6 +717,7 @@ export const bookingAPI = {
   //     } as unknown as ApiResponse<{ reservationId: string; expiresAt: string }>;
   //   }
   // },
+
   reserveSlot: async (
     slotId: number
   ): Promise<ApiResponse<{ reservationId: string; expiresAt: string }>> => {
@@ -660,7 +737,27 @@ export const bookingAPI = {
       } as ApiResponse<{ reservationId: string; expiresAt: string }>;
     }
   },
-  
+
+  releaseSlot: async (
+  slotId: number
+): Promise<ApiResponse<{ slotId: number; status: string }>> => {
+  try {
+    // explicitly send JSON body { "slotId": <value> }
+    const response = await api.post('/bookings/release', {
+      slotId: slotId,
+    });
+    console.log('Release slot response:', response);
+    return response.data;
+  } catch (error) {
+    console.error('Release slot failed:', error);
+    return {
+      success: false,
+      data: { slotId: slotId, status: 'FAILED' },
+      error: 'Failed to release slot',
+    } as ApiResponse<{ slotId: number; status: string }>;
+  }
+},
+
   // Release a previously reserved slot (on cancellation, timeout, or failure)
   releaseReservation: async (reservationId: string): Promise<ApiResponse<{ released: boolean }>> => {
     try {
@@ -692,6 +789,7 @@ export const bookingAPI = {
   }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
     try {
       const response = await api.post('/payments/payhere/confirm', payload);
+      console.log('Confirm PayHere payment response000000:', response);
       return response.data;
     } catch (error) {
       console.error('Confirm PayHere payment failed:', error);

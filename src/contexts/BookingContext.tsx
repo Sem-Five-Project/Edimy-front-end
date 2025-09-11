@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { Tutor, TimeSlot, BookingPreferences } from '@/types';
 import { useRouter } from 'next/navigation';
+import { bookingAPI } from '@/lib/api';
 
 interface ReservationDetails {
   reservationId: string;
@@ -127,7 +128,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const goBack = () => {
+  const goBack1 = () => {
     switch (currentStep) {
       case 'slot-selection':
         setCurrentStep('tutor-selection');
@@ -144,6 +145,61 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
         break;
     }
   };
+  const goBack = async (slotId?: number) => {
+  switch (currentStep) {
+    case 'slot-selection':
+      setCurrentStep('tutor-selection');
+      router.push('/dashboard/student/find-tutor');
+      break;
+
+    case 'payment':
+      if (slotId) {
+        await bookingAPI.releaseSlot(slotId); // release the slot passed as parameter
+      }
+      setCurrentStep('slot-selection');
+      router.push('/dashboard/student/find-tutor/book/slots');
+      break;
+
+    case 'confirmation':
+      setCurrentStep('payment');
+      router.push('/dashboard/student/find-tutor/book/payment');
+      break;
+  }
+};
+
+  const goBack2 = async () => {
+  switch (currentStep) {
+    case 'slot-selection':
+      setCurrentStep('tutor-selection');
+      router.push('/dashboard/student/find-tutor');
+      break;
+
+    case 'payment':
+      // Release the previously locked slot
+      if (selectedSlotId) {
+        try {
+          const releaseResponse = await tutorAPI.releaseSlot(selectedSlotId);
+          if (!releaseResponse.success) {
+            console.warn('Failed to release slot:', releaseResponse.error);
+          } else {
+            console.log('Slot released successfully:', releaseResponse.data);
+          }
+        } catch (err) {
+          console.error('Error releasing slot:', err);
+        }
+      }
+
+      setCurrentStep('slot-selection');
+      router.push('/dashboard/student/find-tutor/book/slots');
+      break;
+
+    case 'confirmation':
+      setCurrentStep('payment');
+      router.push('/dashboard/student/find-tutor/book/payment');
+      break;
+  }
+};
+
 
   const resetBookingState = () => {
     setCurrentStep('tutor-selection');

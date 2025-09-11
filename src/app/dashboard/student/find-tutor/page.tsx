@@ -3,24 +3,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Search,
   Filter,
-  Star,
-  Clock,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
-  Loader2,
-  MapPin,
-  Award,
-  Globe,
-  DollarSign
 } from 'lucide-react';
 import { tutorAPI } from '@/lib/api';
 import { Tutor, FilterOptions, Subject, Language } from '@/types';
@@ -28,8 +20,9 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useBooking } from '@/contexts/BookingContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { CurrencySelector } from '@/components/ui/currency-selector';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Skeleton } from '@/components/ui/skeleton';
+
+// Import the responsive TutorCard components
+import { ResponsiveTutorCard } from '@/components/ui/tutorcard'; // Adjust path as needed
 
 const SUBJECTS = [
   'Mathematics',
@@ -51,6 +44,109 @@ const SORT_OPTIONS = [
   { value: 'completion_rate', label: 'Best Completion Rate' },
 ];
 
+// ==================== HORIZONTAL LOADING SKELETON ====================
+const TutorCardSkeleton = () => {
+  return (
+    <>
+      {/* Desktop/Tablet Horizontal Skeleton */}
+      <div className="hidden sm:block">
+        <Card className="border-0 bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 animate-pulse">
+          <CardContent className="p-0">
+            <div className="flex">
+              {/* Left section - Profile */}
+              <div className="flex-shrink-0 p-4">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-2">
+                    <Skeleton className="h-16 w-16 lg:h-20 lg:w-20 rounded-full" />
+                    <Skeleton className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <div className="flex space-x-1 mb-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-3 w-3 rounded-sm" />
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 w-full">
+                    <Skeleton className="h-12 rounded-lg" />
+                    <Skeleton className="h-12 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right section - Details */}
+              <div className="flex-1 p-4 border-l border-slate-100 dark:border-slate-700/50">
+                <div className="h-full flex flex-col">
+                  <div className="mb-3">
+                    <Skeleton className="h-3 w-16 mb-1" />
+                    <div className="flex space-x-1">
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 mb-3">
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-8 rounded-lg" />
+                      <Skeleton className="h-8 rounded-lg" />
+                    </div>
+                  </div>
+                  
+                  <div className="mb-3 flex-1">
+                    <Skeleton className="h-3 w-full mb-1" />
+                    <Skeleton className="h-3 w-4/5" />
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Skeleton className="flex-1 h-9 rounded-md" />
+                    <Skeleton className="flex-1 h-9 rounded-md" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Mobile Vertical Skeleton */}
+      <div className="block sm:hidden">
+        <Card className="border-0 bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 animate-pulse">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3 mb-3">
+              <div className="relative">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <Skeleton className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full" />
+              </div>
+              <div className="flex-1">
+                <Skeleton className="h-4 w-3/4 mb-1" />
+                <div className="flex space-x-1 mb-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-3 w-3 rounded-sm" />
+                  ))}
+                </div>
+                <div className="flex space-x-2">
+                  <Skeleton className="h-3 w-8" />
+                  <Skeleton className="h-3 w-8" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2 mb-3">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-4/5" />
+            </div>
+            
+            <div className="flex space-x-2">
+              <Skeleton className="flex-1 h-8 rounded-md" />
+              <Skeleton className="flex-1 h-8 rounded-md" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+};
+
 export const TutorSearch: React.FC = () => {
   const { formatPrice, convertPrice, selectedCurrency } = useCurrency();
   const [tutors, setTutors] = useState<Tutor[]>([]);
@@ -63,7 +159,7 @@ export const TutorSearch: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
-  const itemsPerPage = 12;
+  const itemsPerPage = 8; // Reduced for better layout with horizontal cards
 
   // Filters
   const [filters, setFilters] = useState<FilterOptions>({
@@ -80,10 +176,10 @@ export const TutorSearch: React.FC = () => {
   const debouncedFilters = useDebounce(filters, 500);
 
   const FiltersContent: React.FC = () => (
-    <Card>
+    <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
       <CardContent className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Filters</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">Filters</h3>
           <Button variant="ghost" size="sm" onClick={clearFilters}>
             Clear All
           </Button>
@@ -91,7 +187,7 @@ export const TutorSearch: React.FC = () => {
 
         {/* Subjects */}
         <div>
-          <h4 className="font-medium mb-3">Subjects</h4>
+          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">Subjects</h4>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {SUBJECTS.map((subject) => (
               <div key={subject} className="flex items-center space-x-2">
@@ -104,7 +200,7 @@ export const TutorSearch: React.FC = () => {
                 />
                 <label
                   htmlFor={subject}
-                  className="text-sm cursor-pointer flex-1"
+                  className="text-sm cursor-pointer flex-1 text-slate-700 dark:text-slate-300"
                 >
                   {subject}
                 </label>
@@ -115,7 +211,7 @@ export const TutorSearch: React.FC = () => {
 
         {/* Price Range */}
         <div>
-          <h4 className="font-medium mb-3">
+          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">
             Max Price: {formatPrice(filters.maxPrice || 200)}/hour
           </h4>
           <Slider
@@ -132,7 +228,7 @@ export const TutorSearch: React.FC = () => {
 
         {/* Minimum Rating */}
         <div>
-          <h4 className="font-medium mb-3">
+          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">
             Minimum Rating: {filters.minRating || 0}+
           </h4>
           <Slider
@@ -149,7 +245,7 @@ export const TutorSearch: React.FC = () => {
 
         {/* Experience */}
         <div>
-          <h4 className="font-medium mb-3">
+          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">
             Minimum Experience: {filters.experience || 0}+ years
           </h4>
           <Slider
@@ -166,7 +262,7 @@ export const TutorSearch: React.FC = () => {
 
         {/* Sort By */}
         <div>
-          <h4 className="font-medium mb-3">Sort By</h4>
+          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">Sort By</h4>
           <Select
             value={filters.sortBy}
             onValueChange={(value) =>
@@ -189,33 +285,30 @@ export const TutorSearch: React.FC = () => {
     </Card>
   );
 
-const searchTutors = useCallback(async (page: number = 1) => {
-  setIsLoading(true);
-  try {
-    const searchFilters = {
-      ...debouncedFilters,
-      search: debouncedSearchTerm,
-    };
+  const searchTutors = useCallback(async (page: number = 1) => {
+    setIsLoading(true);
+    try {
+      const searchFilters = {
+        ...debouncedFilters,
+        search: debouncedSearchTerm,
+      };
 
-    const response = await tutorAPI.searchTutors(searchFilters, page, itemsPerPage);
-    console.log("response of search tutors in component:", response);
-    
-    if (response.success) {
-
-      // Use the correct property names from API response
-      setTutors(response.data.content || []);
-
-      // Pagination
-      setTotalPages(response.data.totalPages || 1);
-      setTotalResults(response.data.totalElements || 0);
+      const response = await tutorAPI.searchTutors(searchFilters, page, itemsPerPage);
+      console.log("response of search tutors in component:", response);
+      
+      if (response.success) {
+        // Use the correct property names from API response
+        setTutors(response.data.content || []);
+        // Pagination
+        setTotalPages(response.data.totalPages || 1);
+        setTotalResults(response.data.totalElements || 0);
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('Search failed:', error);
-  } finally {
-    setIsLoading(false);
-  }
-}, [debouncedSearchTerm, debouncedFilters, itemsPerPage]);
-
+  }, [debouncedSearchTerm, debouncedFilters, itemsPerPage]);
 
   useEffect(() => {
     searchTutors(1);
@@ -261,19 +354,6 @@ const searchTutors = useCallback(async (page: number = 1) => {
     setSearchTerm('');
   };
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`h-4 w-4 ${
-          i < Math.floor(rating) 
-            ? 'fill-yellow-400 text-yellow-400' 
-            : 'text-gray-300'
-        }`}
-      />
-    ));
-  };
-
   const renderPagination = () => {
     const pages = [];
     const maxVisible = 5;
@@ -291,6 +371,7 @@ const searchTutors = useCallback(async (page: number = 1) => {
           variant={i === currentPage ? "default" : "outline"}
           size="sm"
           onClick={() => handlePageChange(i)}
+          className={i === currentPage ? "bg-blue-600 hover:bg-blue-700" : ""}
         >
           {i}
         </Button>
@@ -298,7 +379,7 @@ const searchTutors = useCallback(async (page: number = 1) => {
     }
 
     return (
-      <div className="flex items-center justify-center space-x-2 mt-6">
+      <div className="flex items-center justify-center space-x-2 mt-8">
         <Button
           variant="outline"
           size="sm"
@@ -321,37 +402,48 @@ const searchTutors = useCallback(async (page: number = 1) => {
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Search Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
-        <div className="flex justify-between items-start mb-4">
-          <h1 className="text-2xl font-bold">Find Your Perfect Tutor</h1>
-          <CurrencySelector compact className="bg-white/10 backdrop-blur-sm rounded-lg" />
-        </div>
-        
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by tutor name, subject, or expertise..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white text-black border-0"
-            />
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Find Your Perfect Tutor</h1>
+              <p className="text-blue-100 mt-2">Connect with experienced educators</p>
+            </div>
+            <CurrencySelector compact className="bg-white/10 backdrop-blur-sm rounded-lg" />
           </div>
-          {/* Desktop: toggle sidebar filters | Mobile: open sheet */}
-          <div className="shrink-0">
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Search by tutor name, subject, or expertise..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 h-12 bg-white text-black border-0 rounded-lg shadow-sm text-base lg:text-lg"
+              />
+            </div>
+            
+            {/* Desktop Filters */}
             <div className="hidden sm:block">
-              <Button variant="secondary" onClick={() => setShowFilters(!showFilters)}>
-                <Filter className="h-4 w-4 mr-2" />
+              <Button 
+                variant="secondary" 
+                size="lg"
+                onClick={() => setShowFilters(!showFilters)}
+                className="h-12 bg-white/10 hover:bg-white/20 border-white/20"
+              >
+                <Filter className="h-5 w-5 mr-2" />
                 Filters
               </Button>
             </div>
+
+            {/* Mobile Filters */}
             <div className="sm:hidden">
               <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="secondary">
-                    <Filter className="h-4 w-4 mr-2" />
+                  <Button variant="secondary" size="lg" className="w-full h-12">
+                    <Filter className="h-5 w-5 mr-2" />
                     Filters
                   </Button>
                 </SheetTrigger>
@@ -359,7 +451,7 @@ const searchTutors = useCallback(async (page: number = 1) => {
                   <SheetHeader>
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
-                  <div className="mt-4 space-y-6">
+                  <div className="mt-6">
                     <FiltersContent />
                   </div>
                 </SheetContent>
@@ -369,200 +461,75 @@ const searchTutors = useCallback(async (page: number = 1) => {
         </div>
       </div>
 
-      <div className="flex gap-6 w-full">
-        {/* Filters Sidebar */}
-        {showFilters && (
-          <div className="hidden sm:block w-80 space-y-6">
-            <FiltersContent />
-          </div>
-        )}
-
-        {/* Results */}
-        <div className="flex-1 space-y-6 w-full min-w-0">
-          {/* Results Header */}
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">
-              {totalResults} tutors found
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </p>
-          </div>
-
-          {/* Loading State */}
-          {isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-              {Array.from({ length: 8 }).map((_, idx) => (
-                <Card key={idx} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-3 sm:p-4 md:p-6 space-y-4">
-                    <div className="flex items-start space-x-3 sm:space-x-4">
-                      <Skeleton className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-2/3" />
-                        <Skeleton className="h-3 w-1/2" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-3 w-full" />
-                    <Skeleton className="h-3 w-5/6" />
-                    <div className="flex space-x-2">
-                      <Skeleton className="h-8 w-full" />
-                      <Skeleton className="h-8 w-full" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="flex gap-6 lg:gap-8">
+          {/* Filters Sidebar - Desktop */}
+          {showFilters && (
+            <div className="hidden sm:block w-72 lg:w-80 shrink-0">
+              <div className="sticky top-8">
+                <FiltersContent />
+              </div>
             </div>
           )}
 
-          {/* Tutor Cards Grid */}
-          {!isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 w-full">
-              {tutors.map((tutor) => (
-                <Card key={String(tutor.id)} className="w-full hover:shadow-lg transition-shadow">
-                  <CardContent className="p-3 sm:p-4 md:p-6">
-                    <div className="flex items-start space-x-3 sm:space-x-4 mb-4">
-                      <Avatar className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 flex-shrink-0">
-                        <AvatarImage src={tutor.profileImage} />
-                        <AvatarFallback className="text-xs sm:text-sm">
-                          {`${tutor.firstName} ${tutor.lastName}`.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm sm:text-base md:text-lg truncate">
-                          {tutor.firstName} {tutor.lastName}
-                        </h3>
-                        <div className="flex items-center space-x-1 mb-1 sm:mb-2">
-                          <div className="flex">
-                            {renderStars(tutor.rating)}
-                          </div>
-                          <span className="text-xs sm:text-sm text-muted-foreground ml-1 sm:ml-2">
-                            ({tutor.rating.toFixed(1)})
-                          </span>
-                        </div>
-                        <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span className="truncate">
-                            {(() => {
-                              const months = tutor.experience ?? 0;
-                              console.log("tutor experience:", months);
-                              if (months >= 12) {
-                                const years = Math.floor(months / 12);
-                                const remainingMonths = months % 12;
-                                return `${years} year${years > 1 ? "s" : ""}${
-                                  remainingMonths > 0 ? ` and ${remainingMonths} month${remainingMonths > 1 ? "s" : ""}` : ""
-                                } experience`;
-                              }
-                              return `${months} month${months !== 1 ? "s" : ""} experience`;
-                            })()}
-                          </span>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 sm:space-y-3">
-                      {/* Languages */}
-                      {tutor.languages && tutor.languages.length > 0 && (
-                        <div>
-                          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Languages:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {tutor.languages.slice(0, 2).map((language, index) => (
-                              <Badge key={`${tutor.id}-lang-${index}`} variant="outline" className="text-xs">
-                                <Globe className="h-3 w-3 mr-1" />
-                                <span className="truncate max-w-[80px] sm:max-w-none">
-                                  {language.languageName}
-                                </span>
-                              </Badge>
-                            ))}
-                            {tutor.languages.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{tutor.languages.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Subjects with individual rates */}
-                      <div>
-                        <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Subjects & Rates:</p>
-                        <div className="space-y-1">
-                          {tutor.subjects.slice(0, 2).map((subject, index) => (
-                            <div key={`${tutor.id}-subject-${index}`} className="flex items-center justify-between text-xs gap-2">
-                              <Badge variant="secondary" className="text-xs truncate flex-shrink max-w-[120px] sm:max-w-[150px]">
-                                {subject.subjectName}
-                              </Badge>
-                              <span className="text-green-600 font-medium flex items-center flex-shrink-0 text-xs sm:text-sm">
-                                <DollarSign className="h-3 w-3" />
-                                {formatPrice(subject.hourlyRate)}/hr
-                              </span>
-                            </div>
-                          ))}
-                          {tutor.subjects.length > 2 && (
-                            <div className="text-xs text-muted-foreground">
-                              +{tutor.subjects.length - 2} more subjects...
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {tutor.bio && (
-                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-2 sm:mb-3">
-                          {tutor.bio}
-                        </p>
-                      )}
-
-                      <div className="flex items-center justify-center text-xs sm:text-sm border-t pt-2">
-                        <div className="flex items-center text-muted-foreground">
-                          <Award className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span className="truncate">{tutor.classCompletionRate.toFixed(0)}% completion</span>
-                        </div>
-                      </div>
-
-                      <div className="flex space-x-1 sm:space-x-2 pt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
-                          onClick={() => handleViewProfile(tutor)}
-                        >
-                          <span className="hidden sm:inline">View Profile</span>
-                          <span className="sm:hidden">Profile</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="flex-1 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
-                          onClick={() => handleBookTutor(tutor)}
-                        >
-                          <span className="hidden sm:inline">Book Class</span>
-                          <span className="sm:hidden">Book</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!isLoading && tutors.length === 0 && (
-            <div className="text-center py-12">
-              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No tutors found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your search criteria or filters
+          {/* Results Section */}
+          <div className="flex-1 min-w-0">
+            {/* Results Header */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+              <p className="text-slate-600 dark:text-slate-400 text-sm lg:text-base">
+                {isLoading ? 'Searching...' : `${totalResults} tutors found`}
               </p>
-              <Button onClick={clearFilters}>Clear Filters</Button>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {!isLoading && `Page ${currentPage} of ${totalPages}`}
+              </p>
             </div>
-          )}
 
-          {/* Pagination */}
-          {!isLoading && tutors.length > 0 && totalPages > 1 && renderPagination()}
+            {/* Loading State */}
+            {isLoading && (
+              <div className="space-y-4 sm:space-y-6">
+                {Array.from({ length: itemsPerPage }).map((_, idx) => (
+                  <TutorCardSkeleton key={idx} />
+                ))}
+              </div>
+            )}
+
+            {/* Tutor Cards - Changed from grid to vertical stack */}
+            {!isLoading && (
+              <div className="space-y-4 sm:space-y-6">
+                {tutors.map((tutor) => (
+                  <ResponsiveTutorCard
+                    key={String(tutor.id)}
+                    tutor={tutor}
+                    onViewProfile={handleViewProfile}
+                    onBookClass={handleBookTutor}
+                    formatPrice={formatPrice}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && tutors.length === 0 && (
+              <div className="text-center py-16">
+                <Search className="h-16 w-16 text-slate-400 dark:text-slate-600 mx-auto mb-6" />
+                <h3 className="text-xl font-medium text-slate-900 dark:text-slate-100 mb-2">No tutors found</h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                  Try adjusting your search criteria or filters to find more tutors
+                </p>
+                <Button onClick={clearFilters} className="bg-blue-600 hover:bg-blue-700">
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {!isLoading && tutors.length > 0 && totalPages > 1 && renderPagination()}
+          </div>
         </div>
       </div>
-
     </div>
   );
 };
+
 export default TutorSearch;
