@@ -203,7 +203,7 @@
 import React, { useState } from 'react';
 import { useRouter } from "next/navigation"; // ✅ import this
 import { Home, User, Search, BookOpen, Users, FileText, BarChart3, Menu, X, ChevronRight, LogOut, Settings } from 'lucide-react';
-
+import { NAV_DATA } from '@/components/Layouts/sidebar/data/index';
 interface DashboardSidebarProps {
   userRole?: string;
 }

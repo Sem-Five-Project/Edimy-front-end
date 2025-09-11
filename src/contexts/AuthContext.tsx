@@ -106,7 +106,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { User } from '@/types';
-import { refreshAccessToken, authAPI, setAuthToken, setTokenRefreshCallback } from '@/lib/api';
+import { refreshAccessToken, authAPI, setAuthToken, setTokenRefreshCallback, checkApiHealth } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -163,22 +163,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // };
   const checkAuthStatus = async () => {
     try {
+      // First, check if the API is healthy
+      console.log('🔍 Checking API health before authentication...');
+      const healthCheck = await checkApiHealth();
+      
+      if (!healthCheck.isHealthy) {
+        console.log('❌ API is not healthy:', healthCheck.message);
+        setUser(null);
+        setToken(null);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('✅ API is healthy, proceeding with authentication');
+      
       // try to silently refresh on page load
       const newToken = await refreshAccessToken(); 
       setToken(newToken.accessToken);
       setAuthToken(newToken.accessToken); // attach to axios
       console.log('newToken8888888888888', newToken.accessToken);
-      //setUser(newUser);
-
-      // Test the token first
-      console.log('Testing token validity......');
-      try {
-        // const tokenTest = await authAPI.testToken();
-        // console.log('Token test result:', tokenTest);
-        console.log('Token test skipped - endpoint may not exist');
-      } catch (testErr) {
-        console.log('Token test failed (expected if endpoint doesn\'t exist):', testErr);
-      }
       
       const response = await authAPI.getCurrentUser();
       if (response?.data?.user) {
