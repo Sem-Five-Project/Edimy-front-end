@@ -13,6 +13,7 @@ import {
   ClassDoc,
   Subject,
   TutorAvailability,
+  TutorSubject,
 } from "@/types";
 import InteractiveCalendar from "./InteractiveCalendar";
 import StatsCard from "./StatsCard";
@@ -38,7 +39,7 @@ export default function TutorProfilePage() {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TutorAvailability[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [classDocs, setClassDocs] = useState<Record<number, ClassDoc[]>>({});
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjects, setSubjects] = useState<TutorSubject[]>([]);
   const [showAddDocModal, setShowAddDocModal] = useState(false);
   const [showAddTimeSlotModal, setShowAddTimeSlotModal] = useState(false);
   const [selectedDocClass, setSelectedDocClass] = useState<number | null>(null);
@@ -557,7 +558,7 @@ const handleUploadDocument = async () => {
                           <option value="">Select subject</option>
                           {subjects.map((subject) => (
                             <option key={subject.subjectId} value={subject.subjectId}>
-                              {subject.subjectName}
+                              {subject.subjectId}
                             </option>
                           ))}
                         </select>

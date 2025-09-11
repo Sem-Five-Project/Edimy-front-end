@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject } from '@/types';
+import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject, TutorSubject } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -1050,13 +1050,28 @@ export const tutorAvailabilityAPI = {
 
 export const subjectAPI = {
   //get the subjects of a tutor when the tutorid is given
-  getSubjectsByTutorId: async (tutorId: number): Promise<Subject[]> => {
+  getSubjectsByTutorId: async (tutorId: number): Promise<TutorSubject[]> => {
     try {
       const response = await api.get(`/tutors/${tutorId}/subjects`);
       return response.data;
     } catch (error) {
       console.error('Get subjects by tutor ID failed:', error);
       return [];
+    }
+  },
+
+  //add a subject to a tutor
+  addSubjectToTutor: async (tutorId: number, subjectId: number, hourlyRate: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(`/tutors/add`, { tutorId,subjectId, hourlyRate });  
+      return response.data;
+    } catch (error) {
+      console.error('Add subject to tutor failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to add subject to tutor',
+      };
     }
   },
 }

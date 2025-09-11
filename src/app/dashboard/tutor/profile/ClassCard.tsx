@@ -1,12 +1,12 @@
 import React from "react";
 import { BookOpen, Trash2, Calendar, Clock, Activity, FileText } from "lucide-react";
-import { Class, Subject, ClassDoc } from "@/types";
+import { Class, Subject, ClassDoc, TutorSubject } from "@/types";
 import DocumentsSection from "./DocumentsSection";
 
 interface ClassCardProps {
   cls: Class;
   classTypes: { id: number; name: string; icon: string; color: string }[];
-  subjects: Subject[];
+  subjects: TutorSubject[];
   classDocs: Record<number, ClassDoc[]>;
   classAPI: any;
   tutorId: number;

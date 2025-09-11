@@ -25,6 +25,17 @@ export interface Subject {
   hourlyRate: number;
 }
 
+export type TutorSubject = {
+    tutorSubjectId: number;
+    subjectName: string;
+    tutorId: number;
+    subjectId: number;
+    verification: "APPROVED" | "PENDING" | "REJECTED"; // adjust based on your allowed values
+    verificationDocs: string | null;
+    hourlyRate: number;
+};
+
+
 export interface Language {
   languageId: number;
   languageName: string;
@@ -351,8 +362,8 @@ export interface TutorAvailability {
 }
 
 
-export interface Subject {
-  subjectId: number;
-  subjectName: string;
-}
+// export interface Subject {
+//   subjectId: number;
+//   subjectName: string;
+// }
 
