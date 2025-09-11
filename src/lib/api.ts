@@ -986,7 +986,16 @@ export const tutorAvailabilityAPI = {
   //create availability
   createAvailability: async (availabilityData: TutorAvailability): Promise<ApiResponse<TutorAvailability>> => {
     try {
-      const response = await api.post('/tutor-availability', availabilityData);
+      const newSlot = {
+      startTime: availabilityData.startTime,
+      endTime: availabilityData.endTime,
+      dayOfWeek: availabilityData.dayOfWeek,
+      recurring: availabilityData.recurring,
+      tutorProfile: {
+        tutorId: availabilityData.tutorId
+      }
+    };
+      const response = await api.post('/tutor-availability', newSlot);
       return response.data;
     } catch (error) {
       console.error('Create availability failed:', error);
@@ -1028,9 +1037,9 @@ export const tutorAvailabilityAPI = {
   },
   //get availability of a tutor by tutor id
   getAvailabilityByTutorId: async (tutorId: number): Promise<TutorAvailability[]> => {
+
     try {
       const response = await api.get(`/tutor-availability/tutor/${tutorId}`);
-      console.log('Tutor availability:', response.data);
       return response.data;
     } catch (error) {
       console.error('Get availability by tutor ID failed:', error);

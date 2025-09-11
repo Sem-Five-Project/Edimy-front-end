@@ -77,7 +77,7 @@ export default function TutorProfilePage() {
     { id: 3, name: "Monthly Recurring", icon: "📅", color: "bg-purple-100 text-purple-800" },
   ];
 
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
   const fullDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   // Mock stats for beautiful dashboard
@@ -103,6 +103,7 @@ export default function TutorProfilePage() {
 
         setAvailableTimeSlots(slotsRes);
         setClasses(classesRes);
+        console.log('Classes data:*************', classesRes);
         setSubjects(subjectsRes);
 
         // Fetch docs for each class
