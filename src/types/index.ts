@@ -123,7 +123,7 @@ export interface PageableResponse<T> {
 }
 
 export interface ClassType {
-  id: string;
+  id: number;
   name: string;
   description: string;
   durationWeeks?: number;
@@ -139,20 +139,20 @@ export interface BookingPreferences {
 
 export const CLASS_TYPES: ClassType[] = [
   {
-    id: 'lesson',
+    id: 2,
     name: 'Single Lesson',
     description: 'One-time tutoring session',
     priceMultiplier: 1.0,
   },
   {
-    id: 'normal',
+    id: 1,
     name: 'Regular Classes',
     description: 'Weekly classes with flexible scheduling',
     durationWeeks: 4,
     priceMultiplier: 0.95,
   },
   {
-    id: 'monthly',
+    id: 3,
     name: 'Monthly Recurring',
     description: 'Committed monthly package with best rates',
     durationWeeks: 12,
@@ -356,3 +356,27 @@ export interface Subject {
   subjectName: string;
 }
 
+export interface InitPayHerePendingReq  {
+  orderId: string;
+  studentId: number;
+  amount: number | string;
+  currency: string; // "LKR"
+  gateway?: "PAYHERE";
+};
+
+export interface InitPayHerePendingRes  {
+  orderId?: string;
+  order_id?: string; // Backend snake_case format
+  paymentId?: string;
+  payment_id?: string; // Backend snake_case format
+  expiresAt?: string; // ISO
+  expires_at?: string; // Backend snake_case format
+  status?: string;
+};
+
+export interface ValidatePayHereWindowRes  {
+  valid: boolean;
+  expired: boolean;
+  expiresAt: string;
+  remainingSeconds: number;
+};

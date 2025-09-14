@@ -101,27 +101,8 @@ export default function BookingSlotsPage() {
            (tutor.languages.length <= 1 || preferences.selectedLanguage);
   };
 
-  const handleContinue = () => {
 
-    if (!selectedSlotLocal || !isValid()) return;
-    
-    const finalPreferences = {
-      ...preferences,
-      finalPrice: calculatePrice()
-    };
-    
-    setSelectedSlot(selectedSlotLocal);
-    setBookingPreferences(finalPreferences);
-    
-    setReservationDetails({
-      reservationId: `temp-${Date.now()}`,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-      timer: 300
-    });
-    
-    proceedToStep('payment');
-  };
-  const handleContinuemain = async () => {
+  const handleContinue = async () => {
   if (!selectedSlotLocal || !isValid()) {
     setError("Please select a valid slot and complete all preferences");
     return;
@@ -173,59 +154,7 @@ console.log('Slot reserved successfully:'); // Debug log
     setIsLoading(false);
   }
 };
-  const handleContinue2= async () => {
-    if (!selectedSlotLocal || !isValid()) return;
 
-    try {
-      setIsLoading(true);
-      setError('');
-
-      // Try to reserve the slot first
-      const response = await bookingAPI.reserveSlot(selectedSlotLocal.slotId);
-      console.log('Reserve slot response:', response);
-
-      if (!response.success) {
-        // Show specific error message from the server
-        setError(response.message || "Slot is no longer available");
-        
-        // If the slot status has changed, update it in the available slots
-        if (response.slotId && response.status) {
-          setAvailableSlots(prevSlots => 
-            prevSlots.map(slot => 
-              slot.slotId === response.slotId 
-                ? { ...slot, status: response.status }
-                : slot
-            )
-          );
-        }
-        return; // Don't proceed if reservation fails
-      }
-
-      // Only proceed if slot reservation was successful
-      const finalPreferences = {
-        ...preferences,
-        finalPrice: calculatePrice()
-      };
-      
-      setSelectedSlot(selectedSlotLocal);
-      setBookingPreferences(finalPreferences);
-      
-      setReservationDetails({
-        reservationId: response.reservationId || `temp-${Date.now()}`,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-        timer: 900
-      });
-
-      // Only proceed to payment if everything is successful
-      proceedToStep('payment');
-
-    } catch (error) {
-      setError("Failed to reserve slot. Please try again.");
-      console.error("Slot reservation error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (!tutor) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">

@@ -35,7 +35,7 @@ interface BookingContextType {
   // Navigation helpers
   canProceedToStep: (step: BookingStep) => boolean;
   proceedToStep: (step: BookingStep) => void;
-  goBack: () => void;
+  goBack: (slotId?: number) => Promise<void>;
   
   // State management
   resetBookingState: () => void;
@@ -128,24 +128,8 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const goBack1 = () => {
-    switch (currentStep) {
-      case 'slot-selection':
-        setCurrentStep('tutor-selection');
-        router.push('/dashboard/student/find-tutor');
-        break;
-      case 'payment':
-        setCurrentStep('slot-selection');
-        router.push('/dashboard/student/find-tutor/book/slots');
-        break;
-      case 'confirmation':
-        // Usually can't go back from confirmation, but if needed
-        setCurrentStep('payment');
-        router.push('/dashboard/student/find-tutor/book/payment');
-        break;
-    }
-  };
-  const goBack = async (slotId?: number) => {
+
+const goBack = async (slotId?: number): Promise<void> => {
   switch (currentStep) {
     case 'slot-selection':
       setCurrentStep('tutor-selection');
@@ -154,7 +138,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     case 'payment':
       if (slotId) {
-        await bookingAPI.releaseSlot(slotId); // release the slot passed as parameter
+        await bookingAPI.releaseSlot(slotId);
       }
       setCurrentStep('slot-selection');
       router.push('/dashboard/student/find-tutor/book/slots');
@@ -167,38 +151,6 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   }
 };
 
-  const goBack2 = async () => {
-  switch (currentStep) {
-    case 'slot-selection':
-      setCurrentStep('tutor-selection');
-      router.push('/dashboard/student/find-tutor');
-      break;
-
-    case 'payment':
-      // Release the previously locked slot
-      if (selectedSlotId) {
-        try {
-          const releaseResponse = await tutorAPI.releaseSlot(selectedSlotId);
-          if (!releaseResponse.success) {
-            console.warn('Failed to release slot:', releaseResponse.error);
-          } else {
-            console.log('Slot released successfully:', releaseResponse.data);
-          }
-        } catch (err) {
-          console.error('Error releasing slot:', err);
-        }
-      }
-
-      setCurrentStep('slot-selection');
-      router.push('/dashboard/student/find-tutor/book/slots');
-      break;
-
-    case 'confirmation':
-      setCurrentStep('payment');
-      router.push('/dashboard/student/find-tutor/book/payment');
-      break;
-  }
-};
 
 
   const resetBookingState = () => {
