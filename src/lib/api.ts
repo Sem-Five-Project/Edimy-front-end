@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse, PageableResponse } from '@/types';
+import {InitPayHerePendingReq, InitPayHerePendingRes, ValidatePayHereWindowRes } from '@/types';
 interface BookingUpdateData {
   orderId: string;
   tutorId: string;
@@ -20,6 +20,7 @@ interface BookingUpdateData {
     status: 'SUCCESS' | 'FAILED'|'ROLLBACKED_PENDING_ADMIN'|'PENDING';
   };
 }
+import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -225,10 +226,13 @@ export const authAPI = {
     }
   },
 
-  login: async (credentials: LoginCredentials): Promise<ApiResponse<{ user: User }>> => {
+  login: async (credentials: LoginCredentials): Promise<ApiResponse<{
+    [x: string]: any; user: User 
+}>> => {
     try {
+      console.log("login credentials main :",credentials)
       const response = await api.post('/auth/login', credentials);
-            console.log("login response main :",response.data)
+        console.log("login response main :",response.data)
 
       return {
         success: true,
@@ -604,7 +608,7 @@ export const bookingAPI = {
   },
 
   // Generate PayHere hash for payment
-  generatePayHereHash: async (orderId: string, amount: number, currency: string = "LKR"): Promise<ApiResponse<{ hash: string; merchantId?: string }>> => {
+  generatePayHereHash: async (orderId: string, amount: number | string, currency: string = "LKR"): Promise<ApiResponse<{ hash: string; merchantId?: string }>> => {
     try {
       const response = await api.post('/payment/hash', {
         orderId,
@@ -613,54 +617,106 @@ export const bookingAPI = {
       });
       console.log('Generate PayHere hash response:', response);
       
-      // The response.data might already be the expected format or need transformation
-      if (response.data && response.data.data) {
-        // If backend returns { success: true, data: { hash: "..." } }
-        return {
-          success: true,
-          data: response.data.data
-        };
-      } else if (response.data && response.data.hash) {
-        // If backend returns { hash: "..." } directly
-        return {
-          success: true,
-          data: response.data
-        };
-      } else {
-        // Fallback - create mock response for testing
+      // Normalize and validate expected payload
+      const payload = response?.data?.data ?? response?.data;
+      if (payload?.hash) {
         return {
           success: true,
           data: {
-            hash: `mock_hash_${Date.now()}`,
-            merchantId: "1228616"
-          }
+            hash: payload.hash,
+            merchantId: payload.merchantId,
+          },
         };
       }
+      return {
+        success: false,
+        data: { hash: '', merchantId: undefined },
+        error: 'Backend did not return a valid hash',
+      } as unknown as ApiResponse<{ hash: string; merchantId?: string }>;
     } catch (error) {
       console.error('Generate PayHere hash failed:', error);
-      // For testing purposes, return a mock hash when API fails
       return {
-        success: true,
-        data: {
-          hash: `mock_hash_${Date.now()}`,
-          merchantId: "1228616"
-        }
+        success: false,
+        data: { hash: '', merchantId: undefined },
+        error: 'Failed to generate payment hash',
+      } as unknown as ApiResponse<{ hash: string; merchantId?: string }>;
+    }
+  },
+    initiatePaymentPending: async (
+    payload: InitPayHerePendingReq
+  ): Promise<ApiResponse<InitPayHerePendingRes>> => {
+    try {
+      console.log("API: Sending initiate payment request with payload:", payload);
+      const { data } = await api.post("/payment/initiate", payload);
+      console.log("API: Initiate payment response:", data);
+      return { success: true, data };
+    } catch (e: any) {
+      console.error("API: Initiate payment failed:", e);
+      console.error("API: Error response:", e?.response?.data);
+      console.error("API: Error status:", e?.response?.status);
+      return {
+        success: false,
+        data: {} as InitPayHerePendingRes,
+        error: e?.response?.data?.message || e?.response?.data?.error || "Failed to initiate payment",
       };
     }
   },
+  validatePaymentWindow: async (
+    paymentId: string
+  ): Promise<ApiResponse<ValidatePayHereWindowRes>> => {
+    try {
+      console.log("API: Validating payment window for paymentId:", paymentId);
+      
+      // Try both possible endpoints
+      let response;
+      try {
+        console.log("API: Trying endpoint: `/payments/validate?paymentId=${paymentId}`");
+        response = await api.get(`/payments/validate?paymentId=${paymentId}`);
+      } catch (firstError: any) {
+        if (firstError?.response?.status === 404) {
+          console.log("API: First endpoint not found, trying: `/payment/validate?paymentId=${paymentId}`");
+          response = await api.get(`/payment/validate?paymentId=${paymentId}`);
+        } else {
+          throw firstError;
+        }
+      }
+      
+      console.log("API: Payment validation response:", response.data);
+      return { success: true, data: response.data };
+    } catch (e: any) {
+      console.error("API: Payment validation error:", e?.response?.data || e.message);
+      console.error("API: Full error object:", e);
+      
+      // If validation fails, let's continue with a warning rather than blocking payment
+      if (e?.response?.status === 500) {
+        console.warn("API: Server error during validation - allowing payment to proceed with warning");
+        return {
+          success: true,
+          data: {
+            valid: true, // Assume valid if server error
+            expired: false,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes from now
+            remainingSeconds: 15 * 60 // 15 minutes in seconds
+          }
+        };
+      }
+      
+      return {
+        success: false,
+        data: {} as ValidatePayHereWindowRes,
+        error: e?.response?.data?.message || e?.response?.data?.error || "Failed to validate payment window",
+      };
+    }
+  },
+
 updateBookingDetails: async (data: BookingUpdateData): Promise<{ success: boolean; bookingId: string }> => {
   try {
-    const response = await api.post('/api/bookings/confirm', {
-
-      body: JSON.stringify(data)
-    });
-
-    if (!response) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to update booking details');
+    // Using axios; body is passed as data, not nested with JSON.stringify
+    const response = await api.post('/bookings/confirm', data);
+    if (response?.data) {
+      return response.data;
     }
-
-    return await response.json();
+    throw new Error('Failed to update booking details');
   } catch (error) {
     console.error('Error updating booking details:', error);
     throw error;
@@ -738,6 +794,26 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
     }
   },
 
+  bookSlot: async (
+    slotId: number
+  ): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
+    try {
+      // explicitly send JSON body { "slotId": <value> }
+      const response = await api.post('/bookings/book-slot', {
+        slotId: slotId,
+      });
+      console.log('Book slot response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Book slot failed:', error);
+      return {
+        success: false,
+        data: { bookingId: 0, status: 'FAILED' },
+        error: 'Failed to book slot',
+      } as ApiResponse<{ bookingId: number; status: string }>;
+    }
+  },
+
   releaseSlot: async (
   slotId: number
 ): Promise<ApiResponse<{ slotId: number; status: string }>> => {
@@ -775,21 +851,51 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
 
   // Confirm PayHere payment and finalize booking, updating all related tables
   confirmPayHerePayment: async (payload: {
-    orderId: string;
-    slotId: number;
-    tutorId: number;
-    amount: number;
-    currency: string;
-    paymentStatus: 'COMPLETED' | 'FAILED' | 'CANCELLED';
-    paymentMethod: 'PAYHERE';
-    paymentTime: string; // ISO string
-    reservationId?: string;
-    studentId?: number;
-    classId?: number;
+    paymentId: string; // Only paymentId received from initiatePaymentPending
+    slotId?: number; // Optional slotId for booking confirmation
   }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
     try {
-      const response = await api.post('/payments/payhere/confirm', payload);
-      console.log('Confirm PayHere payment response000000:', response);
+      const response = await api.post('/payment/bookings/confirm', payload);
+      console.log('Confirm PayHere payment response:', response);
+
+      // If payment confirmation is successful and slotId is provided, book the slot
+      if (response.data.success && payload.slotId) {
+        console.log('Payment confirmed successfully, proceeding to book slot:', payload.slotId);
+        
+        try {
+          const bookingResponse = await bookingAPI.bookSlot(payload.slotId);
+          console.log('Book slot after payment response:', bookingResponse);
+          
+          if (bookingResponse.success) {
+            console.log('Slot booked successfully finished!!');
+            // Return combined response with booking information
+            return {
+              success: true,
+              data: {
+                success: true,
+                paymentId: response.data.paymentId,
+                bookingId: bookingResponse.data.bookingId
+              }
+            };
+          } else {
+            console.error('Failed to book slot after payment confirmation:', bookingResponse.error);
+            // Payment confirmed but booking failed - this should be handled carefully
+            return {
+              success: false,
+              data: { success: false },
+              error: `Payment confirmed but booking failed: ${bookingResponse.error}`,
+            } as unknown as ApiResponse<{ success: boolean }>;
+          }
+        } catch (bookingError) {
+          console.error('Error booking slot after payment:', bookingError);
+          return {
+            success: false,
+            data: { success: false },
+            error: 'Payment confirmed but slot booking failed',
+          } as unknown as ApiResponse<{ success: boolean }>;
+        }
+      }
+
       return response.data;
     } catch (error) {
       console.error('Confirm PayHere payment failed:', error);
@@ -906,4 +1012,300 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
   },
 };
 
+export const classAPI = {
+  //create a class
+  createClass: async (classData: Class): Promise<ApiResponse<Class>> => {
+    try {
+      const response = await api.post('/classes/create', classData);
+      return response.data;
+    } catch (error) {
+      console.error('Create class failed:', error);
+      return {
+        success: false,
+        data: {} as Class,
+        error: 'Failed to create class',
+      };
+    }
+  },
+  //get a class by classId
+  getClassById: async (classId: number): Promise<ApiResponse<Class>> => {
+    try {
+      const response = await api.get(`/classes/${classId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get class by ID failed:', error);
+      return {
+        success: false,
+        data: {} as Class,
+        error: 'Failed to get class by ID',
+      };
+    }
+  },
+  //get class a of a tutor when tutorId is given
+  getClassesByTutorId: async (tutorId: number): Promise<Class[]> => {
+    try {
+      const response = await api.get(`/classes/tutor/${tutorId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get classes by tutor ID failed:', error);
+      return [];
+    }
+  },
+  //delete a class by classId and tutorId
+  deleteClass: async (classId: number | undefined, tutorId: number): Promise<any> => {
+    try {
+      const response = await api.delete(`/classes/delete?classId=${classId}&tutorId=${tutorId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete class failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to delete class',
+      };
+    }
+  },
+};
+
+export const classDocAPI ={
+  //add a doc
+  addClassDoc: async (classDocData: ClassDoc): Promise<any> => {
+    console.log('Adding class doc with data:*************', classDocData);
+    try {
+      const response = await api.post(`/class-docs/add`, classDocData);
+      return response.data;
+    } catch (error) {
+      console.error('Add class doc failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to add class doc',
+      };
+    }
+  },
+  //get docs by classId
+  getClassDocsByClassId: async (classId: number): Promise<ClassDoc[]> => {
+    try {
+      const response = await api.get(`/class-docs/class/${classId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get class docs by class ID failed:', error);
+      return [];
+    }
+  },
+  //delete a doc by docId
+  deleteClassDoc: async (docId: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.delete(`/class-docs/delete/${docId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete class doc failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to delete class doc',
+      };
+    }
+  },
+}
+
+export const tutorAvailabilityAPI = {
+  //create availability
+  createAvailability: async (availabilityData: TutorAvailability): Promise<ApiResponse<TutorAvailability>> => {
+    try {
+      const response = await api.post('/tutor-availability', availabilityData);
+      return response.data;
+    } catch (error) {
+      console.error('Create availability failed:', error);
+      return {
+        success: false,
+        data: {} as TutorAvailability,
+        error: 'Failed to create availability',
+      };
+    }
+  },
+  //delete availability by availabilityId
+  deleteAvailability: async (availabilityId: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.delete(`/tutor-availability/delete/${availabilityId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete availability failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to delete availability',
+      };
+    }
+  },
+
+  //update availability by the id
+  updateAvailability: async (availabilityData: TutorAvailability): Promise<ApiResponse<TutorAvailability>> => {
+    try {
+      const response = await api.put(`/tutor-availability/update/${availabilityData.availabilityId}`, availabilityData);
+      return response.data;
+    } catch (error) {
+      console.error('Update availability failed:', error);
+      return {
+        success: false,
+        data: {} as TutorAvailability,
+        error: 'Failed to update availability',
+      };
+    }
+  },
+  //get availability of a tutor by tutor id
+  getAvailabilityByTutorId: async (tutorId: number): Promise<TutorAvailability[]> => {
+    try {
+      const response = await api.get(`/tutor-availability/tutor/${tutorId}`);
+      console.log('Tutor availability:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get availability by tutor ID failed:', error);
+      return [];
+    }
+  },
+}
+
+export const subjectAPI = {
+  //get the subjects of a tutor when the tutorid is given
+  getSubjectsByTutorId: async (tutorId: number): Promise<Subject[]> => {
+    try {
+      const response = await api.get(`/tutors/${tutorId}/subjects`);
+      return response.data;
+    } catch (error) {
+      console.error('Get subjects by tutor ID failed:', error);
+      return [];
+    }
+  },
+}
 export default api;
+
+// FCM Token API functions
+export const fcmAPI = {
+  // Send FCM token to backend
+  sendToken: async (tokenData: {
+    token: string;
+    userId?: string;
+    deviceType: string;
+    timestamp?: string;
+  }): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/auth/fcmtoken', tokenData.token, {
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
+      
+      // Handle different response structures
+      if (response.status >= 200 && response.status < 300) {
+        return {
+          success: true,
+          data: { message: 'FCM token sent successfully' },
+        };
+      } else {
+        return {
+          success: false,
+          data: { message: 'Failed to send FCM token' },
+          error: `HTTP ${response.status}`,
+        };
+      }
+    } catch (error) {
+      console.error('FCM token send failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to send FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Remove FCM token from backend
+  removeToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.delete('auth/fcmtoken', {
+        data: { token },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token removal failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to remove FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+
+  // Update FCM token
+  updateToken: async (oldToken: string, newToken: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.put('auth/fcmtoken/update', {
+        oldToken,
+        newToken,
+        timestamp: new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('FCM token update failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to update FCM token' },
+        error: 'Network error',
+      };
+    }
+  },
+};
+
+// Helper function for backward compatibility
+export const sendFCMTokenToBackend = fcmAPI.sendToken;
+
+export const sendFCMTokenAfterLogin = async (userId: string): Promise<void> => {
+  console.log("🔥 sendFCMTokenAfterLogin called for user:", userId);
+  
+  try {
+    // Dynamic import to avoid SSR issues
+    const { messaging, getToken } = await import('./firebaseMessaging');
+    console.log("🔥 Firebase messaging imported, messaging available:", !!messaging);
+    
+    if (!messaging) {
+      console.log("❌ Firebase messaging not available");
+      return;
+    }
+
+    // Check if permission is granted
+    console.log("🔥 Checking notification permission:", Notification.permission);
+    if (Notification.permission !== 'granted') {
+      console.log("❌ Notification permission not granted, current permission:", Notification.permission);
+      return;
+    }
+
+    const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "";
+    console.log("🔥 Getting FCM token with VAPID key:", VAPID_KEY ? "Available" : "Missing");
+    
+    const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+    console.log("🔥 FCM token received:", currentToken ? "Available" : "None");
+    
+    if (currentToken) {
+      console.log("🔥 Sending FCM token after login:", currentToken);
+      
+      const result = await fcmAPI.sendToken({
+        token: currentToken,
+        userId: userId,
+        deviceType: 'web',
+      });
+      
+      console.log("🔥 FCM token send result:", result);
+      
+      if (result.success) {
+        console.log("✅ FCM token successfully sent after login");
+      } else {
+        console.error("❌ Failed to send FCM token after login. Error:", result.error || 'Unknown error');
+        console.error("❌ Response data:", result.data);
+      }
+    } else {
+      console.log("❌ No FCM token available to send");
+    }
+  } catch (error) {
+    console.error("💥 Error sending FCM token after login:", error);
+  }
+};
