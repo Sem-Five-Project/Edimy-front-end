@@ -138,22 +138,17 @@ export interface BookingPreferences {
 }
 
 export const CLASS_TYPES: ClassType[] = [
-  {
-    id: 2,
-    name: 'Single Lesson',
-    description: 'One-time tutoring session',
-    priceMultiplier: 1.0,
-  },
+ 
   {
     id: 1,
-    name: 'Regular Classes',
+    name: 'Regular Class',
     description: 'Weekly classes with flexible scheduling',
     durationWeeks: 4,
     priceMultiplier: 0.95,
   },
   {
-    id: 3,
-    name: 'Monthly Recurring',
+    id: 2,
+    name: 'Monthly Class',
     description: 'Committed monthly package with best rates',
     durationWeeks: 12,
     priceMultiplier: 0.85,
@@ -380,3 +375,60 @@ export interface ValidatePayHereWindowRes  {
   expiresAt: string;
   remainingSeconds: number;
 };
+
+export interface SelectedSlotPattern {
+  id: string; // Unique identifier for the pattern
+  dayOfWeek: number; // 1-7 (Monday-Sunday)
+  times: string[]; // Array of time strings e.g., ['08:00', '14:00']
+  generatedSlots: RecurringSlot[];
+}
+
+export interface RecurringSlot {
+  id: string; // Unique identifier combining pattern info
+  dateTime: string; // Full ISO datetime
+  dayOfWeek: number; // 1-7 (Monday-Sunday)  
+  time: string; // e.g., '08:00'
+  isAvailable: boolean;
+  isLocked?: boolean;
+  patternId: string; // Reference to parent pattern
+}
+
+export interface MonthlyClassBooking {
+  id: string;
+  tutorId: string;
+  subjectId: string;
+  languageId: string;
+  patterns: SelectedSlotPattern[];
+  weekBreakdown: WeekBreakdown[];
+  totalSlots: number;
+  totalCost: number;
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  createdAt: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface WeekBreakdown {
+  weekStartDate: string;
+  slots: RecurringSlot[];
+  totalSlots: number;
+}
+
+export interface BookMonthlyClassReq {
+  tutorId: string;
+  subjectId: string;
+  languageId: string;
+  patterns: SelectedSlotPattern[];
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+}
+
+export interface BookMonthlyClassRes {
+  success: boolean;
+  bookingId?: string;
+  failedSlots?: {
+    dayOfWeek: number;
+    time: string;
+    reason: string;
+  }[];
+}

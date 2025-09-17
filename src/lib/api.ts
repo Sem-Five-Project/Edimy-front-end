@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {InitPayHerePendingReq, InitPayHerePendingRes, ValidatePayHereWindowRes } from '@/types';
+import {InitPayHerePendingReq, InitPayHerePendingRes, ValidatePayHereWindowRes, BookMonthlyClassReq, BookMonthlyClassRes } from '@/types';
 interface BookingUpdateData {
   orderId: string;
   tutorId: string;
@@ -535,14 +535,15 @@ export const tutorAPI = {
       };
     }
   },
-  getTutorSlots: async (tutorId: string, date?: string): Promise<ApiResponse<TimeSlot[]>> => {
+  getTutorSlots: async (tutorId: string, date?: string, recurring?: boolean | null): Promise<ApiResponse<TimeSlot[]>> => {
     try {
       // Use the real backend endpoint
       console.log('Fetching slots for tutorId:', tutorId, 'on date:', date);
       const response = await api.get(`/student/bookings/slots`, {
         params: {
           tutorId: tutorId,
-          date: date || new Date().toISOString().split('T')[0]
+          date: date || new Date().toISOString().split('T')[0],
+          recurring: recurring == null ? undefined : recurring
         }
       });
       console.log('Get tutor slots response:', response);
@@ -782,8 +783,25 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
       const response = await api.post('/bookings/reserve', {
         slotId: slotId,
       });
-  console.log('Reserve slot response:', response);
-      return response.data;
+      console.log('Reserve slot response:', response);
+      const payload = response?.data ?? response;
+      // Normalize to ApiResponse shape
+      if (payload && typeof payload === 'object' && 'reservationId' in payload) {
+        return {
+          success: true,
+          data: payload as { reservationId: string; expiresAt: string },
+        };
+      }
+      // If backend already returns ApiResponse
+      if (payload && typeof payload === 'object' && 'success' in payload) {
+        return payload as ApiResponse<{ reservationId: string; expiresAt: string }>;
+      }
+      // Fallback
+      return {
+        success: false,
+        data: { reservationId: '', expiresAt: '' },
+        error: 'Unexpected reserve response format',
+      } as ApiResponse<{ reservationId: string; expiresAt: string }>;
     } catch (error) {
       console.error('Reserve slot failed:', error);
       return {
@@ -791,6 +809,24 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
         data: { reservationId: '', expiresAt: '' },
         error: 'Failed to reserve slot',
       } as ApiResponse<{ reservationId: string; expiresAt: string }>;
+    }
+  },
+
+  // Bulk reserve slots to lock multiple selections
+  reserveSlots: async (
+    slotIds: number[]
+  ): Promise<ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>> => {
+    try {
+      const response = await api.post('/bookings/reserve-bulk', { slotIds });
+      console.log('Reserve bulk slots response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Reserve bulk slots failed:', error);
+      return {
+        success: false,
+        data: { reservationId: '', expiresAt: '', reserved: [], failed: [] },
+        error: 'Failed to reserve slots',
+      } as ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>;
     }
   },
 
@@ -811,6 +847,37 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
         data: { bookingId: 0, status: 'FAILED' },
         error: 'Failed to book slot',
       } as ApiResponse<{ bookingId: number; status: string }>;
+    }
+  },
+
+  bookMonthlyClass: async (
+    payload: BookMonthlyClassReq
+  ): Promise<ApiResponse<BookMonthlyClassRes>> => {
+    try {
+      console.log('Booking monthly class with payload:', payload);
+      const response = await api.post('/bookings/book-monthly-class', payload);
+      console.log('Book monthly class response:', response);
+      return response.data;
+    } catch (error: any) {
+      console.error('Book monthly class failed:', error);
+      
+      // Handle specific slot locking errors
+      if (error?.response?.data?.failedSlots) {
+        return {
+          success: false,
+          data: {
+            success: false,
+            failedSlots: error.response.data.failedSlots
+          },
+          error: 'Some slots are currently unavailable',
+        };
+      }
+      
+      return {
+        success: false,
+        data: { success: false },
+        error: error?.response?.data?.message || 'Failed to book monthly class',
+      } as ApiResponse<BookMonthlyClassRes>;
     }
   },
 
@@ -849,6 +916,24 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
     }
   },
 
+  // Bulk release locked slots
+  releaseSlots: async (
+    slotIds: number[]
+  ): Promise<ApiResponse<{ released: number[]; failed?: number[] }>> => {
+    try {
+      const response = await api.post('/bookings/release-bulk', { slotIds });
+      console.log('Release bulk slots response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Release bulk slots failed:', error);
+      return {
+        success: false,
+        data: { released: [], failed: slotIds },
+        error: 'Failed to release slots',
+      } as ApiResponse<{ released: number[]; failed?: number[] }>;
+    }
+  },
+
   // Confirm PayHere payment and finalize booking, updating all related tables
   confirmPayHerePayment: async (payload: {
     paymentId: string; // Only paymentId received from initiatePaymentPending
@@ -859,7 +944,7 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
       console.log('Confirm PayHere payment response:', response);
 
       // If payment confirmation is successful and slotId is provided, book the slot
-      if (response.data.success && payload.slotId) {
+      if (response.status ==200 && payload.slotId) {
         console.log('Payment confirmed successfully, proceeding to book slot:', payload.slotId);
         
         try {

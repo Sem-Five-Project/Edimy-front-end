@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { bookingAPI } from '@/lib/api';
 
 interface ReservationDetails {
-  reservationId: string;
+  reservationSlotId: string;
   expiresAt: string;
   timer: number;
 }
