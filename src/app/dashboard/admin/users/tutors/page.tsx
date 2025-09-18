@@ -208,15 +208,77 @@ export default function TutorsPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      // Export functionality would need to be implemented separately
-      // For now, we'll just log the tutors data
-      console.log('Exporting tutors:', tutors);
-      alert('Export functionality not yet implemented with the current API');
+      // Get all tutors data for export (without pagination)
+      const allTutorsData = await searchTutorsByAdmin({
+        name: nameSearch || undefined,
+        username: usernameSearch || undefined,
+        email: emailSearch || undefined,
+        tutorId: tutorIdSearch ? parseInt(tutorIdSearch) : undefined,
+        status: statusFilter,
+        verified: verifiedFilter,
+        page: 0,
+        size: 1000 // Get a large number to export all matching records
+      });
+
+      // Convert data to CSV format
+      const csvData = convertTutorsToCSV(allTutorsData);
+      
+      // Create and download the file
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().split('T')[0];
+      const filename = `tutors_export_${currentDate}.csv`;
+      link.setAttribute('download', filename);
+      
+      // Trigger download
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log(`Exported ${allTutorsData.length} tutors to ${filename}`);
     } catch (error) {
       console.error('Error exporting tutors:', error);
+      alert('Error exporting tutors. Please try again.');
     } finally {
       setIsExporting(false);
     }
+  };
+
+  // Helper function to convert tutors data to CSV format
+  const convertTutorsToCSV = (tutorsData: TutorsDto[]): string => {
+    const headers = [
+      'Tutor ID',
+      'First Name', 
+      'Last Name',
+      'Full Name',
+      'Hourly Rate',
+      'Status',
+      'Verified',
+      'Export Date'
+    ];
+    
+    const csvRows = [headers.join(',')];
+    
+    tutorsData.forEach(tutor => {
+      const row = [
+        tutor.tutorId,
+        `"${tutor.firstName}"`, // Wrap in quotes to handle commas
+        `"${tutor.lastName}"`,
+        `"${tutor.firstName} ${tutor.lastName}"`,
+        tutor.hourlyRate,
+        tutor.status,
+        tutor.verified ? 'Yes' : 'No',
+        new Date().toISOString().split('T')[0]
+      ];
+      csvRows.push(row.join(','));
+    });
+    
+    return csvRows.join('\n');
   };
 
   const getStatusBadgeColor = (status: string) => {
