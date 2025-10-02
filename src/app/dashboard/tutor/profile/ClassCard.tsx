@@ -1,12 +1,12 @@
 import React from "react";
 import { BookOpen, Trash2, Calendar, Clock, Activity, FileText } from "lucide-react";
-import { Class, Subject, ClassDoc } from "@/types";
+import { Class, Subject, ClassDoc, TutorSubject } from "@/types";
 import DocumentsSection from "./DocumentsSection";
 
 interface ClassCardProps {
   cls: Class;
   classTypes: { id: number; name: string; icon: string; color: string }[];
-  subjects: Subject[];
+  subjects: TutorSubject[];
   classDocs: Record<number, ClassDoc[]>;
   classAPI: any;
   tutorId: number;
@@ -30,6 +30,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const subject = subjects.find((s) => s.subjectId === cls.subjectId);
   const classDocs_ = classDocs[cls.classId!] || [];
 
+  // Fallback for className
+  const classNameInitial = cls.className && typeof cls.className === 'string' && cls.className.length > 0
+    ? cls.className.charAt(0).toUpperCase()
+    : <span className="text-xs">N/A</span>;
+
+  console.log('Rendering ClassCard for class:***************', cls);
+
   return (
     <div
       key={cls.classId}
@@ -39,7 +46,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-start space-x-3">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md">
-            {cls.className.charAt(0).toUpperCase()}
+            {classNameInitial}
           </div>
           <div>
             <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-700 transition-colors">

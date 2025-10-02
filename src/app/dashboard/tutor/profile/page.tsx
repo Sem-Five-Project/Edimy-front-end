@@ -13,6 +13,7 @@ import {
   ClassDoc,
   Subject,
   TutorAvailability,
+  TutorSubject,
 } from "@/types";
 import InteractiveCalendar from "./InteractiveCalendar";
 import StatsCard from "./StatsCard";
@@ -38,7 +39,7 @@ export default function TutorProfilePage() {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TutorAvailability[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [classDocs, setClassDocs] = useState<Record<number, ClassDoc[]>>({});
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjects, setSubjects] = useState<TutorSubject[]>([]);
   const [showAddDocModal, setShowAddDocModal] = useState(false);
   const [showAddTimeSlotModal, setShowAddTimeSlotModal] = useState(false);
   const [selectedDocClass, setSelectedDocClass] = useState<number | null>(null);
@@ -77,7 +78,7 @@ export default function TutorProfilePage() {
     { id: 3, name: "Monthly Recurring", icon: "📅", color: "bg-purple-100 text-purple-800" },
   ];
 
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
   const fullDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   // Mock stats for beautiful dashboard
@@ -103,6 +104,7 @@ export default function TutorProfilePage() {
 
         setAvailableTimeSlots(slotsRes);
         setClasses(classesRes);
+        console.log('Classes data:*************', classesRes);
         setSubjects(subjectsRes);
 
         // Fetch docs for each class
@@ -556,7 +558,7 @@ const handleUploadDocument = async () => {
                           <option value="">Select subject</option>
                           {subjects.map((subject) => (
                             <option key={subject.subjectId} value={subject.subjectId}>
-                              {subject.subjectName}
+                              {subject.subjectId}
                             </option>
                           ))}
                         </select>
