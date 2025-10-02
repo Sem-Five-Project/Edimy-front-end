@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
-import { Eye, EyeOff, Check, X, Loader2, User, Mail, Lock, UserCheck } from 'lucide-react';
+import { Eye, EyeOff, Check, X, Loader2, User, Mail, Lock, UserCheck, Shield, ArrowRight, Users, BookOpen, Trophy } from 'lucide-react';
 import { authAPI } from '@/lib/api';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -191,7 +191,6 @@ export default function Register() {
       const response = await authAPI.register(formData);
       console.log('Registration response:', response);
       if (response.user) {
-        // Don't store any token, just redirect to email verification
         localStorage.setItem('pendingEmail', formData.email);
         
         if (formData.role === 'TUTOR') {
@@ -212,7 +211,7 @@ export default function Register() {
   const getUsernameIcon = () => {
     switch (usernameStatus) {
       case 'checking':
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+        return <Loader2 className="h-4 w-4 animate-spin text-slate-500" />;
       case 'available':
         return <Check className="h-4 w-4 text-green-500" />;
       case 'taken':
@@ -235,34 +234,105 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 p-4">
-      <div className="flex items-center justify-center min-h-screen py-8">
-        <div className="w-full max-w-md">
-          <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-lg dark:bg-gray-900/80">
-            <CardHeader className="text-center pb-6">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full flex items-center justify-center mb-4">
-                <UserCheck className="h-8 w-8 text-white" />
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="w-full max-w-7xl grid lg:grid-cols-2 gap-8 items-start min-h-screen lg:min-h-0 py-8 lg:py-0">
+        
+        {/* Left Side - Platform Benefits */}
+        <div className="hidden lg:flex lg:items-center">
+          <div className="space-y-8 w-full">
+            <div className="space-y-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-900 dark:bg-white rounded-lg">
+                <Shield className="w-6 h-6 text-white dark:text-gray-900" />
               </div>
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+                Join Our Learning Community
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-lg">
+                Connect with thousands of learners and educators in a secure, professional environment designed for academic success.
+              </p>
+            </div>
+            
+            {/* Professional Image */}
+            <div className="relative rounded-xl overflow-hidden shadow-lg max-w-lg">
+              <img 
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                alt="Students collaborating and learning together"
+                className="w-full h-64 object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            </div>
+            
+            {/* Platform Benefits */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Why Choose Our Platform?</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">Expert Tutors</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Learn from verified professionals and subject matter experts</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <BookOpen className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">Personalized Learning</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Tailored courses and one-on-one sessions for your goals</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Trophy className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">Proven Results</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Join thousands who've achieved their learning objectives</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Registration Form */}
+        <div className="w-full max-w-lg mx-auto lg:mx-0 lg:max-w-none">
+          {/* Logo/Brand for mobile */}
+          <div className="text-center mb-8 lg:hidden">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-slate-900 to-slate-700 dark:from-white dark:to-gray-100 rounded-2xl mb-4 shadow-lg">
+              <Shield className="w-8 h-8 text-white dark:text-slate-900" />
+            </div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">EduPlatform</h2>
+          </div>
+
+          <Card className="backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 border-0 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50">
+            <CardHeader className="text-center pb-6 pt-8">
+              <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-br from-slate-900 to-slate-700 dark:from-white dark:to-gray-100 rounded-2xl flex items-center justify-center shadow-lg">
+                <UserCheck className="w-10 h-10 text-white dark:text-slate-900" />
+              </div>
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-2">
                 Create Account
               </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-400 text-lg">
+              <CardDescription className="text-slate-600 dark:text-slate-400 text-base">
                 Join our platform to connect with tutors or start teaching
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-5">
+            
+            <CardContent className="px-8 pb-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
-                  <Alert variant="destructive" className="animate-in slide-in-from-top-2">
-                    <AlertDescription className="text-sm">{error}</AlertDescription>
+                  <Alert variant="destructive" className="border-red-200 bg-red-50/50 dark:bg-red-950/20 backdrop-blur-sm">
+                    <AlertDescription className="text-red-700 dark:text-red-400">{error}</AlertDescription>
                   </Alert>
                 )}
 
                 {/* Name Fields */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-medium flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <Label htmlFor="firstName" className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                       First Name
                     </Label>
                     <Input
@@ -272,12 +342,12 @@ export default function Register() {
                       value={formData.firstName}
                       onChange={handleInputChange}
                       placeholder="John"
-                      className="h-11 border-2 focus:border-indigo-500 transition-colors"
+                      className="h-12 text-base border-2 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:border-slate-400 focus:ring-4 focus:ring-slate-200/50 dark:focus:border-slate-500 dark:focus:ring-slate-700/50 transition-all duration-200 backdrop-blur-sm"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium">
+                  <div className="space-y-3">
+                    <Label htmlFor="lastName" className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                       Last Name
                     </Label>
                     <Input
@@ -287,16 +357,15 @@ export default function Register() {
                       value={formData.lastName}
                       onChange={handleInputChange}
                       placeholder="Doe"
-                      className="h-11 border-2 focus:border-indigo-500 transition-colors"
+                      className="h-12 text-base border-2 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:border-slate-400 focus:ring-4 focus:ring-slate-200/50 dark:focus:border-slate-500 dark:focus:ring-slate-700/50 transition-all duration-200 backdrop-blur-sm"
                       required
                     />
                   </div>
                 </div>
 
                 {/* Username */}
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium flex items-center gap-2">
-                    <UserCheck className="h-4 w-4 text-gray-500" />
+                <div className="space-y-3">
+                  <Label htmlFor="username" className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                     Username
                   </Label>
                   <div className="relative">
@@ -307,7 +376,7 @@ export default function Register() {
                       value={formData.username}
                       onChange={handleInputChange}
                       placeholder="Choose a unique username"
-                      className="h-11 border-2 focus:border-indigo-500 transition-colors pr-12"
+                      className="h-12 text-base pr-12 border-2 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:border-slate-400 focus:ring-4 focus:ring-slate-200/50 dark:focus:border-slate-500 dark:focus:ring-slate-700/50 transition-all duration-200 backdrop-blur-sm"
                       required
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -315,7 +384,7 @@ export default function Register() {
                     </div>
                   </div>
                   {usernameStatus === 'checking' && (
-                    <p className="text-sm text-blue-600 animate-pulse">Checking availability...</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 animate-pulse">Checking availability...</p>
                   )}
                   {usernameStatus === 'taken' && (
                     <p className="text-sm text-red-600 flex items-center gap-1">
@@ -332,10 +401,9 @@ export default function Register() {
                 </div>
 
                 {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    Email
+                <div className="space-y-3">
+                  <Label htmlFor="email" className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                    Email Address
                   </Label>
                   <Input
                     id="email"
@@ -344,23 +412,23 @@ export default function Register() {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="your.email@example.com"
-                    className="h-11 border-2 focus:border-indigo-500 transition-colors"
+                    className="h-12 text-base border-2 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:border-slate-400 focus:ring-4 focus:ring-slate-200/50 dark:focus:border-slate-500 dark:focus:ring-slate-700/50 transition-all duration-200 backdrop-blur-sm"
                     required
                   />
                 </div>
 
                 {/* User Type Toggle */}
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-2 border-dashed border-gray-200 dark:border-gray-700">
+                <div className="bg-slate-50/50 dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700 backdrop-blur-sm">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-full transition-colors ${formData.role === 'TUTOR' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'}`}>
-                        {formData.role === 'TUTOR' ? <UserCheck className="h-5 w-5" /> : <User className="h-5 w-5" />}
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-3 rounded-xl transition-colors ${formData.role === 'TUTOR' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
+                        {formData.role === 'TUTOR' ? <UserCheck className="h-6 w-6" /> : <User className="h-6 w-6" />}
                       </div>
                       <div>
-                        <Label htmlFor="userType" className="cursor-pointer font-medium text-lg">
+                        <Label htmlFor="userType" className="cursor-pointer font-semibold text-lg text-slate-900 dark:text-white">
                           I want to be a {formData.role === 'TUTOR' ? 'Tutor' : 'Student'}
                         </Label>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                           {formData.role === 'TUTOR' 
                             ? 'Share your knowledge and teach others' 
                             : 'Find tutors and learn new skills'
@@ -372,24 +440,23 @@ export default function Register() {
                       id="userType"
                       checked={formData.role === 'TUTOR'}
                       onCheckedChange={handleUserTypeToggle}
-                      className="data-[state=checked]:bg-indigo-600"
+                      className="data-[state=checked]:bg-slate-900 dark:data-[state=checked]:bg-white"
                     />
                   </div>
                 </div>
 
                 {formData.role === 'TUTOR' && (
-                  <Alert className="border-indigo-200 bg-indigo-50 text-indigo-700 animate-in slide-in-from-top-2">
-                    <UserCheck className="h-4 w-4" />
-                    <AlertDescription>
-                      As a tutor, you'll need to complete additional verification steps after registration to start teaching.
+                  <Alert className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 backdrop-blur-sm">
+                    <UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertDescription className="text-blue-700 dark:text-blue-300">
+                      As a tutor, you'll complete additional verification steps after registration to start teaching.
                     </AlertDescription>
                   </Alert>
                 )}
 
                 {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-gray-500" />
+                <div className="space-y-3">
+                  <Label htmlFor="password" className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                     Password
                   </Label>
                   <div className="relative">
@@ -400,35 +467,35 @@ export default function Register() {
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Create a strong password"
-                      className="h-11 border-2 focus:border-indigo-500 transition-colors pr-12"
+                      className="h-12 text-base pr-12 border-2 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:border-slate-400 focus:ring-4 focus:ring-slate-200/50 dark:focus:border-slate-500 dark:focus:ring-slate-700/50 transition-all duration-200 backdrop-blur-sm"
                       required
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-11 px-3 hover:bg-transparent"
+                      className="absolute right-2 top-2 h-8 px-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   
                   {formData.password && (
-                    <div className="space-y-3 animate-in slide-in-from-top-2">
+                    <div className="space-y-3">
                       <div className="flex items-center space-x-3">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
                             style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
                           />
                         </div>
-                        <span className="text-sm font-medium min-w-16">{getPasswordStrengthText()}</span>
+                        <span className="text-sm font-medium min-w-16 text-slate-700 dark:text-slate-300">{getPasswordStrengthText()}</span>
                       </div>
                       {passwordStrength.feedback.length > 0 && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-2">Password requirements:</p>
-                          <ul className="text-sm text-red-700 space-y-1">
+                        <div className="bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/50 rounded-lg p-3 backdrop-blur-sm">
+                          <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-2">Password requirements:</p>
+                          <ul className="text-sm text-red-700 dark:text-red-400 space-y-1">
                             {passwordStrength.feedback.map((item, index) => (
                               <li key={index} className="flex items-center space-x-2">
                                 <X className="h-3 w-3 text-red-500 flex-shrink-0" />
@@ -443,9 +510,8 @@ export default function Register() {
                 </div>
 
                 {/* Confirm Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-gray-500" />
+                <div className="space-y-3">
+                  <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                     Confirm Password
                   </Label>
                   <div className="relative">
@@ -456,21 +522,21 @@ export default function Register() {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="Confirm your password"
-                      className="h-11 border-2 focus:border-indigo-500 transition-colors pr-12"
+                      className="h-12 text-base pr-12 border-2 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:border-slate-400 focus:ring-4 focus:ring-slate-200/50 dark:focus:border-slate-500 dark:focus:ring-slate-700/50 transition-all duration-200 backdrop-blur-sm"
                       required
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-11 px-3 hover:bg-transparent"
+                      className="absolute right-2 top-2 h-8 px-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                    <p className="text-sm text-red-600 flex items-center gap-1 animate-in slide-in-from-top-1">
+                    <p className="text-sm text-red-600 flex items-center gap-1">
                       <X className="h-3 w-3" />
                       Passwords do not match
                     </p>
@@ -479,35 +545,41 @@ export default function Register() {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white font-medium text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]" 
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-slate-900 to-slate-700 hover:from-slate-800 hover:to-slate-600 dark:from-white dark:to-gray-100 dark:text-slate-900 dark:hover:from-gray-100 dark:hover:to-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
                   disabled={isLoading || usernameStatus === 'checking'}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
                       Creating Account...
                     </>
                   ) : (
                     <>
                       {formData.role === 'TUTOR' ? 'Continue to Tutor Setup' : 'Create Account'}
-                      <UserCheck className="ml-2 h-5 w-5" />
+                      <ArrowRight className="ml-3 h-5 w-5" />
                     </>
                   )}
                 </Button>
 
-                <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Already have an account?{' '}
-                    <Button
-                      type="button"
-                      variant="link"
-                      className="p-0 h-auto font-semibold text-indigo-600 hover:text-indigo-700"
-                      onClick={() => router.push('/login')}
-                    >
-                      Sign in instead
-                    </Button>
-                  </p>
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="px-4 text-sm text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm">
+                      Already have an account?
+                    </span>
+                  </div>
                 </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 text-base font-medium border-2 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 backdrop-blur-sm transition-all duration-200"
+                  onClick={() => router.push('/login')}
+                >
+                  Sign in to existing account
+                </Button>
               </form>
             </CardContent>
           </Card>

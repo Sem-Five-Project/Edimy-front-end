@@ -26,6 +26,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useRouter } from "next/navigation";
 import { PayHerePayment } from "../../PayHerePayment";
+import { Slot } from "@radix-ui/react-slot";
 
 export default function BookingPaymentPage() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function BookingPaymentPage() {
 
   const { formatPrice, selectedCurrency } = useCurrency();
   const [error, setError] = useState("");
+  const [realTimeTimer, setRealTimeTimer] = useState<number>(0);
 
   useEffect(() => {
     if (!tutor || !selectedSlot || !bookingPreferences.selectedSubject || !bookingPreferences.selectedClassType) {
@@ -51,6 +53,27 @@ export default function BookingPaymentPage() {
     }
     setCurrentStep('payment');
   }, [tutor, selectedSlot, bookingPreferences, router, setCurrentStep]);
+
+  // Real-time timer effect based on reservationDetails.expiresAt
+  useEffect(() => {
+    if (!reservationDetails?.expiresAt) return;
+    
+    const updateTimer = () => {
+      const secs = Math.max(
+        0,
+        Math.floor((new Date(reservationDetails.expiresAt).getTime() - Date.now()) / 1000)
+      );
+      setRealTimeTimer(secs);
+    };
+
+    // Update immediately
+    updateTimer();
+    
+    // Then update every second
+    const id = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(id);
+  }, [reservationDetails?.expiresAt]);
 
   const formatTime = (time: string) =>
     new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
@@ -64,7 +87,13 @@ export default function BookingPaymentPage() {
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
+ const handleBack = async () => {
 
+    if (selectedSlot?.slotId) {
+      console.log('Going back, releasing slot:', selectedSlot.slotId);
+      await goBack(selectedSlot.slotId); 
+    }
+  };
   const calculateSlotHours = () => {
     if (!selectedSlot) return 0;
     const start = new Date(`2000-01-01T${selectedSlot.startTime}`);
@@ -72,8 +101,8 @@ export default function BookingPaymentPage() {
     return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
   };
 
-  const handlePaymentSuccess = () => {
-    const bookingId = `BK${Date.now()}`;
+  const handlePaymentSuccess = (bookingIdFromAPI?: number) => {
+    const bookingId = bookingIdFromAPI ? String(bookingIdFromAPI) : `BK${Date.now()}`;
     setBookingId(bookingId);
     router.push('/dashboard/student/find-tutor/book/confirmation');
   };
@@ -82,10 +111,38 @@ export default function BookingPaymentPage() {
     setError(errorMessage);
   };
 
+  const handleCancel = () => {
+    router.push('/dashboard/student/find-tutor');
+  };
+
   if (!tutor || !selectedSlot || !bookingPreferences) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // If reservation has expired, show a different state
+  if (reservationDetails && realTimeTimer === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <BookingProgress currentStep={currentStep} />
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
+          <Alert variant="destructive" className="animate-in slide-in-from-top-2 duration-300">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <span className="font-medium">Slot reservation has expired!</span>
+              <span className="text-sm block mt-1">Please return to slot selection to book a new time.</span>
+            </AlertDescription>
+          </Alert>
+          <div className="text-center">
+            <Button onClick={() => router.push('/dashboard/student/find-tutor')} className="mt-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Slot Selection
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -102,7 +159,7 @@ export default function BookingPaymentPage() {
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
-            onClick={goBack}
+            onClick={handleBack}
             className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -117,13 +174,42 @@ export default function BookingPaymentPage() {
         </div>
 
         {/* Timer Alert */}
-        {reservationDetails && reservationDetails.timer > 0 && (
-          <Alert className="animate-in slide-in-from-top-2 duration-300 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
-            <Timer className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800 dark:text-orange-300">
-              <span className="font-medium">Slot reserved for: </span>
-              <span className="font-bold text-lg">{formatTimer(reservationDetails.timer)}</span>
-              <span className="text-sm block mt-1">Complete payment before time expires</span>
+        {reservationDetails && realTimeTimer > 0 && (
+          <Alert className={`animate-in slide-in-from-top-2 duration-300 ${
+            realTimeTimer <= 60 
+              ? "border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800" 
+              : "border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800"
+          }`}>
+            <Timer className={`h-4 w-4 ${realTimeTimer <= 60 ? "text-red-600 animate-pulse" : "text-orange-600"}`} />
+            <AlertDescription className={realTimeTimer <= 60 ? "text-red-800 dark:text-red-300" : "text-orange-800 dark:text-orange-300"}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium">Slot reserved for: </span>
+                  <span className={`font-bold text-lg ${realTimeTimer <= 60 ? "text-red-600 animate-pulse" : ""}`}>
+                    {formatTimer(realTimeTimer)}
+                  </span>
+                  <span className="text-sm block mt-1">
+                    {realTimeTimer <= 60 ? "⚠️ Hurry! Time running out!" : "Complete payment before time expires"}
+                  </span>
+                </div>
+                <Badge 
+                  variant={realTimeTimer <= 60 ? "destructive" : "secondary"} 
+                  className="text-xs ml-4"
+                >
+                  {realTimeTimer <= 60 ? "URGENT" : "RESERVED"}
+                </Badge>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Timer Expired Alert */}
+        {reservationDetails && realTimeTimer === 0 && (
+          <Alert variant="destructive" className="animate-in slide-in-from-top-2 duration-300">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <span className="font-medium">Slot reservation has expired!</span>
+              <span className="text-sm block mt-1">Please select a new slot to continue booking.</span>
             </AlertDescription>
           </Alert>
         )}
@@ -301,45 +387,18 @@ export default function BookingPaymentPage() {
                 selectedDate={selectedDate!}
                 selectedSlot={selectedSlot}
                 bookingPreferences={bookingPreferences}
-                reservationTimer={reservationDetails?.timer || 0}
-                onBack={goBack}
+                reservationTimer={realTimeTimer}
+                onBack={handleBack}
                 onPaymentSuccess={handlePaymentSuccess}
                 onPaymentError={handlePaymentError}
+                onCancel={handleCancel}
               />
             </CardContent>
           </Card>
         </div>
 
         {/* Bottom Action Bar */}
-        <Card className="animate-in slide-in-from-bottom-4 duration-500 delay-300 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950/20 dark:to-gray-900 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <DollarSign className="h-8 w-8 text-blue-600" />
-                <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Amount</div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {formatPrice(bookingPreferences.finalPrice)}
-                  </div>
-                  {selectedCurrency.code !== 'LKR' && (
-                    <div className="text-xs text-gray-400">
-                      ≈ Rs. {bookingPreferences.finalPrice.toFixed(2)} LKR
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {reservationDetails && reservationDetails.timer > 0 && (
-                <div className="text-center">
-                  <div className="text-sm text-orange-600 dark:text-orange-400">Time Remaining</div>
-                  <div className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                    {formatTimer(reservationDetails.timer)}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );

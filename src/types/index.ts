@@ -7,8 +7,7 @@ export interface User {
   role: 'STUDENT' | 'TUTOR' | 'ADMIN';
   isVerified: boolean;
   createdAt: string;
-  profileImage?: string;
-  // Add other properties from the backend response
+  profileImage?: string | null; // Add this line
   accountNonExpired?: boolean;
   accountNonLocked?: boolean;
   credentialsNonExpired?: boolean;
@@ -17,6 +16,7 @@ export interface User {
   membership?: string | null;
   password?: string;
   updatedAt?: string;
+  stream?: string | null;
 }
 
 export interface Subject {
@@ -112,7 +112,7 @@ export interface RegisterData {
 
 export interface FilterOptions {
   search?: string;
-  subjects?: string[];
+  subjects?: number[]; // now numeric subject IDs
   minRating?: number;
   maxPrice?: number;
   experience?: number;
@@ -134,7 +134,7 @@ export interface PageableResponse<T> {
 }
 
 export interface ClassType {
-  id: string;
+  id: number;
   name: string;
   description: string;
   durationWeeks?: number;
@@ -149,22 +149,17 @@ export interface BookingPreferences {
 }
 
 export const CLASS_TYPES: ClassType[] = [
+ 
   {
-    id: 'lesson',
-    name: 'Single Lesson',
-    description: 'One-time tutoring session',
-    priceMultiplier: 1.0,
-  },
-  {
-    id: 'normal',
-    name: 'Regular Classes',
+    id: 1,
+    name: 'Regular Class',
     description: 'Weekly classes with flexible scheduling',
     durationWeeks: 4,
     priceMultiplier: 0.95,
   },
   {
-    id: 'monthly',
-    name: 'Monthly Recurring',
+    id: 2,
+    name: 'Monthly Class',
     description: 'Committed monthly package with best rates',
     durationWeeks: 12,
     priceMultiplier: 0.85,
@@ -367,3 +362,246 @@ export interface TutorAvailability {
 //   subjectName: string;
 // }
 
+export interface InitPayHerePendingReq  {
+  orderId: string;
+  studentId: number;
+  amount: number | string;
+  currency: string; // "LKR"
+  gateway?: "PAYHERE";
+};
+
+export interface InitPayHerePendingRes  {
+  orderId?: string;
+  order_id?: string; // Backend snake_case format
+  paymentId?: string;
+  payment_id?: string; // Backend snake_case format
+  expiresAt?: string; // ISO
+  expires_at?: string; // Backend snake_case format
+  status?: string;
+};
+
+export interface ValidatePayHereWindowRes  {
+  valid: boolean;
+  expired: boolean;
+  expiresAt: string;
+  remainingSeconds: number;
+};
+
+export interface SelectedSlotPattern {
+  id: string; // Unique identifier for the pattern
+  dayOfWeek: number; // 1-7 (Monday-Sunday)
+  times: string[]; // Array of time strings e.g., ['08:00', '14:00']
+  generatedSlots: RecurringSlot[];
+}
+
+export interface RecurringSlot {
+  id: string; // Unique identifier combining pattern info
+  dateTime: string; // Full ISO datetime
+  dayOfWeek: number; // 1-7 (Monday-Sunday)  
+  time: string; // e.g., '08:00'
+  isAvailable: boolean;
+  isLocked?: boolean;
+  patternId: string; // Reference to parent pattern
+}
+
+export interface MonthlyClassBooking {
+  id: string;
+  tutorId: string;
+  subjectId: string;
+  languageId: string;
+  patterns: SelectedSlotPattern[];
+  weekBreakdown: WeekBreakdown[];
+  totalSlots: number;
+  totalCost: number;
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  createdAt: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface WeekBreakdown {
+  weekStartDate: string;
+  slots: RecurringSlot[];
+  totalSlots: number;
+}
+
+export interface BookMonthlyClassReq {
+  tutorId: string;
+  subjectId: string;
+  languageId: string;
+  patterns: SelectedSlotPattern[];
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+}
+
+export interface BookMonthlyClassRes {
+  success: boolean;
+  bookingId?: string;
+  failedSlots?: {
+    dayOfWeek: number;
+    time: string;
+    reason: string;
+  }[];
+}
+export interface SubjectRequestBody {
+  educationLevel: string;
+  stream: string | null;
+}
+
+export interface SubjectDto {
+  subjectId: number;
+  subjectName: string;
+}
+export type ClassTypeForFiltering = 'ONE_TIME' | 'MONTHLY';
+
+export interface TimeSlot {
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+}
+
+export interface FindTutorFilters {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];            // numeric subjectIds
+  classType: ClassTypeForFiltering;
+  // For ONE_TIME
+  oneTimeDate?: Date | null;
+  timePeriods: Record<number, TimeSlot[] | TimeSlot>; // 0 for one-time OR weekday -> slots[]
+  // For MONTHLY
+  selectedWeekdays: number[]; // 0=Sunday .. 6=Saturday
+  // Other filters
+  rating?: number | null;
+  experience?: number | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  sortField?: 'PRICE' | 'RATING' | 'EXPERIENCE';
+  sortDirection?: 'ASC' | 'DESC';
+}
+
+export interface TutorSearchPayload {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];           // subject IDs
+  classType: ClassTypeForFiltering;
+  rating: number | null;
+  experience: number | null;
+  price: { min: number | null; max: number | null };
+  sort: { field: string; direction: 'ASC' | 'DESC' };
+  session?: {
+    date: string | null;        // YYYY-MM-DD
+    startTime: string | null;   // HH:MM (24h)
+    endTime: string | null;
+  };
+  recurring?: {
+    days: {
+      weekday: number;          // 0-6
+      slots: { startTime: string; endTime: string }[];
+    }[];
+  };
+}
+
+// ...existing imports...
+// Add / adjust below (avoid duplicate declarations)
+
+export interface TimeSlot {
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+}
+
+
+
+export interface ExtendedFilterOptionss extends DateTimeFilters {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];
+  minRating: number;
+  maxPrice: number;
+  minExperience: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  currentMonth?: Date | null;
+}
+
+export interface TimeSlotEdit {
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+}
+
+export interface DateTimeFilters {
+  classType: 'one-time' | 'monthly-recurring' | null;
+  selectedDate: Date | null;
+  selectedWeekdays: number[];
+  timePeriods: { [weekday: number]: { startTime: string; endTime: string } };
+  tempTimeSelection?: { [weekday: number]: Partial<TimeSlotEdit> };
+  addingNewSlot: boolean;
+}
+
+export interface DateTimeSelectorProps {
+  filters: DateTimeFilters;
+  onFilterChange: (key: string, value: any) => void;
+}
+export interface NormalizedTutor {
+  id: number;
+  name: string;
+  bio: string;
+  rating: number;
+  experienceMonths: number;
+  subjects: Array<{ name: string; hourlyRate: number }>;
+  hourlyRate: number;
+  languages: string[];
+}
+
+
+
+
+
+export interface SessionPayload {
+  date: string | null;       // "YYYY-MM-DD"
+  startTime: string | null;  // "HH:MM"
+  endTime: string | null;    // "HH:MM"
+}
+
+export interface RecurringPayload {
+  days: {
+    weekday: number;
+    dates: string[];
+    slots: { startTime: string; endTime: string }[];
+  }[];
+}
+
+export interface TutorCardProps {
+  tutor: NormalizedTutor;
+  onViewProfile: (tutor: NormalizedTutor) => void;
+  onBookClass: (tutor: NormalizedTutor) => void;
+}
+export interface WeekdayTimeRange {
+  startTime: string; // "HH:MM"
+  endTime: string;   // "HH:MM"
+}
+
+
+export interface ExtendedFilterOptions {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];
+  classType: 'one-time' | 'monthly-recurring' | null;
+  selectedDate: Date | null;
+  selectedWeekdays: number[];
+  // One slot per weekday (strings already formatted)
+  timePeriods: { [weekday: number]: WeekdayTimeRange };
+  // Temp builder still keeps granular hour/min while editing
+  tempTimeSelection?: { [weekday: number]: { startHour?: number; startMinute?: number; endHour?: number; endMinute?: number } };
+  addingNewSlot: boolean;
+  minRating: number;
+  maxPrice: number;
+  minExperience: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  currentMonth?: Date | null;
+}

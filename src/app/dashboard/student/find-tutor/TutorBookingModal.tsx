@@ -597,6 +597,13 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
     setError("");
   };
 
+  const handleCancel = () => {
+    setBookingStep("slots");
+    setSelectedSlot(null);
+    setReservationTimer(0);
+    setError("");
+  };
+
   const getDialogTitle = () => {
     switch (bookingStep) {
       case "slots":
@@ -647,6 +654,7 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
               onBack={handleBackToSlots}
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
+              onCancel={handleCancel}
             />
           )}
 {/* 

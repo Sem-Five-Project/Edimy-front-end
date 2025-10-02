@@ -1,6 +1,5 @@
-"use client"; 
+"use client";
 import React, { useState } from 'react';
-//import { useNavigate } from 'react-router-dom';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Shield, ArrowRight } from 'lucide-react';
 import { authAPI } from '@/lib/api';
 import { sendFCMTokenAfterLogin } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,53 +60,48 @@ export default function LoginPage() {
 
     try {
       const response = await authAPI.login(credentials);
-      console.log('response.data.success:', response);
-    if (response.success) {
-    const user = response.data.user;
-    // For now, use a mock token since the API response doesn't include it
-    const token = response.data.accessToken;
-    console.log('Login response token:', token);
-    // Set user and token in AuthContext
-    login(token, user);
+      console.log('Login response:', response);
+      
+      if (response.success) {
+        const user = response.data.user;
+        const token = response.data.accessToken;
+        console.log('Login response token:', token);
+        
+        // Login user
+        login(token, user);
 
-    // Send FCM token after successful login
-    console.log("🔥 About to send FCM token for user:", user.email || user.username);
-    try {
-      await sendFCMTokenAfterLogin(user.email || user.username);
-      console.log("🔥 FCM token sending completed");
-    } catch (fcmError) {
-      console.error("🔥 FCM token sending failed:", fcmError);
-      // Don't block login flow for FCM errors
-    }
+        // Reset attempt count on successful login
+        setAttemptCount(0);
 
-      // Reset attempt count on successful login
-      setAttemptCount(0);
+        // Send FCM token after successful login
+        console.log("🔥 About to send FCM token for user:", user.email || user.username);
+        try {
+          await sendFCMTokenAfterLogin(user.email || user.username);
+          console.log("🔥 FCM token sending completed");
+        } catch (fcmError) {
+          console.error("🔥 FCM token sending failed:", fcmError);
+          // Don't block login flow for FCM errors
+        }
 
-      // Navigate to dashboard based on user role
-      // Handle uppercase role formats from backend
-      const userRole = user.role;
-      if (userRole === 'TUTOR') {
-        router.push('/dashboard/tutor');
-      } else if (userRole === 'STUDENT') {
-        router.push('/dashboard/student');
-      } else if (userRole === 'ADMIN') {
-        router.push('/dashboard/admin');
+        // Navigate to dashboard based on user role
+        const userRole = user.role;
+        if (userRole === 'TUTOR') {
+          router.push('/dashboard/tutor');
+        } else if (userRole === 'STUDENT') {
+          router.push('/dashboard/student');
+        } else if (userRole === 'ADMIN') {
+          router.push('/dashboard/admin');
+        } else {
+          router.push('/not-found');
+        }
       } else {
-        // For unknown roles, show 404
-        router.push('/not-found');
+        const newAttemptCount = attemptCount + 1;
+        setAttemptCount(newAttemptCount);
+        setError('Invalid credentials. Please check your email/username and password.');
       }
-    } else {
-      // Increment attempt count on failed login
-      const newAttemptCount = attemptCount + 1;
-      setAttemptCount(newAttemptCount);
-
-      // Generic error message to avoid revealing if email/username exists
-      setError('Invalid credentials. Please check your email/username and password.');
-    }
     } catch (error: unknown) {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
-      
       setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -115,105 +109,189 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to your account to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="usernameOrEmail">Email or Username</Label>
-              <Input
-                id="usernameOrEmail"
-                name="usernameOrEmail"
-                type="text"
-                value={credentials.usernameOrEmail}
-                onChange={handleInputChange}
-                placeholder="Enter your email or username"
-                required
-              />
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+        
+        {/* Left Side - Image and Content */}
+        <div className="hidden lg:block">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-900 dark:bg-white rounded-lg">
+                <Shield className="w-6 h-6 text-white dark:text-gray-900" />
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+                Secure Learning Platform
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                Access your educational resources with enterprise-grade security and seamless user experience.
+              </p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={credentials.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter your password"
-                  className="pr-10"
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+            
+            {/* Professional Image */}
+            <div className="relative rounded-xl overflow-hidden shadow-lg">
+              <img 
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
+                alt="Professional team collaboration"
+                className="w-full h-64 object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-900 dark:bg-white rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Advanced authentication system</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-900 dark:bg-white rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Role-based access control</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-900 dark:bg-white rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">24/7 secure cloud infrastructure</span>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="flex items-center justify-between">
-              <Button
-                type="button"
-                variant="link"
-                className="p-0 text-sm"
-                onClick={() => router.push('/forgot-password')}
-              >
-                Forgot password?
-              </Button>
+        {/* Right Side - Login Form */}
+        <div className="w-full max-w-md mx-auto lg:mx-0">
+          {/* Logo/Brand for mobile */}
+          <div className="text-center mb-8 lg:hidden">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-900 dark:bg-white rounded-xl mb-4">
+              <Shield className="w-8 h-8 text-white dark:text-gray-900" />
             </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">EduPlatform</h2>
+          </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign in'
-              )}
-            </Button>
+          <Card className="shadow-lg border border-gray-200 dark:border-gray-700">
+            <CardHeader className="space-y-2 pb-6">
+              <CardTitle className="text-2xl font-semibold text-center text-gray-900 dark:text-white">
+                Sign In
+              </CardTitle>
+              <CardDescription className="text-center text-gray-600 dark:text-gray-400">
+                Enter your credentials to access your account
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertDescription className="text-sm">{error}</AlertDescription>
+                  </Alert>
+                )}
 
-            <div className="text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Don't have an account?{' '}
-                <Button
-                  type="button"
-                  variant="link"
-                  className="p-0 font-semibold"
-                  onClick={() => router.push('/register')}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label 
+                      htmlFor="usernameOrEmail" 
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Email or Username
+                    </Label>
+                    <Input
+                      id="usernameOrEmail"
+                      name="usernameOrEmail"
+                      type="text"
+                      value={credentials.usernameOrEmail}
+                      onChange={handleInputChange}
+                      placeholder="Enter your email or username"
+                      className="h-11 border-gray-300 dark:border-gray-600 focus:border-gray-900 focus:ring-gray-900 dark:focus:border-gray-400 dark:focus:ring-gray-400"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label 
+                      htmlFor="password" 
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={credentials.password}
+                        onChange={handleInputChange}
+                        placeholder="Enter your password"
+                        className="h-11 pr-11 border-gray-300 dark:border-gray-600 focus:border-gray-900 focus:ring-gray-900 dark:focus:border-gray-400 dark:focus:ring-gray-400"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-11 px-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end pt-2">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="p-0 h-auto text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                    onClick={() => router.push('/forgot-password')}
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 font-medium transition-colors"
+                  disabled={isLoading}
                 >
-                  Sign up
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Sign in
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
-              </p>
-            </div>
 
-            {/* Demo credentials for testing */}
-            <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
-              <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
-                Demo credentials: test@example.com / password
-              </p>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Don't have an account?{' '}
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="p-0 h-auto font-medium text-gray-900 hover:text-gray-700 dark:text-white dark:hover:text-gray-300"
+                      onClick={() => router.push('/register')}
+                    >
+                      Create account
+                    </Button>
+                  </p>
+                </div>
+
+                {/* Demo credentials */}
+                <div className="mt-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Demo Account
+                    </p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">
+                      test@example.com / password
+                    </p>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
-};
+}
