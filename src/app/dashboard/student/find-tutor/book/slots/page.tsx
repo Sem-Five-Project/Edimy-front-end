@@ -75,12 +75,14 @@ export default function BookingSlotsPage() {
     }
     setCurrentStep('slot-selection');
     if (selectedDate) loadSlots(selectedDate);
+    console.log('BookingSlotsPage mounted with tutor:', tutor, 'and selectedDate:', selectedDate);
   }, [tutor, selectedDate, router, setCurrentStep]);
 
   const loadSlots = async (date: Date) => {
     if (!tutor) return;
     setIsLoading(true);
     try {
+      console.log('Loading slots for date:', date);
       const dateString = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
       const response = await tutorAPI.getTutorSlots(
         tutor.tutorProfileId.toString(),
@@ -156,15 +158,25 @@ export default function BookingSlotsPage() {
     const datesToCheck: Date[] = [];
     const cursor = new Date(start);
     while (cursor <= end) {
-      // If any pattern matches this weekday, we need to check this date
       if (patterns.some(p => p.dayOfWeek === getDayOfWeek1to7(cursor))) {
         datesToCheck.push(new Date(cursor));
       }
       cursor.setDate(cursor.getDate() + 1);
     }
+    // if (!tutor) return { all: [] as RecurringSlot[], weeks: [] as WeekBreakdown[] };
+    // const { start, end } = getMonthDateRange();
 
-    // Fetch slots for each date in parallel
-    const results = await Promise.all(
+    // // Collect all dates we need to check
+    // const datesToCheck: Date[] = [];
+    // const cursor = new Date(start);
+    // while (cursor <= end) {
+    //   // If any pattern matches this weekday, we need to check this date
+    //   if (patterns.some(p => p.dayOfWeek === getDayOfWeek1to7(cursor))) {
+    //     datesToCheck.push(new Date(cursor));
+    //   }
+    //   cursor.setDate(cursor.getDate() + 1);
+    // }
+const results = await Promise.all(
       datesToCheck.map(async (d) => {
         const dateString = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         try {
@@ -179,10 +191,26 @@ export default function BookingSlotsPage() {
         }
       })
     );
+    // Fetch slots for each date in parallel
+    // const results = await Promise.all(
+    //   datesToCheck.map(async (d) => {
+    //     const dateString = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    //     try {
+    //       const res = await tutorAPI.getTutorSlots(
+    //         tutor.tutorProfileId.toString(),
+    //         dateString,
+    //         true
+    //       );
+    //       return { date: d, slots: res.success ? res.data : [] as TimeSlot[] };
+    //     } catch {
+    //       return { date: d, slots: [] as TimeSlot[] };
+    //     }
+    //   })
+    // );
 
     // Build recurring slots
     const occurrences: RecurringSlot[] = [];
-    for (const p of patterns) {
+     for (const p of patterns) {
       for (const range of p.times) {
         const [s, e] = range.split("-");
         for (const r of results) {
@@ -198,10 +226,32 @@ export default function BookingSlotsPage() {
             time: range,
             isAvailable: !!found && found.status === 'AVAILABLE',
             patternId: p.id,
+            // carry slotId so we can reserve all at once
+            slotId: found?.slotId,
           });
         }
       }
     }
+    // for (const p of patterns) {
+    //   for (const range of p.times) {
+    //     const [s, e] = range.split("-");
+    //     for (const r of results) {
+    //       if (getDayOfWeek1to7(r.date) !== p.dayOfWeek) continue;
+    //       // Check availability by matching start/end
+    //       const found = r.slots.find(sl => sl.startTime.startsWith(s) && sl.endTime.startsWith(e));
+    //       const dateStr = `${r.date.getFullYear()}-${String(r.date.getMonth()+1).padStart(2,'0')}-${String(r.date.getDate()).padStart(2,'0')}`;
+    //       const iso = `${dateStr}T${s}:00`;
+    //       occurrences.push({
+    //         id: `${p.id}:${dateStr}:${range}`,
+    //         dateTime: iso,
+    //         dayOfWeek: p.dayOfWeek,
+    //         time: range,
+    //         isAvailable: !!found && found.status === 'AVAILABLE',
+    //         patternId: p.id,
+    //       });
+    //     }
+    //   }
+    // }
 
     // Group by week start (Monday)
     const groupByWeek = new Map<string, RecurringSlot[]>();
@@ -285,18 +335,20 @@ export default function BookingSlotsPage() {
   }, [JSON.stringify(selectedPatterns), preferences.selectedSubject, preferences.selectedClassType, tutor, JSON.stringify(excludedOccurrenceIds)]);
 
 
-  const handleContinue = async () => {
+  const handleContinue1 = async () => {
   if (!isValid()) {
     setError("Please complete all selections to continue");
     return;
   }
+  console.log("here")
 
   try {
     setIsLoading(true);
     setError('');
+  console.log("here1")
 
     // Handle monthly class bookings differently
-    if (preferences.selectedClassType?.id === 2) {
+    if (preferences.selectedClassType?.id === 3) {
       // Build API payload
       const { start, end } = getMonthDateRange();
       const payload: BookMonthlyClassReq = {
@@ -352,16 +404,26 @@ export default function BookingSlotsPage() {
       router.push('/dashboard/student/find-tutor/book/payment');
       return;
     }
+  console.log("here 2")
 
     // Handle regular slot bookings
-    if (!selectedSlotLocal) {
-      setError("Please select a valid slot");
-      return;
-    }
-    console.log("Selected slot for booking:", selectedSlotLocal);
+    // if (!selectedSlotLocal) {
+    //   setError("Please select a valid slot");
+    //     console.log("here 3")
 
+    //   return;
+      
+    // }
+    console.log("here we are again");
+    
     // Try to reserve the slot first
-    const response = await bookingAPI.reserveSlot(selectedSlotLocal.slotId);
+      const response = await bookingAPI.reserveSlots(
+        [selectedSlotLocal.slotId],
+        {
+          recurring: preferences.selectedClassType?.id === 2 ? true : null,
+          weekday: selectedDate ? getDayOfWeek1to7(selectedDate) : null,
+        }
+      );
     console.log('Reserve slot response:', response);
 
     if (!response.success) {
@@ -384,10 +446,11 @@ export default function BookingSlotsPage() {
     
       // Set reservation details
       setReservationDetails({
-        reservationSlotId: response.slotId || `temp-${Date.now()}`,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-        timer: 900
-      });    // Add a small delay to ensure context is updated
+        reservationSlotId: response.data?.reservationId || `temp-${Date.now()}`,
+        expiresAt: response.data?.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+        timer: 900,
+      });
+      // Add a small delay to ensure context is updated
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Navigate to payment page
@@ -402,6 +465,111 @@ export default function BookingSlotsPage() {
     setIsLoading(false);
   }
 };
+
+  const handleContinue = async () => {
+    if (!isValid()) {
+      setError("Please complete all selections to continue");
+      return;
+    }
+      console.log("here we are again");
+
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Monthly (recurring) flow: reserve all selected visible occurrences
+      if (isMonthlyClassType) {
+        // Build the slotIds list dynamically from visible available occurrences
+        const slotIdsToReserve = visibleAvailableOccurrences
+          .map(o => o.slotId)
+          .filter((id): id is number => typeof id === 'number');
+
+        if (slotIdsToReserve.length === 0) {
+          setError('No available slots to reserve for the selected patterns.');
+          setIsLoading(false);
+          return;
+        }
+      console.log("here we are again");
+
+        const response = await bookingAPI.reserveSlots(slotIdsToReserve);
+        if (!response.success) {
+          setError(response.error || 'Failed to reserve monthly slots');
+          setIsLoading(false);
+          return;
+        }
+
+        // Compose local monthly booking data for payment step
+        const { start, end } = getMonthDateRange();
+        const booking: MonthlyBookingType = {
+          id: response.data?.reservationId || `monthly-${Date.now()}`,
+          tutorId: String(tutor!.tutorProfileId),
+          subjectId: String(preferences.selectedSubject!.subjectId),
+          languageId: String((preferences.selectedLanguage || tutor!.languages[0]).languageId),
+          patterns: selectedPatterns,
+          weekBreakdown,
+          totalSlots: slotIdsToReserve.length,
+          totalCost: monthlyTotal,
+          status: 'PENDING',
+          createdAt: new Date().toISOString(),
+          startDate: `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`,
+          endDate: `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`,
+        };
+
+        setMonthlyBookingData(booking);
+        const finalPreferences = { ...preferences, finalPrice: monthlyTotal };
+        setBookingPreferences(finalPreferences);
+
+        // Reservation details for countdown
+        setReservationDetails({
+          reservationSlotId: response.data?.reservationId || `temp-${Date.now()}`,
+          expiresAt: response.data?.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          timer: 900,
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+        proceedToStep('payment');
+        router.push('/dashboard/student/find-tutor/book/payment');
+        return;
+      }
+
+      // Regular flow: reserve selected slot (sent as a list)
+      if (!selectedSlotLocal) {
+        setError("Please select a valid slot");
+        setIsLoading(false);
+        return;
+      }
+      console.log("here we are again");
+      const response = await bookingAPI.reserveSlots([selectedSlotLocal.slotId]);
+      if (!response.success) {
+        setError(response.error || "This slot is currently unavailable");
+        setIsLoading(false);
+        return;
+      }
+
+      const finalPreferences = {
+        ...preferences,
+        finalPrice: calculatePrice()
+      };
+
+      setSelectedSlot(selectedSlotLocal);
+      setBookingPreferences(finalPreferences);
+
+      setReservationDetails({
+        reservationSlotId: response.data?.reservationId || `temp-${Date.now()}`,
+        expiresAt: response.data?.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+        timer: 900,
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+      proceedToStep('payment');
+      router.push('/dashboard/student/find-tutor/book/payment');
+    } catch (error) {
+      console.error("Booking error:", error);
+      setError("Failed to process booking. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   if (!tutor) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <Loader2 className="h-8 w-8 animate-spin text-blue-600" />

@@ -8,6 +8,7 @@ export interface CalendarProps {
   mode?: 'single' | 'multiple' | 'range' | 'weekday';
   selected?: Date | Date[] | { from: Date; to?: Date } | number;
   onSelect?: (dates: Date[]) => void;
+  onClickDate?: (date: Date) => void;
   onMonthChange?: (month: Date) => void;
   disabled?: (date: Date) => boolean;
   className?: string;
@@ -38,6 +39,7 @@ function Calendar({
   mode = 'weekday',
   selected,
   onSelect,
+  onClickDate,
   onMonthChange,
   disabled = (date: Date) => {
     const today = new Date();
@@ -59,41 +61,31 @@ function Calendar({
   const weekdays: string[] = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
   // Function to get all future dates of the same weekday within the SELECTED DATE'S MONTH
-  const getFutureWeekdayDates = (selectedDate: Date): Date[] => {
+
+    const getMonthWeekdayDates = (selectedDate: Date): Date[] => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const targetWeekday = selectedDate.getDay();
     const dates: Date[] = [];
-    
-    // Use the month and year of the selected date
-    const currentYear = selectedDate.getFullYear();
-    const currentMonthIndex = selectedDate.getMonth();
-    
-    // Get the last day of the current month
-    const lastDayOfMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
-    
-    // Start from the later of selected date or today
-    let startDate = new Date(Math.max(selectedDate.setHours(0,0,0,0), today.getTime()));
-    // Move to the first occurrence of the target weekday within the selected month
-    if (startDate.getMonth() !== currentMonthIndex || startDate.getFullYear() !== currentYear) {
-      startDate = new Date(currentYear, currentMonthIndex, 1);
-    }
-    while (startDate.getDay() !== targetWeekday && startDate.getDate() <= lastDayOfMonth) {
-      startDate.setDate(startDate.getDate() + 1);
-    }
-    
-    // Collect all occurrences of the same weekday within the current month
-    let currentDate = new Date(startDate);
-    while (currentDate.getMonth() === currentMonthIndex && currentDate.getFullYear() === currentYear) {
-      // Only include if not disabled and not in the past
-      if (!disabled(currentDate) && currentDate >= today) {
-        dates.push(new Date(currentDate));
+
+    const year = selectedDate.getFullYear();
+    const monthIndex = selectedDate.getMonth();
+
+    // Find first occurrence of targetWeekday in that month
+    const firstOfMonth = new Date(year, monthIndex, 1);
+    const firstWeekday = firstOfMonth.getDay();
+    const diff = (targetWeekday - firstWeekday + 7) % 7;
+    const firstOccurrence = new Date(year, monthIndex, 1 + diff);
+
+    // Collect all occurrences in the month, but exclude past dates and custom disabled
+    let d = new Date(firstOccurrence);
+    while (d.getMonth() === monthIndex && d.getFullYear() === year) {
+      if (!disabled(d) && d >= today) {
+        dates.push(new Date(d));
       }
-      // Move to next week
-      currentDate.setDate(currentDate.getDate() + 7);
+      d.setDate(d.getDate() + 7);
     }
-    
     return dates;
   };
 
@@ -103,6 +95,13 @@ function Calendar({
     );
   };
 
+  // Check if date has same weekday as any selected date (for highlighting)
+  const isSameWeekdayAsSelected = (date: Date): boolean => {
+    if (selectedDates.length === 0) return false;
+    const dayOfWeek = date.getDay();
+    return selectedDates.some(selectedDate => selectedDate.getDay() === dayOfWeek);
+  };
+
   interface DayCell {
     date: Date | null;
     isCurrentMonth: boolean;
@@ -110,9 +109,10 @@ function Calendar({
     isSelected: boolean;
     isDisabled: boolean;
     isEmpty: boolean;
+    isSameWeekday: boolean;
   }
 
-  const getDaysInMonth = (date: Date): DayCell[] => {
+   const getDaysInMonth = (date: Date): DayCell[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -122,45 +122,87 @@ function Calendar({
 
     const days: DayCell[] = [];
 
-    // Add empty cells for previous month (but don't show the dates)
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push({
-        date: null, // No date for empty cells
-        isCurrentMonth: false,
-        isToday: false,
-        isSelected: false,
-        isDisabled: true,
-        isEmpty: true
-      });
+    // If showing outside days, fill leading days from previous month as clickable
+    if (showOutsideDays && startingDayOfWeek > 0) {
+      const prevMonthLastDate = new Date(year, month, 0).getDate();
+      for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+        const dayNum = prevMonthLastDate - i;
+        const d = new Date(year, month - 1, dayNum);
+        const today = new Date();
+        const isToday = d.toDateString() === today.toDateString();
+        days.push({
+          date: d,
+          isCurrentMonth: false,
+          isToday,
+          isSelected: isDateSelected(d),
+          isDisabled: disabled(d),
+          isEmpty: false,
+          isSameWeekday: isSameWeekdayAsSelected(d)
+        });
+      }
+    } else {
+      // Add empty cells for previous month (not clickable)
+      for (let i = 0; i < startingDayOfWeek; i++) {
+        days.push({
+          date: null,
+          isCurrentMonth: false,
+          isToday: false,
+          isSelected: false,
+          isDisabled: true,
+          isEmpty: true,
+          isSameWeekday: false
+        });
+      }
     }
 
-    // Add current month days only
+    // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
+      const d = new Date(year, month, day);
       const today = new Date();
-      const isToday = date.toDateString() === today.toDateString();
+      const isToday = d.toDateString() === today.toDateString();
 
       days.push({
-        date,
+        date: d,
         isCurrentMonth: true,
         isToday,
-        isSelected: isDateSelected(date),
-        isDisabled: disabled(date),
-        isEmpty: false
+        isSelected: isDateSelected(d),
+        isDisabled: disabled(d),
+        isEmpty: false,
+        isSameWeekday: isSameWeekdayAsSelected(d)
       });
     }
 
-    // Fill remaining cells if needed (but don't show dates)
-    const remainingCells = 42 - days.length;
-    for (let i = 0; i < remainingCells; i++) {
-      days.push({
-        date: null,
-        isCurrentMonth: false,
-        isToday: false,
-        isSelected: false,
-        isDisabled: true,
-        isEmpty: true
-      });
+    // Trailing cells to complete 6 rows (42 cells)
+    const totalCells = 42;
+    if (showOutsideDays) {
+      const remaining = totalCells - days.length;
+      for (let i = 1; i <= remaining; i++) {
+        const d = new Date(year, month + 1, i);
+        const today = new Date();
+        const isToday = d.toDateString() === today.toDateString();
+        days.push({
+          date: d,
+          isCurrentMonth: false,
+          isToday,
+          isSelected: isDateSelected(d),
+          isDisabled: disabled(d),
+          isEmpty: false,
+          isSameWeekday: isSameWeekdayAsSelected(d)
+        });
+      }
+    } else {
+      const remainingCells = totalCells - days.length;
+      for (let i = 0; i < remainingCells; i++) {
+        days.push({
+          date: null,
+          isCurrentMonth: false,
+          isToday: false,
+          isSelected: false,
+          isDisabled: true,
+          isEmpty: true,
+          isSameWeekday: false
+        });
+      }
     }
 
     return days;
@@ -176,19 +218,23 @@ function Calendar({
   if (onMonthChange) onMonthChange(newMonth);
   };
 
-  const handleDateClick = (date: Date, isDisabled: boolean) => {
+ 
+    const handleDateClick = (date: Date, isDisabled: boolean) => {
     if (isDisabled || !date) return;
 
-    const weekdayDates = getFutureWeekdayDates(date);
+    // Select ALL weekday occurrences within that month, excluding past dates
+    const weekdayDates = getMonthWeekdayDates(date);
     setSelectedDates(weekdayDates);
     
     if (onSelect) {
       onSelect(weekdayDates);
     }
+    if (onClickDate) {
+      onClickDate(date);
+    }
   };
 
   const days = getDaysInMonth(currentMonth);
-
   return (
     <div className={cn("p-3", className)}>
       <div className={cn("space-y-4", classNames.months)}>
@@ -260,9 +306,17 @@ function Calendar({
                           className={cn(
                             "h-7 sm:h-8 md:h-9 w-7 sm:w-8 md:w-9 p-0 font-normal rounded-md transition-all duration-200 hover:bg-blue-100 dark:hover:bg-blue-900/20 focus:bg-blue-100 dark:focus:bg-blue-900/20",
                             classNames.day,
+                            !day.isCurrentMonth && cn(
+                              "opacity-80", // style for outside days
+                              classNames.day_outside
+                            ),
                             day.isSelected && cn(
                               "bg-blue-600 text-white hover:bg-blue-700 focus:bg-blue-700 focus:text-white rounded-full font-medium ring-2 ring-blue-500 ring-offset-1 ring-offset-background shadow-md",
                               classNames.day_selected
+                            ),
+                            day.isSameWeekday && !day.isSelected && !day.isDisabled && cn(
+                              "bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50 font-medium",
+                              "hover:bg-blue-200 dark:hover:bg-blue-900/50"
                             ),
                             day.isToday && !day.isSelected && cn(
                               "bg-blue-100 text-blue-900 dark:bg-blue-900/20 dark:text-blue-300 font-semibold border-2 border-blue-500 rounded-full ring-1 ring-blue-500 ring-offset-1 ring-offset-background shadow-sm",
@@ -307,6 +361,7 @@ function Calendar({
       )}
     </div>
   );
+
 }
 
 Calendar.displayName = "Calendar";

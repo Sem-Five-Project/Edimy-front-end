@@ -336,13 +336,21 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
             throw new Error("Payment ID not found");
           }
           
+          // Ensure required booking preference fields exist
+          if (!bookingPreferences.selectedSubject || !bookingPreferences.selectedLanguage || !bookingPreferences.selectedClassType) {
+            console.error("Missing booking preference details:", bookingPreferences);
+            onPaymentError("Missing booking preference details (subject/language/class type). Please re-select and try again.");
+            setIsProcessing(false);
+            return;
+          }
+
           const confirmPayload = {
             paymentId: paymentId,
-            tutorId: tutor.tutorProfileId || parseInt(String(tutor.id), 10),
+            tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
             slotId: selectedSlot.slotId,
-            subjectId: bookingPreferences.selectedSubject?.subjectId,
-            languageId: bookingPreferences.selectedLanguage?.languageId,
-            classTypeId: bookingPreferences.selectedClassType?.id,
+            subjectId: bookingPreferences.selectedSubject.subjectId,
+            languageId: bookingPreferences.selectedLanguage.languageId,
+            classTypeId: bookingPreferences.selectedClassType.id,
             paymentTime: new Date().toISOString(),
           };
           

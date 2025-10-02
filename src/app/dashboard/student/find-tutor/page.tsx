@@ -1,357 +1,483 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+ import { ExtendedFilterOptions,NormalizedTutor,SessionPayload,RecurringPayload } from '@/types/index';
+
 import {
   Search,
   Filter,
+  X,
   ChevronLeft,
-  ChevronRight,
+  ChevronRight
 } from 'lucide-react';
-import { tutorAPI } from '@/lib/api';
-import { Tutor, FilterOptions, Subject, Language } from '@/types';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useBooking } from '@/contexts/BookingContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { CurrencySelector } from '@/components/ui/currency-selector';
-
-// Import the responsive TutorCard components
+import {filterAPI} from '@/lib/api';
 import { ResponsiveTutorCard } from '@/components/ui/tutorcard'; // Adjust path as needed
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { useAuth } from '@/contexts/AuthContext';
 
-const SUBJECTS = [
-  'Mathematics',
-  'Physics',
-  'Chemistry',
-  'Biology',
-  'English',
-  'History',
-  'Geography',
-  'Computer Science',
-  'Economics',
-  'Psychology',
-];
+// Import your modular components
+import BasicFiltersComponent from './BasicFiltersComponent';
+import AdvancedFiltersComponent from './AdvancedFiltersComponent';
 
-const SORT_OPTIONS = [
-  { value: 'rating', label: 'Highest Rated' },
-  { value: 'price', label: 'Price: Low to High' },
-  { value: 'experience', label: 'Most Experienced' },
-  { value: 'completion_rate', label: 'Best Completion Rate' },
-];
 
-// ==================== HORIZONTAL LOADING SKELETON ====================
-const TutorCardSkeleton = () => {
-  return (
-    <>
-      {/* Desktop/Tablet Horizontal Skeleton */}
-      <div className="hidden sm:block">
-        <Card className="border-0 bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 animate-pulse">
-          <CardContent className="p-0">
-            <div className="flex">
-              {/* Left section - Profile */}
-              <div className="flex-shrink-0 p-4">
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-2">
-                    <Skeleton className="h-16 w-16 lg:h-20 lg:w-20 rounded-full" />
-                    <Skeleton className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full" />
-                  </div>
-                  <Skeleton className="h-4 w-20 mb-2" />
-                  <div className="flex space-x-1 mb-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-3 w-3 rounded-sm" />
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 w-full">
-                    <Skeleton className="h-12 rounded-lg" />
-                    <Skeleton className="h-12 rounded-lg" />
-                  </div>
-                </div>
-              </div>
 
-              {/* Right section - Details */}
-              <div className="flex-1 p-4 border-l border-slate-100 dark:border-slate-700/50">
-                <div className="h-full flex flex-col">
-                  <div className="mb-3">
-                    <Skeleton className="h-3 w-16 mb-1" />
-                    <div className="flex space-x-1">
-                      <Skeleton className="h-5 w-16 rounded-full" />
-                      <Skeleton className="h-5 w-16 rounded-full" />
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 mb-3">
-                    <Skeleton className="h-4 w-24 mb-2" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-8 rounded-lg" />
-                      <Skeleton className="h-8 rounded-lg" />
-                    </div>
-                  </div>
-                  
-                  <div className="mb-3 flex-1">
-                    <Skeleton className="h-3 w-full mb-1" />
-                    <Skeleton className="h-3 w-4/5" />
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Skeleton className="flex-1 h-9 rounded-md" />
-                    <Skeleton className="flex-1 h-9 rounded-md" />
-                  </div>
-                </div>
-              </div>
+// Interfaces (moved outside mock API literal)
+
+
+
+const TutorCardSkeleton = () => (
+  <Card className="border-0 bg-white ring-1 ring-gray-200 animate-pulse">
+    <CardContent className="p-0">
+      <div className="flex">
+        <div className="flex-shrink-0 p-6">
+          <div className="flex flex-col items-center text-center">
+            <Skeleton className="h-20 w-20 rounded-full mb-2" />
+            <Skeleton className="h-4 w-20 mb-2" />
+            <div className="flex space-x-1 mb-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-3 w-3 rounded-sm" />
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="grid grid-cols-1 gap-2 w-full">
+              <Skeleton className="h-10 rounded-lg" />
+              <Skeleton className="h-10 rounded-lg" />
+            </div>
+          </div>
+        </div>
 
-      {/* Mobile Vertical Skeleton */}
-      <div className="block sm:hidden">
-        <Card className="border-0 bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 animate-pulse">
-          <CardContent className="p-4">
-            <div className="flex items-start space-x-3 mb-3">
-              <div className="relative">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <Skeleton className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full" />
-              </div>
-              <div className="flex-1">
-                <Skeleton className="h-4 w-3/4 mb-1" />
-                <div className="flex space-x-1 mb-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-3 w-3 rounded-sm" />
-                  ))}
-                </div>
-                <div className="flex space-x-2">
-                  <Skeleton className="h-3 w-8" />
-                  <Skeleton className="h-3 w-8" />
-                </div>
+        <div className="flex-1 p-6 border-l border-gray-100">
+          <div className="h-full flex flex-col">
+            <div className="mb-3">
+              <Skeleton className="h-3 w-16 mb-1" />
+              <div className="flex space-x-1">
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-full" />
               </div>
             </div>
             
-            <div className="space-y-2 mb-3">
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-4/5" />
+            <div className="flex-1 mb-3">
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-4/5" />
             </div>
             
-            <div className="flex space-x-2">
-              <Skeleton className="flex-1 h-8 rounded-md" />
-              <Skeleton className="flex-1 h-8 rounded-md" />
+            <div className="flex space-x-2 mb-3">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-16" />
             </div>
-          </CardContent>
-        </Card>
+            
+            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          </div>
+        </div>
       </div>
-    </>
-  );
-};
+    </CardContent>
+  </Card>
+);
 
-export const TutorSearch: React.FC = () => {
-  const { formatPrice, convertPrice, selectedCurrency } = useCurrency();
-  const [tutors, setTutors] = useState<Tutor[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+// Main Tutor Search Component
+const MainTutorSearchComponent: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tutors, setTutors] = useState<NormalizedTutor[]>([]);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
-  const itemsPerPage = 8; // Reduced for better layout with horizontal cards
+  const itemsPerPage = 8;
 
-  // Filters
-  const [filters, setFilters] = useState<FilterOptions>({
-    search: '',
-    subjects: [],
-    minRating: 0,
-    maxPrice: 200,
-    experience: 0,
-    sortBy: 'rating',
-    sortOrder: 'desc',
-  });
+  // Filter state
+const [filters, setFilters] = useState<ExtendedFilterOptions>({
+  educationLevel: null,
+  stream: null,
+  subjects: [],
+  classType: null,
+  selectedDate: null,
+  selectedWeekdays: [],
+  timePeriods: {},
+  tempTimeSelection: {},   //new
+  addingNewSlot: false,    //new
+  minRating: 0,
+  maxPrice: 2000,
+  minExperience: 0,
+  sortBy: 'rating',
+  sortOrder: 'desc',
+  currentMonth: new Date(),
+});
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const debouncedFilters = useDebounce(filters, 500);
+  const [appliedFilters, setAppliedFilters] = useState<ExtendedFilterOptions>(filters);
+  const [hasUserAppliedFilters, setHasUserAppliedFilters] = useState(false);
 
-  const FiltersContent: React.FC = () => (
-    <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
-      <CardContent className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100">Filters</h3>
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear All
-          </Button>
-        </div>
-
-        {/* Subjects */}
-        <div>
-          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">Subjects</h4>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {SUBJECTS.map((subject) => (
-              <div key={subject} className="flex items-center space-x-2">
-                <Checkbox
-                  id={subject}
-                  checked={filters.subjects?.includes(subject)}
-                  onCheckedChange={(checked) =>
-                    handleSubjectChange(subject, checked as boolean)
-                  }
-                />
-                <label
-                  htmlFor={subject}
-                  className="text-sm cursor-pointer flex-1 text-slate-700 dark:text-slate-300"
-                >
-                  {subject}
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Price Range */}
-        <div>
-          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">
-            Max Price: {formatPrice(filters.maxPrice || 200)}/hour
-          </h4>
-          <Slider
-            value={[filters.maxPrice || 200]}
-            onValueChange={([value]) =>
-              setFilters(prev => ({ ...prev, maxPrice: value }))
-            }
-            max={200}
-            min={10}
-            step={10}
-            className="w-full"
-          />
-        </div>
-
-        {/* Minimum Rating */}
-        <div>
-          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">
-            Minimum Rating: {filters.minRating || 0}+
-          </h4>
-          <Slider
-            value={[filters.minRating || 0]}
-            onValueChange={([value]) =>
-              setFilters(prev => ({ ...prev, minRating: value }))
-            }
-            max={5}
-            min={0}
-            step={0.1}
-            className="w-full"
-          />
-        </div>
-
-        {/* Experience */}
-        <div>
-          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">
-            Minimum Experience: {filters.experience || 0}+ years
-          </h4>
-          <Slider
-            value={[filters.experience || 0]}
-            onValueChange={([value]) =>
-              setFilters(prev => ({ ...prev, experience: value }))
-            }
-            max={20}
-            min={0}
-            step={1}
-            className="w-full"
-          />
-        </div>
-
-        {/* Sort By */}
-        <div>
-          <h4 className="font-medium mb-3 text-slate-900 dark:text-slate-100">Sort By</h4>
-          <Select
-            value={filters.sortBy}
-            onValueChange={(value) =>
-              setFilters(prev => ({ ...prev, sortBy: value as FilterOptions['sortBy'] }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const searchTutors = useCallback(async (page: number = 1) => {
-    setIsLoading(true);
-    try {
-      const searchFilters = {
-        ...debouncedFilters,
-        search: debouncedSearchTerm,
-      };
-
-      const response = await tutorAPI.searchTutors(searchFilters, page, itemsPerPage);
-      console.log("response of search tutors in component:", response);
+  // Filter change handler
+  const handleFilterChange = useCallback((key: string, value: any) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [key]: value };
       
-      if (response.success) {
-        // Use the correct property names from API response
-        setTutors(response.data.content || []);
-        // Pagination
-        setTotalPages(response.data.totalPages || 1);
-        setTotalResults(response.data.totalElements || 0);
+      // Handle dependent filter resets
+      if (key === 'educationLevel') {
+        newFilters.stream = null;
+        newFilters.subjects = [];
       }
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setIsLoading(false);
+      if (key === 'stream') {
+        newFilters.subjects = [];
+      }
+      if (key === 'classType') {
+        newFilters.selectedDate = null;
+        newFilters.selectedWeekdays = [];
+        newFilters.timePeriods = {};
+      }
+      
+      return newFilters;
+    });
+  }, []);
+const DEFAULT_LIMIT = 10;
+const { user, loadStudentAcademicInfo } = useAuth();
+
+const buildEffectiveFilters = useCallback((): ExtendedFilterOptions => {
+  if (user?.role === 'STUDENT' && user.educationLevel && user.stream) {
+    const mappedEdu = mapEducationLevel(filters.educationLevel);
+    const mappedStream = mapStream(filters.stream);
+    return {
+      ...filters,
+      educationLevel: mappedEdu,
+      stream: mappedStream
+    };
+  }
+  return filters;
+}, [filters, user?.role, user?.educationLevel, user?.stream]);
+const searchTutors = useCallback(async (
+  page: number = 1,
+  activeFilters?: ExtendedFilterOptions,
+  activeSearch?: string,
+  limitOverride?: number
+) => {
+  console.log('Starting tutor search with original tutor function:', page);
+  setIsLoading(true);
+  try {
+    const baseFilters = activeFilters ?? appliedFilters;
+    const effectiveFilters =
+      activeFilters
+        ? activeFilters
+        : buildEffectiveFilters(); // ensure academic mapping reflected
+
+    const effectiveSearch = activeSearch ?? appliedSearchTerm;
+
+    const convertedTimePeriods: { [weekday: number]: string[] } = {};
+    if (effectiveFilters.timePeriods) {
+      Object.entries(effectiveFilters.timePeriods).forEach(([weekday, periods]) => {
+        if (Array.isArray(periods)) {
+          convertedTimePeriods[+weekday] = periods.map(
+            p =>
+              `${p.startHour.toString().padStart(2,'0')}:${p.startMinute.toString().padStart(2,'0')}-` +
+              `${p.endHour.toString().padStart(2,'0')}:${p.endMinute.toString().padStart(2,'0')}`
+          );
+        }
+      });
     }
-  }, [debouncedSearchTerm, debouncedFilters, itemsPerPage]);
+  const edu = mapEducationLevel(filters.educationLevel);
+  const str = mapStream(filters.stream);
 
-  useEffect(() => {
-    searchTutors(1);
-    setCurrentPage(1);
-  }, [searchTutors]);
+  // Update filters (without depending on filters in deps)
+  setFilters(prev => ({ ...prev, educationLevel: edu, stream: str }));
 
+  const payload = buildBackendPayload(
+    { ...filters, educationLevel: edu, stream: str },
+    searchTerm
+  );
+    const searchFilters = {
+      ...effectiveFilters,
+      search: effectiveSearch,
+      selectedDate: effectiveFilters.selectedDate?.toISOString().split('T')[0],
+      timePeriods: convertedTimePeriods
+    };
+
+    console.log('Search filters being sent payload:', payload);
+
+    const response = await filterAPI.searchTutors(
+      payload,
+      page,
+      limitOverride || itemsPerPage
+    );
+
+    console.log('Raw tutor search response:', response);
+
+    if (response.success) {
+      const rawList =
+        response.data?.content ??
+  // response.data?.tutors ?? (legacy shape)
+        (Array.isArray(response.data) ? response.data : []);
+
+      const normalized = rawList.map((t: any) => adaptTutor(t));
+      setTutors(normalized);
+      setTotalPages(response.data?.totalPages || 1);
+      setTotalResults(
+        response.data?.totalElements ??
+        normalized.length
+      );
+    } else {
+      setTutors([]);
+      setTotalPages(1);
+      setTotalResults(0);
+    }
+  } catch (e) {
+    console.error('Search failed:', e);
+    setTutors([]);
+  } finally {
+    setIsLoading(false);
+  }
+}, [
+  appliedFilters,
+  appliedSearchTerm,
+  itemsPerPage,
+  buildEffectiveFilters
+]);
+
+const mapEducationLevel = (val: string | null | undefined): string | null => {
+  if (!val) return null;
+  switch (val) {
+    case 'grade-1-5': return 'PRIMARY/GRADE 1-5';
+    case 'grade-6-11': return 'SECONDARY/GRADE 6-11';
+    case 'ordinary-level': return 'HIGHSCHOOL/ADVANCED_LEVEL'; // adjust if different
+    case 'advanced-level': return 'HIGHSCHOOL/ADVANCED_LEVEL';
+    case 'undergraduate': return 'UNDERGRADUATE';
+    case 'postgraduate': return 'POSTGRADUATE';
+    case 'doctorate': return 'DOCTORATE';
+    default: return val.toUpperCase();
+  }
+};
+
+const mapStream = (val: string | null | undefined): string | null => {
+  if (!val) return null;
+  switch (val.toLowerCase()) {
+    case 'mathematics': return 'MATHS';
+    case 'biology': return 'BIO';
+    case 'technology': return 'TECHNOLOGY';
+    case 'commerce': return 'COMMERSE';
+    case 'arts': return 'ARTS';
+    case 'agri': return 'AGRI';
+    case 'ict': return 'ICT';
+    default: return val.toUpperCase();
+  }
+};
+const getDatesForWeekdayInMonth = (monthDate: Date, weekday: number): string[] => {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth(); // 0-based
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const out: string[] = [];
+  for (let d = 1; d <= lastDay; d++) {
+    const dt = new Date(year, month, d);
+    if (dt.getDay() === weekday) {
+      out.push(`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`);
+    }
+  }
+  return out;
+};
+
+const buildBackendPayload = useCallback(
+  (f: ExtendedFilterOptions, searchValue: string) => {
+    const classType =
+      f.classType === 'one-time'
+        ? 'ONE_TIME'
+        : f.classType === 'monthly-recurring'
+        ? 'MONTHLY'
+        : null;
+
+    let session: SessionPayload | null = null;
+    let recurring: RecurringPayload | null = null;
+
+    if (classType === 'ONE_TIME') {
+      // One-time uses weekday index 0 (stored in timePeriods[0])
+      const dayRange = f.timePeriods[0];
+      session = {
+        date: f.selectedDate ? f.selectedDate.toISOString().split('T')[0] : null,
+        startTime: dayRange ? dayRange.startTime : null,
+        endTime: dayRange ? dayRange.endTime : null
+      };
+    } else if (classType === 'MONTHLY') {
+      const monthRef = f.currentMonth || new Date();
+      const days = f.selectedWeekdays
+        .map(weekday => {
+          const range = f.timePeriods[weekday];
+            if (!range) return null;
+            if (!range.startTime || !range.endTime) return null;
+            // Basic validation: start < end
+            if (range.endTime <= range.startTime) return null;
+            const dates = getDatesForWeekdayInMonth(monthRef, weekday);
+            return {
+              weekday,
+              dates,
+              slots: [{ startTime: range.startTime, endTime: range.endTime }]
+            };
+        })
+        .filter(Boolean) as RecurringPayload['days'];
+
+      recurring = { days };
+    }
+
+    const sortFieldMap: Record<string, string> = {
+      rating: 'RATING',
+      price: 'PRICE',
+      experience: 'EXPERIENCE'
+    };
+    const sortField = sortFieldMap[f.sortBy] || 'PRICE';
+
+    return {
+      educationLevel: f.educationLevel ?? null,
+      stream: f.stream ?? null,
+      subjects: f.subjects ?? [],
+      classType,
+      maxPrice: typeof f.maxPrice === 'number' ? f.maxPrice : null,
+      rating: f.minRating > 0 ? f.minRating : null,
+      experience: f.minExperience > 0 ? f.minExperience : null,
+      sort: {
+        field: sortField,
+        direction: (f.sortOrder || 'desc').toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+      },
+      search: searchValue || null,
+      session,
+      recurring
+    };
+  },
+  []
+);
+// Helper to format hours/minutes into HH:MM
+
+
+const adaptTutor = (t: any): NormalizedTutor => {
+  const tutorId = t.tutorId ?? t.id ?? t.tutorProfileId ?? Math.random();
+  const first = t.firstName ?? t.first_name ?? '';
+  const last = t.lastName ?? t.last_name ?? '';
+  const name =
+    (first || last)
+      ? [first, last].filter(Boolean).join(' ')
+      : t.name || `Tutor ${tutorId}`;
+
+  // subjects could be: [{name,hourly_rate}] or [{subject, hourlyRate}] or string[]
+  let subjects: Array<{ name: string; hourlyRate: number }> = [];
+  if (Array.isArray(t.subjects)) {
+    subjects = t.subjects.map((s: any) => {
+      if (typeof s === 'string') return { name: s, hourlyRate: t.hourlyRate ?? 0 };
+      return {
+        name: s.name ?? s.subject ?? 'Unknown',
+        hourlyRate: s.hourly_rate ?? s.hourlyRate ?? 0
+      };
+    });
+  }
+
+  const primaryRate =
+    subjects.length > 0
+      ? subjects[0].hourlyRate
+      : (t.hourlyRate ?? t.hourly_rate ?? 0);
+
+  return {
+    id: tutorId,
+    name,
+    bio: t.bio ?? t.description ?? 'No bio provided.',
+    rating: Number(t.rating ?? t.averageRating ?? 0),
+    experienceMonths: Number(t.experienceMonths ?? t.experience_months ?? t.experience ?? 0),
+    subjects,
+    hourlyRate: primaryRate,
+    languages: Array.isArray(t.languages) ? t.languages : []
+  };
+};
+
+// User explicitly applies filters
+const applyFiltersAndSearch = useCallback(async () => {
+  setHasUserAppliedFilters(true);
+  const effective = buildEffectiveFilters();
+  setAppliedFilters(effective);
+  setAppliedSearchTerm(searchTerm);
+  setCurrentPage(1);
+  await searchTutors(1, effective, searchTerm);
+  setIsFilterOpen(false);
+}, [buildEffectiveFilters, searchTerm]);
+const initialAcademicSearchRef = useRef(false);
+
+useEffect(() => {
+  if (!user || user.role !== 'STUDENT') return;
+  if (initialAcademicSearchRef.current) return; 
+  if (!user.educationLevel || !user.stream) {
+    // load then wait for next render
+    loadStudentAcademicInfo();
+    return;
+  }
+  initialAcademicSearchRef.current = true;
+
+  const edu = mapEducationLevel(user.educationLevel);
+  const str = mapStream(user.stream);
+
+  // Update filters (without depending on filters in deps)
+  setFilters(prev => ({ ...prev, educationLevel: edu, stream: str }));
+
+  const payload = buildBackendPayload(
+    { ...filters, educationLevel: edu, stream: str },
+    searchTerm
+  );
+  console.log('Running initial academic-based tutor search payload (one-shot):', payload);
+  setIsLoading(true);
+  filterAPI.searchTutors(payload, 1, 10)
+    .then(res => {
+      if (res.success) {
+        const raw = res.data.content || [];
+        const normalized = raw.map((t: any) => adaptTutor(t));
+        setTutors(normalized);
+        setTotalPages(res.data.totalPages || 1);
+        setTotalResults(res.data.totalElements || (res.data.content?.length || 0));
+      }
+    })
+    .finally(() => setIsLoading(false));
+}, [user?.role, user?.educationLevel, user?.stream, loadStudentAcademicInfo, buildBackendPayload]);
+
+
+  const clearFilters = () => {
+    const resetFilters = {
+      educationLevel: null,
+      stream: null,
+      subjects: [],
+      classType: null,
+      selectedDate: null,
+      selectedWeekdays: [],
+      timePeriods: {},
+      minRating: 0,
+      maxPrice: 2000,
+      minExperience: 0,
+      sortBy: 'rating',
+      sortOrder: 'desc' as 'desc',
+      currentMonth: new Date(),
+      tempTimeSelection: {},
+      addingNewSlot: false,
+    };
+    setFilters(resetFilters);
+    setAppliedFilters(resetFilters);
+    setSearchTerm('');
+    setAppliedSearchTerm('');
+  };
+const handleViewProfile = (tutor: NormalizedTutor) => {
+  console.log('View profile clicked:', tutor);
+  // TODO: add navigation e.g. router.push(`/dashboard/student/tutors/${tutor.id}`);
+};
+
+const handleBookTutor = (tutor: NormalizedTutor) => {
+  console.log('Book class clicked:', tutor);
+  // TODO: open booking modal or navigate to booking flow
+  // setSelectedTutor(tutor);
+  // setIsBookingOpen(true);
+};
+  // Pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     searchTutors(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleSubjectChange = (subject: string, checked: boolean) => {
-    setFilters(prev => ({
-      ...prev,
-      subjects: checked 
-        ? [...(prev.subjects || []), subject]
-        : (prev.subjects || []).filter(s => s !== subject),
-    }));
-  };
-
-  const { setTutor, setCurrentStep, proceedToStep } = useBooking();
-
-  const handleBookTutor = (tutor: Tutor) => {
-    setTutor(tutor);
-    proceedToStep('slot-selection');
-  };
-
-  const handleViewProfile = (tutor: Tutor) => {
-    console.log('View profile:', tutor.id);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      search: '',
-      subjects: [],
-      minRating: 0,
-      maxPrice: 200,
-      experience: 0,
-      sortBy: 'rating',
-      sortOrder: 'desc',
-    });
-    setSearchTerm('');
   };
 
   const renderPagination = () => {
@@ -359,10 +485,6 @@ export const TutorSearch: React.FC = () => {
     const maxVisible = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     const endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
 
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
@@ -401,135 +523,205 @@ export const TutorSearch: React.FC = () => {
     );
   };
 
+
+
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      {/* Search Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Find Your Perfect Tutor</h1>
-              <p className="text-blue-100 mt-2">Connect with experienced educators</p>
-            </div>
-            <CurrencySelector compact className="bg-white/10 backdrop-blur-sm rounded-lg" />
+    <div className="bg-gray-50">
+      {/* Header with Search and Filters */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white relative overflow-hidden">
+        {/* Background Pattern */}
+ 
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8  z-50">
+          <div className="text-center mb-8 pt-8">
+            <h1 className="text-4xl font-bold mb-4">Find Your Perfect Tutor</h1>
+            <p className="text-xl text-blue-100">Connect with experienced educators tailored to your needs</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4">
+          {/* Search Bar */}
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
-                placeholder="Search by tutor name, subject, or expertise..."
+                placeholder="Search by tutor name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 bg-white text-black border-0 rounded-lg shadow-sm text-base lg:text-lg"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    applyFiltersAndSearch();
+                  }
+                }}
+                className="pl-12 h-14 bg-white/95 backdrop-blur-sm text-gray-900 border-0 rounded-xl shadow-lg text-lg focus:ring-4 focus:ring-blue-300"
               />
             </div>
             
-            {/* Desktop Filters */}
-            <div className="hidden sm:block">
+            <div className="flex gap-2">
               <Button 
-                variant="secondary" 
-                size="lg"
-                onClick={() => setShowFilters(!showFilters)}
-                className="h-12 bg-white/10 hover:bg-white/20 border-white/20"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="h-14 px-4 sm:px-8 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm rounded-xl font-semibold transition-all"
               >
                 <Filter className="h-5 w-5 mr-2" />
-                Filters
+                {isFilterOpen ? 'Hide Filters' : 'Filters'}
+              </Button>
+            <Button 
+                  onClick={() => {
+                    applyFiltersAndSearch();
+                  }}
+                className="h-14 px-4 sm:px-8 bg-green-500 hover:bg-green-600 rounded-xl font-semibold shadow-lg transition-all"
+              >
+                Apply Search
               </Button>
             </div>
+          </div>
 
-            {/* Mobile Filters */}
-            <div className="sm:hidden">
-              <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="secondary" size="lg" className="w-full h-12">
-                    <Filter className="h-5 w-5 mr-2" />
-                    Filters
+          {/* Filter Panel - Integrated into the blue header */}
+          <div className={`border-t border-white/20 transition-all duration-500 ease-in-out overflow-hidden ${
+            isFilterOpen ? 'max-h-[3000px] opacity-100 py-6' : 'max-h-0 opacity-0 py-0'
+          }`}>
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <h2 className="text-xl font-bold text-white">Advanced Filters</h2>
+                <div className="flex flex-wrap gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={clearFilters}
+                    className="border-white/30 text-white hover:bg-white/10"
+                  >
+                    Clear All
                   </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <FiltersContent />
+                  
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setIsFilterOpen(false)}
+                    className="hover:bg-white/10 text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-6">
+                {/* Basic and Advanced Filters Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Basic Filters */}
+                  <div className="space-y-4">
+                    <BasicFiltersComponent 
+                      filters={filters} 
+                      onFilterChange={handleFilterChange} 
+                    />
                   </div>
-                </SheetContent>
-              </Sheet>
+
+                  {/* Advanced Filters */}
+                  <div className="space-y-4">
+                    <AdvancedFiltersComponent 
+                      filters={filters} 
+                      onFilterChange={handleFilterChange} 
+                    />
+                  </div>
+                </div>
+
+                {/* Date & Time Selector - Full width at the bottom */}
+
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="flex gap-6 lg:gap-8">
-          {/* Filters Sidebar - Desktop */}
-          {showFilters && (
-            <div className="hidden sm:block w-72 lg:w-80 shrink-0">
-              <div className="sticky top-8">
-                <FiltersContent />
+          {/* Applied filters summary */}
+          {(appliedFilters.educationLevel || appliedFilters.subjects.length > 0 || appliedFilters.classType) && (
+            <div className="max-w-4xl mx-auto pb-6">
+              <div className="flex flex-wrap gap-2">
+                {appliedFilters.educationLevel && (
+                  <Badge className="bg-white/20 text-white border-white/30">
+                    {appliedFilters.educationLevel}
+                  </Badge>
+                )}
+                {appliedFilters.classType && (
+                  <Badge className="bg-white/20 text-white border-white/30">
+                    {appliedFilters.classType === 'one-time' ? 'One-time' : 'Monthly'}
+                  </Badge>
+                )}
+                {appliedFilters.subjects.map(subject => (
+                  <Badge key={subject} className="bg-white/20 text-white border-white/30">
+                    {subject}
+                  </Badge>
+                ))}
+                {appliedFilters.minRating > 0 && (
+                  <Badge className="bg-white/20 text-white border-white/30">
+                    Rating: {appliedFilters.minRating}+
+                  </Badge>
+                )}
               </div>
             </div>
           )}
-
-          {/* Results Section */}
-          <div className="flex-1 min-w-0">
-            {/* Results Header */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-              <p className="text-slate-600 dark:text-slate-400 text-sm lg:text-base">
-                {isLoading ? 'Searching...' : `${totalResults} tutors found`}
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {!isLoading && `Page ${currentPage} of ${totalPages}`}
-              </p>
-            </div>
-
-            {/* Loading State */}
-            {isLoading && (
-              <div className="space-y-4 sm:space-y-6">
-                {Array.from({ length: itemsPerPage }).map((_, idx) => (
-                  <TutorCardSkeleton key={idx} />
-                ))}
-              </div>
-            )}
-
-            {/* Tutor Cards - Changed from grid to vertical stack */}
-            {!isLoading && (
-              <div className="space-y-4 sm:space-y-6">
-                {tutors.map((tutor) => (
-                  <ResponsiveTutorCard
-                    key={String(tutor.id)}
-                    tutor={tutor}
-                    onViewProfile={handleViewProfile}
-                    onBookClass={handleBookTutor}
-                    formatPrice={formatPrice}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Empty State */}
-            {!isLoading && tutors.length === 0 && (
-              <div className="text-center py-16">
-                <Search className="h-16 w-16 text-slate-400 dark:text-slate-600 mx-auto mb-6" />
-                <h3 className="text-xl font-medium text-slate-900 dark:text-slate-100 mb-2">No tutors found</h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                  Try adjusting your search criteria or filters to find more tutors
-                </p>
-                <Button onClick={clearFilters} className="bg-blue-600 hover:bg-blue-700">
-                  Clear Filters
-                </Button>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {!isLoading && tutors.length > 0 && totalPages > 1 && renderPagination()}
-          </div>
         </div>
       </div>
+            
+      {/* Main Content - Tutor Results */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Results Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              {isLoading ? 'Searching...' : `${totalResults} tutors found`}
+            </h2>
+            <p className="text-gray-600 mt-1">
+              {!isLoading && totalPages > 1 && `Page ${currentPage} of ${totalPages}`}
+            </p>
+          </div>
+          
+          {!isLoading && tutors.length > 0 && (
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                Sorted by {filters.sortBy} ({filters.sortOrder === 'desc' ? 'high to low' : 'low to high'})
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="space-y-6">
+            {Array.from({ length: itemsPerPage }).map((_, idx) => (
+              <TutorCardSkeleton key={idx} />
+            ))}
+          </div>
+        )}
+
+        {/* Tutor Cards */}
+        {!isLoading && (
+          <div className="space-y-6">
+            {tutors.map(tutor => (
+              <ResponsiveTutorCard
+                  key={String(tutor.id)}
+                  tutor={tutor}
+                  onViewProfile={handleViewProfile}
+                  onBookClass={handleBookTutor}
+                />
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && tutors.length === 0 && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-6">🔍</div>
+            <h3 className="text-2xl font-semibold text-gray-900 mb-4">No tutors found</h3>
+            <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+              Try adjusting your search criteria or filters to find more tutors that match your needs.
+            </p>
+            <Button onClick={clearFilters} size="lg" className="bg-blue-600 hover:bg-blue-700">
+              Clear All Filters
+            </Button>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && tutors.length > 0 && totalPages > 1 && renderPagination()}
+      </div>
+      
     </div>
   );
 };
 
-export default TutorSearch;
+export default MainTutorSearchComponent;

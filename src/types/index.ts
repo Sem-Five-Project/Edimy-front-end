@@ -7,8 +7,7 @@ export interface User {
   role: 'STUDENT' | 'TUTOR' | 'ADMIN';
   isVerified: boolean;
   createdAt: string;
-  profileImage?: string;
-  // Add other properties from the backend response
+  profileImage?: string | null; // Add this line
   accountNonExpired?: boolean;
   accountNonLocked?: boolean;
   credentialsNonExpired?: boolean;
@@ -17,6 +16,7 @@ export interface User {
   membership?: string | null;
   password?: string;
   updatedAt?: string;
+  stream?: string | null;
 }
 
 export interface Subject {
@@ -101,7 +101,7 @@ export interface RegisterData {
 
 export interface FilterOptions {
   search?: string;
-  subjects?: string[];
+  subjects?: number[]; // now numeric subject IDs
   minRating?: number;
   maxPrice?: number;
   experience?: number;
@@ -431,4 +431,166 @@ export interface BookMonthlyClassRes {
     time: string;
     reason: string;
   }[];
+}
+export interface SubjectRequestBody {
+  educationLevel: string;
+  stream: string | null;
+}
+
+export interface SubjectDto {
+  subjectId: number;
+  subjectName: string;
+}
+export type ClassTypeForFiltering = 'ONE_TIME' | 'MONTHLY';
+
+export interface TimeSlot {
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+}
+
+export interface FindTutorFilters {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];            // numeric subjectIds
+  classType: ClassTypeForFiltering;
+  // For ONE_TIME
+  oneTimeDate?: Date | null;
+  timePeriods: Record<number, TimeSlot[] | TimeSlot>; // 0 for one-time OR weekday -> slots[]
+  // For MONTHLY
+  selectedWeekdays: number[]; // 0=Sunday .. 6=Saturday
+  // Other filters
+  rating?: number | null;
+  experience?: number | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  sortField?: 'PRICE' | 'RATING' | 'EXPERIENCE';
+  sortDirection?: 'ASC' | 'DESC';
+}
+
+export interface TutorSearchPayload {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];           // subject IDs
+  classType: ClassTypeForFiltering;
+  rating: number | null;
+  experience: number | null;
+  price: { min: number | null; max: number | null };
+  sort: { field: string; direction: 'ASC' | 'DESC' };
+  session?: {
+    date: string | null;        // YYYY-MM-DD
+    startTime: string | null;   // HH:MM (24h)
+    endTime: string | null;
+  };
+  recurring?: {
+    days: {
+      weekday: number;          // 0-6
+      slots: { startTime: string; endTime: string }[];
+    }[];
+  };
+}
+
+// ...existing imports...
+// Add / adjust below (avoid duplicate declarations)
+
+export interface TimeSlot {
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+}
+
+
+
+export interface ExtendedFilterOptionss extends DateTimeFilters {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];
+  minRating: number;
+  maxPrice: number;
+  minExperience: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  currentMonth?: Date | null;
+}
+
+export interface TimeSlotEdit {
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+}
+
+export interface DateTimeFilters {
+  classType: 'one-time' | 'monthly-recurring' | null;
+  selectedDate: Date | null;
+  selectedWeekdays: number[];
+  timePeriods: { [weekday: number]: { startTime: string; endTime: string } };
+  tempTimeSelection?: { [weekday: number]: Partial<TimeSlotEdit> };
+  addingNewSlot: boolean;
+}
+
+export interface DateTimeSelectorProps {
+  filters: DateTimeFilters;
+  onFilterChange: (key: string, value: any) => void;
+}
+export interface NormalizedTutor {
+  id: number;
+  name: string;
+  bio: string;
+  rating: number;
+  experienceMonths: number;
+  subjects: Array<{ name: string; hourlyRate: number }>;
+  hourlyRate: number;
+  languages: string[];
+}
+
+
+
+
+
+export interface SessionPayload {
+  date: string | null;       // "YYYY-MM-DD"
+  startTime: string | null;  // "HH:MM"
+  endTime: string | null;    // "HH:MM"
+}
+
+export interface RecurringPayload {
+  days: {
+    weekday: number;
+    dates: string[];
+    slots: { startTime: string; endTime: string }[];
+  }[];
+}
+
+export interface TutorCardProps {
+  tutor: NormalizedTutor;
+  onViewProfile: (tutor: NormalizedTutor) => void;
+  onBookClass: (tutor: NormalizedTutor) => void;
+}
+export interface WeekdayTimeRange {
+  startTime: string; // "HH:MM"
+  endTime: string;   // "HH:MM"
+}
+
+
+export interface ExtendedFilterOptions {
+  educationLevel: string | null;
+  stream: string | null;
+  subjects: number[];
+  classType: 'one-time' | 'monthly-recurring' | null;
+  selectedDate: Date | null;
+  selectedWeekdays: number[];
+  // One slot per weekday (strings already formatted)
+  timePeriods: { [weekday: number]: WeekdayTimeRange };
+  // Temp builder still keeps granular hour/min while editing
+  tempTimeSelection?: { [weekday: number]: { startHour?: number; startMinute?: number; endHour?: number; endMinute?: number } };
+  addingNewSlot: boolean;
+  minRating: number;
+  maxPrice: number;
+  minExperience: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  currentMonth?: Date | null;
 }

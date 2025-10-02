@@ -20,7 +20,9 @@ interface BookingUpdateData {
     status: 'SUCCESS' | 'FAILED'|'ROLLBACKED_PENDING_ADMIN'|'PENDING';
   };
 }
+// Removed explicit .ts extension (not needed / causes TS error without allowImportingTsExtensions)
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject } from '@/types';
+// import { SubjectRequestBody, TutorSearchPayload } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -316,24 +318,6 @@ export const authAPI = {
   }
 },
 
-// getCurrentUser1: async (): Promise<ApiResponse<{ user: User }>> => {
-//   try {
-//     // const response = await api.get('/auth/me'); // no headers override
-//     const response = await api.get('/auth/me', {
-//   headers: { Authorization: `Bearer ${newToken}` }
-// });
-
-//     console.log('Get current user response5555555555555555555555555555555555555555555555555555555555555555555555:', response);
-//     return { success: true, data: { user: response.data } };
-//   } catch (error) {
-//     console.error('Get current user failed:', error);
-//     return { 
-//       success: false, 
-//       data: { user: {} as User },
-//       error: 'Not authenticated' 
-//     };
-//   }
-// },
 
   getCurrentUserr: async (token: string): Promise<ApiResponse<{ user: User }>> => {
     try {
@@ -385,6 +369,162 @@ export const authAPI = {
       };
     }
   },
+};
+
+export const filterAPI = {
+  getAllSubjects: async (
+    body: { educationLevel?: string | null; stream?: string | null },
+    signal?: AbortSignal
+  ): Promise<ApiResponse<Subject[]>> => {
+    try {
+      console.log('getAllSubjects body in api:', body);
+
+      // Axios POST request
+      const response = await api.post('/filters/subjects', body, {
+        signal, // Axios supports AbortSignal in recent versions
+      });
+      console.log('getAllSubjects response in api:', response);
+
+      // Check HTTP status
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`Failed to fetch subjects (${response.status})`);
+      }
+
+      // Extract data from Axios response
+      const data = response.data; // response.data is the full Axios response, data.data is actual array
+      console.log('subjects data in api:', data);
+      //if (!Array.isArray(data)) return { success: true, data: [] } as ApiResponse<Subject[]>;
+
+      // const subjects: Subject[] = data
+      //   .filter(
+      //     (s: any) => s && typeof s.subjectId === 'number' && typeof s.subjectName === 'string'
+      //   )
+      //   .map((s: any) => ({
+      //     subjectId: s.subjectId,
+      //     subjectName: s.subjectName,
+      //     //hourlyRate: typeof s.hourlyRate === 'number' ? s.hourlyRate : 0,
+      //   }));
+
+      console.log('subjects in api:', data);
+
+      return { success: true, data: data } as ApiResponse<Subject[]>;
+    } catch (error: any) {
+      return { success: false, data: [], error: error.message || 'Unknown error' } as ApiResponse<Subject[]>;
+    }
+  },
+
+ searchTutors: async (
+  // Accept a loose shape so caller can send already-built backend payload
+  filters: any,
+  page: number = 1,
+  limit: number = 12
+): Promise<ApiResponse<PageableResponse<Tutor>>> => {
+  try {
+    // If caller passed a minimal FilterOptions-style object, transform it to backend shape
+    // Detect backend shape by presence of 'session' or 'recurring' or 'classType'
+    let body: any;
+    const looksLikeBackendShape =
+      typeof filters === 'object' && (filters?.session !== undefined || filters?.recurring !== undefined || ['ONE_TIME','MONTHLY'].includes(filters?.classType));
+
+    if (looksLikeBackendShape) {
+      body = { ...filters };
+    } else {
+      // Legacy/minimal filters -> adapt
+      const {
+        search,
+        subjects,
+        minRating,
+        maxPrice,
+        experience,
+        sortBy,
+        sortOrder,
+        educationLevel,
+        stream,
+        classType,
+        timePeriods,
+        selectedDate,
+        selectedWeekdays,
+      } = filters || {};
+
+      // Convert plain timePeriods (map weekday -> ["HH:MM-HH:MM"]) into recurring/session shapes if possible
+      let session: any = undefined;
+      let recurring: any = undefined;
+      const normClassType = classType === 'one-time' ? 'ONE_TIME' : (classType === 'monthly-recurring' ? 'MONTHLY' : null);
+
+      if (normClassType === 'ONE_TIME' && selectedDate && timePeriods && timePeriods[0] && Array.isArray(timePeriods[0]) && timePeriods[0][0]) {
+        const first = timePeriods[0][0]; // expects "HH:MM-HH:MM"
+        if (typeof first === 'string' && first.includes('-')) {
+          const [startTime, endTime] = first.split('-');
+          session = { date: selectedDate, startTime, endTime };
+        }
+      } else if (normClassType === 'MONTHLY' && selectedWeekdays && Array.isArray(selectedWeekdays)) {
+        // Can't reconstruct dates without month ref here; leave recurring undefined to avoid incorrect data
+      }
+
+      const sortFieldMap: Record<string,string> = { rating: 'RATING', price: 'PRICE', experience: 'EXPERIENCE', completion_rate: 'COMPLETION_RATE' };
+      const sortField = sortFieldMap[sortBy] || 'PRICE';
+
+      body = {
+        educationLevel: educationLevel ?? null,
+        stream: stream ?? null,
+        subjects: Array.isArray(subjects) ? subjects.map((s: any) => typeof s === 'string' ? parseInt(s,10) || s : s) : [],
+        classType: normClassType,
+        rating: typeof minRating === 'number' && minRating > 0 ? minRating : null,
+        experience: typeof experience === 'number' && experience > 0 ? experience : null,
+        maxPrice: typeof maxPrice === 'number' ? maxPrice : null,
+        sort: { field: sortField, direction: (sortOrder || 'DESC').toString().toUpperCase() === 'ASC' ? 'ASC' : 'DESC' },
+        search: search || null,
+        session,
+        recurring
+      };
+    }
+
+    // Always attach pagination in body (backend expects POST not query params)
+    body = { ...body, page, limit };
+
+    //console.log('Tutor search POST body:', body);
+    const response = await api.post('/tutors/filter', body);
+    console.log('Tutor search raw response:', response);
+
+    const data = response.data;
+    // If backend already wraps as ApiResponse<PageableResponse<Tutor>> just return it
+    if (data && data.success !== undefined && data.data && typeof data.data === 'object' && data.data) {
+      return data;
+    }
+
+    // Otherwise noralize assuming Spring pageable object in root
+    const pageable: PageableResponse<Tutor> = {
+      content: data || [],
+      totalElements: data?.totalElements ?? 0,
+      totalPages: data?.totalPages ?? 0,
+      size: data?.size ?? limit,
+      number: data?.number ?? (page - 1),
+      first: data?.first ?? (page === 1),
+      last: data?.last ?? true,
+      empty: data?.empty ?? (data?.content?.length ? false : true),
+      numberOfElements: data?.numberOfElements ?? (data?.content?.length || 0)
+    };
+
+    return { success: true, data: pageable };
+  } catch (error: any) {
+    console.error('Error fetching tutors (POST /tutors/filter):', error?.response?.data || error?.message || error);
+    return {
+      success: false,
+      data: {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: limit,
+        number: page - 1,
+        first: page === 1,
+        last: true,
+        empty: true,
+        numberOfElements: 0
+      }
+    };
+  }
+},
+
 };
 
 export const tutorAPI = {
@@ -471,38 +611,7 @@ export const tutorAPI = {
 //     },
 //   };
 // },
-  searchTutors: async (
-  filters: FilterOptions,
-  page: number = 1,
-  limit: number = 12
-): Promise<ApiResponse<PageableResponse<Tutor>>> => {
-  try {
-    const params: any = { page, limit, ...filters };
-    console.log("params of search tutors:", params);
-    const response = await api.get('/tutors/search');
-    console.log("response of search tutors:", response);
-    return {
-      success: true,
-      data: response.data
-    };
-  } catch (error: any) {
-    console.error('Error fetching tutors:', error);
-    return {
-      success: false,
-      data: {
-        content: [],
-        totalElements: 0,
-        totalPages: 0,
-        size: limit,
-        number: page,
-        first: true,
-        last: true,
-        empty: true,
-        numberOfElements: 0
-      }
-    };
-  }
-},
+ 
 
   searchTutorss : async (
     filters: FilterOptions,
@@ -538,14 +647,29 @@ export const tutorAPI = {
   getTutorSlots: async (tutorId: string, date?: string, recurring?: boolean | null): Promise<ApiResponse<TimeSlot[]>> => {
     try {
       // Use the real backend endpoint
-      console.log('Fetching slots for tutorId:', tutorId, 'on date:', date);
-      const response = await api.get(`/student/bookings/slots`, {
-        params: {
-          tutorId: tutorId,
-          date: date || new Date().toISOString().split('T')[0],
-          recurring: recurring == null ? undefined : recurring
-        }
-      });
+      console.log('Fetching slots for tutorId:', tutorId, 'date:', date, 'recurring:', recurring);
+
+      // Build params depending on mode
+      const now = new Date();
+      const refDate = date ? new Date(date) : now;
+      const weekdayLong = refDate.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+      const monthNum = refDate.getMonth() + 1; // 1-12
+      const yearNum = refDate.getFullYear();
+
+      const params: Record<string, any> = { tutorId };
+      if (recurring) {
+        // Monthly search: send recurring, weekday, month, year; do NOT send date
+        params.recurring = true;
+        params.weekday = weekdayLong; // e.g., 'MONDAY'
+        params.month = monthNum; // 1-12
+        params.year = yearNum; // full year, e.g., 2025
+      } else {
+        // Regular search: send date only (plus tutorId)
+        params.date = date || now.toISOString().split('T')[0];
+      }
+      console.log('Get tutor slots params:', params);
+
+      const response = await api.get(`/student/bookings/slots`, { params });
       console.log('Get tutor slots response:', response);
       
       // Transform the response to ensure compatibility
@@ -581,6 +705,10 @@ export const tutorAPI = {
         rating: 0.0,
         // Compatibility fields
         id: `slot-${tutorId}-${i}`,
+        startHour: 9 + i * 2,
+        startMinute: 0,
+        endHour: 11 + i * 2,
+        endMinute: 0,
         price: 50 + Math.floor(Math.random() * 50),
       }));
       
@@ -591,6 +719,34 @@ export const tutorAPI = {
     }
   },
 };
+export const studentAPI = {
+  loadStudentAcademicInfo: async (
+    studentId: string
+  ): Promise<ApiResponse<{ educationLevel: string | null; stream: string | null }>> => {
+    try {
+      const response = await api.get(
+        `/student/profile/${studentId}/academic-info`
+      );
+      console.log("response of loadStudentAcademicInfo :", response);
+
+      return {
+        success: true,
+        data: response.data, // backend should return { educationLevel, stream }
+      };
+    } catch (error) {
+      console.error("Load student academic info failed:", error);
+      // Mock data for frontend testing
+      return {
+        success: true,
+        data: {
+          educationLevel: "undergraduate",
+          stream: "arts",
+        },
+      };
+    }
+  },
+};
+
 
 export const bookingAPI = {
   
@@ -774,15 +930,78 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
   //     } as unknown as ApiResponse<{ reservationId: string; expiresAt: string }>;
   //   }
   // },
-
+// ...existing code...
   reserveSlot: async (
-    slotId: number
+    slotId: number,
+    options?: { recurring?: boolean | null; weekday?: number | null }
+  ): Promise<ApiResponse<{ reservationId: string; expiresAt: string }>> => {
+    try {
+      // Backend expects only a list of slot IDs
+      const body = { slotIds: [slotId] };
+      const response = await api.post('/bookings/reserve', body);
+      console.log('Reserve slot response:', response);
+
+      // Normalize to ApiResponse shape
+      const payload = response?.data ?? response;
+      if (payload && typeof payload === 'object' && 'reservationId' in payload) {
+        return {
+          success: true,
+          data: payload as { reservationId: string; expiresAt: string },
+        };
+      }
+      if (payload && typeof payload === 'object' && 'success' in payload) {
+        return payload as ApiResponse<{ reservationId: string; expiresAt: string }>;
+      }
+      return {
+        success: false,
+        data: { reservationId: '', expiresAt: '' },
+        error: 'Unexpected reserve response format',
+      } as ApiResponse<{ reservationId: string; expiresAt: string }>;
+    } catch (error) {
+      console.error('Reserve slot failed:', error);
+      return {
+        success: false,
+        data: { reservationId: '', expiresAt: '' },
+        error: 'Failed to reserve slot',
+      } as ApiResponse<{ reservationId: string; expiresAt: string }>;
+    }
+  },
+// ...existing code...
+  reserveSlots: async (
+    slotIds: number[],
+    options?: { recurring?: boolean | null; weekday?: number | null }
+  ): Promise<ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>> => {
+    try {
+      // Backend expects only a list of slot IDs
+      console.log('Reserving slots with slotIds:', slotIds);
+      const body = { slotIds };
+      console.log('Reserving slots with body:', body);
+      const response = await api.post('/bookings/slots/reserve', body);
+      console.log('Reserve slots response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Reserve slots failed:', error);
+      return {
+        success: false,
+        data: { reservationId: '', expiresAt: '', reserved: [], failed: [] },
+        error: 'Failed to reserve slots',
+      } as ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>;
+    }
+  },
+// ...existing code...
+  reserveSlot1: async (
+    slotId: number,
+    options?: { recurring?: boolean | null; weekday?: number | null }
   ): Promise<ApiResponse<{ reservationId: string; expiresAt: string }>> => {
     try {
       // explicitly send JSON body { "slotId": <value> }
-      const response = await api.post('/bookings/reserve', {
-        slotId: slotId,
-      });
+      const body: Record<string, any> = { slotId };
+      if (options) {
+        if (options.recurring !== undefined && options.recurring !== null) body.recurring = options.recurring;
+        if (options.weekday !== undefined && options.weekday !== null) body.weekday = options.weekday;
+      }
+
+      const response = await api.post('/bookings/reserve', body);
       console.log('Reserve slot response:', response);
       const payload = response?.data ?? response;
       // Normalize to ApiResponse shape
@@ -813,11 +1032,20 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
   },
 
   // Bulk reserve slots to lock multiple selections
-  reserveSlots: async (
-    slotIds: number[]
+  reserveSlots1: async (
+    slotIds: number[],
+    options?: { recurring?: boolean | null; weekday?: number | null }
   ): Promise<ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>> => {
     try {
-      const response = await api.post('/bookings/reserve-bulk', { slotIds });
+      
+      const body: Record<string, any> = { slotIds };
+      console.log('Reserving bulk slots with slotIds:', slotIds, 'and options:', options);
+      if (options) {
+        if (options.recurring !== undefined && options.recurring !== null) body.recurring = options.recurring;
+        if (options.weekday !== undefined && options.weekday !== null) body.weekday = options.weekday;
+      }
+      console.log('Reserving bulk slots with body:', body);
+      const response = await api.post('/bookings/reserve-bulk', body);
       console.log('Reserve bulk slots response:', response);
       return response.data;
     } catch (error) {
@@ -938,8 +1166,14 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
   confirmPayHerePayment: async (payload: {
     paymentId: string; // Only paymentId received from initiatePaymentPending
     slotId?: number; // Optional slotId for booking confirmation
+    tutorId: number; // Tutor associated with the slot
+    subjectId: number; // Subject associated with the booking
+    languageId: number; // Language associated with the booking
+    classTypeId: number; // Class type (e.g., online, in-person)
+
   }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
     try {
+      console.log('Confirming PayHere payment with payload:', payload);
       const response = await api.post('/payment/bookings/confirm', payload);
       console.log('Confirm PayHere payment response:', response);
 
@@ -1057,6 +1291,10 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
             dayOfWeek: 'MONDAY',
             startTime: '14:00:00',
             endTime: '16:00:00',
+            // startHour: 14,
+            // startMinute: 0,
+            // endHour: 16,
+            // endMinute: 0,
             status: 'BOOKED',
             hourlyRate: 60,
             tutorBio: null,
@@ -1066,6 +1304,10 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
             rating: 4.8,
             // Compatibility fields
             id: 'slot-1',
+            startHour: 14,
+            startMinute: 0,
+            endHour: 16,
+            endMinute: 0,
             price: 60,
           },
         },
