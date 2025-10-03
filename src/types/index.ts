@@ -594,3 +594,97 @@ export interface ExtendedFilterOptions {
   sortOrder: 'asc' | 'desc';
   currentMonth?: Date | null;
 }
+
+
+export const EDUCATION_LEVELS = [
+  { value: "primary_grade_1_5", label: "Primary/Grade 1-5" },
+  { value: "secondary_grade_6_11", label: "Secondary/Grade 6-11" },
+  { value: "highschool_advanced_level", label: "Highschool/Advanced Level" },
+  { value: "undergraduate", label: "Undergraduate" },
+  { value: "postgraduate", label: "Postgraduate" },
+  { value: "doctorate", label: "Doctorate" },
+]
+
+export const STREAMS = [
+  { value: "mathematics", label: "Mathematics Stream" },
+  { value: "biology", label: "Biology Stream" },
+  { value: "commerce", label: "Commerce Stream" },
+  { value: "arts", label: "Arts Stream" },
+  { value: "technology", label: "Technology Stream" },
+]
+
+export const CURRENCYDETAIL = [
+  { value: "LKR", label: "LKR", symbol: "Rs." },
+  { value: "INR", label: "INR", symbol: "₹" },
+]
+
+export type StudentProfile = {
+  id: string
+  firstName: string
+  lastName: string
+  username: string
+  profilePicture: string
+  educationLevel: string
+  stream: string
+  totalClassesAttended: number
+  totalSessionsAttended: number
+}
+
+export type Payment = {
+  id: string
+  amount: number
+  currency: string
+  date: string
+  time: string
+  tutorName: string
+  type: "booking" | "recurring"
+  classTime?: string
+  bookingTime?: string
+}
+
+export type RecordedVideo = {
+  id: string
+  title: string
+  url: string
+  date: string
+  time: string
+  comment?: string
+  isAbsenceRecording: boolean
+}
+
+export type ClassMaterial = {
+  id: string
+  name: string
+  type: "image" | "pdf" | "video"
+  url: string
+  uploadedAt: string
+}
+
+export type ClassDetails = {
+  id: string
+  tutorName: string
+  tutorAvatar: string
+  className: string
+  classTime: string
+  status: "ongoing" | "completed"
+  rating?: number
+  review?: string
+  type: "recurring" | "one-time"
+  nextPaymentDue?: string
+  materials: ClassMaterial[]
+  recordedVideos: RecordedVideo[]
+}
+
+export type BookingDetails = {
+  id: string
+  tutorName: string
+  tutorAvatar: string
+  className: string
+  type: "one-time" | "monthly"
+  scheduledDate: string
+  classTime: string
+  amount: number
+  currency: string
+  paymentStatus: "paid" | "pending"
+  slots?: number
+}
