@@ -1,11 +1,11 @@
 import React from "react";
 import ClassCard from "./ClassCard";
-import { Class, Subject, ClassDoc } from "@/types";
+import { Class, Subject, ClassDoc, TutorSubject } from "@/types";
 
 interface ClassesSectionProps {
   classes: Class[];
   classTypes: { id: number; name: string; icon: string; color: string }[];
-  subjects: Subject[];
+  subjects: TutorSubject[];
   classDocs: Record<number, ClassDoc[]>;
   classAPI: any;
   tutorId: number;

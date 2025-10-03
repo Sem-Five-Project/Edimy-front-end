@@ -23,6 +23,7 @@ interface BookingUpdateData {
 // Removed explicit .ts extension (not needed / causes TS error without allowImportingTsExtensions)
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject } from '@/types';
 // import { SubjectRequestBody, TutorSearchPayload } from '@/types';
+import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject, TutorSubject } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -43,7 +44,6 @@ const plainAxios = axios.create({
   },
 });
 export const setAuthToken = (token: string | null) => {
-  console.log('setAuthToken in', token);
   if (token) {
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
@@ -80,6 +80,88 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 // Enhanced response interceptor with token refresh
+  // api.interceptors.response.use(
+  //   (response) => response,
+  //   async (error) => {
+  //     const originalRequest = error.config;
+      
+  //     // Check if it's a 401 error with TOKEN_EXPIRED
+  //     if (error.response?.status === 401) {
+  //       const errorData = error.response.data;
+        
+  //       // Check if it's specifically TOKEN_EXPIRED
+  //       if (errorData?.error === 'TOKEN_EXPIRED' || errorData?.message?.includes('expired')) {
+  //         console.log('Token expired, attempting to refresh...');
+          
+  //         // Prevent infinite loops
+  //         if (originalRequest._retry) {
+  //           console.log('Token refresh already attempted, logging out...');
+  //           window.location.href = '/login';
+  //           return Promise.reject(error);
+  //         }
+          
+  //         if (isRefreshing) {
+  //           // If we're already refreshing, queue this request
+  //           console.log('Token refresh in progress, queuing request...');
+  //           return new Promise((resolve, reject) => {
+  //             failedQueue.push({ resolve, reject });
+  //           }).then(token => {
+  //             originalRequest.headers['Authorization'] = 'Bearer ' + token;
+  //             return api(originalRequest);
+  //           }).catch(err => {
+  //             return Promise.reject(err);
+  //           });
+  //         }
+
+  //         originalRequest._retry = true;
+  //         isRefreshing = true;
+
+  //         try {
+  //           console.log('Attempting token refresh...');
+  //           const refreshResponse = await refreshAccessToken();
+  //           const newAccessToken = refreshResponse.accessToken;
+            
+  //           console.log('Token refreshed successfully:', newAccessToken);
+            
+  //           // Update the global auth token for future requests
+  //           setAuthToken(newAccessToken);
+            
+  //           // Update AuthContext state through callback
+  //           if (onTokenRefreshCallback) {
+  //             onTokenRefreshCallback(newAccessToken);
+  //           }
+            
+  //           // Process the failed queue
+  //           processQueue(null, newAccessToken);
+            
+  //           // Retry the original request with new token
+  //           originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+            
+  //           return api(originalRequest);
+  //         } catch (refreshError) {
+  //           console.error('Token refresh failed:', refreshError);
+            
+  //           // Process queue with error
+  //           processQueue(refreshError, null);
+            
+  //           // Clear auth state and redirect to login
+  //           setAuthToken(null);
+  //           window.location.href = '/login';
+            
+  //           return Promise.reject(refreshError);
+  //         } finally {
+  //           isRefreshing = false;
+  //         }
+  //       } else {
+  //         // For other 401 errors (invalid credentials, etc.), redirect to login
+  //         console.log('Non-token related 401 error, redirecting to login...');
+  //         window.location.href = '/login';
+  //       }
+  //     }
+      
+  //     return Promise.reject(error);
+  //   }
+  // );
   api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -165,7 +247,7 @@ const processQueue = (error: any, token: string | null = null) => {
   export const refreshAccessToken = async () => {
     try {
       const response = await plainAxios.post('/auth/refresh'); 
-      console.log('Refreshed access token', response);
+      console.log('Refreshed access token111111111', response.data.accessToken);
       return response.data;
     } catch (error) {
       throw error;
@@ -299,17 +381,11 @@ export const authAPI = {
     }
   },
   
-  getCurrentUser: async (token?: string): Promise<ApiResponse<{ user: User }>> => {
-  try {
-    // If a token is passed explicitly, use it for this request
-    const response = await api.get('/auth/me', token ? {
-      headers: { Authorization: `Bearer ${token}` }
-    } : {});
-
-      console.log("getCurrentUser response main :",response.data)
+getCurrentUser: async (): Promise<ApiResponse<{ user: User }>> => {
+ try {
+    const response = await api.get('/auth/me');
     return { success: true, data: { user: response.data.data.user } };
   } catch (error) {
-    console.error('Get current user failed:', error);
     return { 
       success: false, 
       data: { user: {} as User },
@@ -1440,7 +1516,16 @@ export const tutorAvailabilityAPI = {
   //create availability
   createAvailability: async (availabilityData: TutorAvailability): Promise<ApiResponse<TutorAvailability>> => {
     try {
-      const response = await api.post('/tutor-availability', availabilityData);
+      const newSlot = {
+      startTime: availabilityData.startTime,
+      endTime: availabilityData.endTime,
+      dayOfWeek: availabilityData.dayOfWeek,
+      recurring: availabilityData.recurring,
+      tutorProfile: {
+        tutorId: availabilityData.tutorId
+      }
+    };
+      const response = await api.post('/tutor-availability', newSlot);
       return response.data;
     } catch (error) {
       console.error('Create availability failed:', error);
@@ -1482,9 +1567,9 @@ export const tutorAvailabilityAPI = {
   },
   //get availability of a tutor by tutor id
   getAvailabilityByTutorId: async (tutorId: number): Promise<TutorAvailability[]> => {
+
     try {
       const response = await api.get(`/tutor-availability/tutor/${tutorId}`);
-      console.log('Tutor availability:', response.data);
       return response.data;
     } catch (error) {
       console.error('Get availability by tutor ID failed:', error);
@@ -1495,13 +1580,28 @@ export const tutorAvailabilityAPI = {
 
 export const subjectAPI = {
   //get the subjects of a tutor when the tutorid is given
-  getSubjectsByTutorId: async (tutorId: number): Promise<Subject[]> => {
+  getSubjectsByTutorId: async (tutorId: number): Promise<TutorSubject[]> => {
     try {
       const response = await api.get(`/tutors/${tutorId}/subjects`);
       return response.data;
     } catch (error) {
       console.error('Get subjects by tutor ID failed:', error);
       return [];
+    }
+  },
+
+  //add a subject to a tutor
+  addSubjectToTutor: async (tutorId: number, subjectId: number, hourlyRate: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(`/tutors/add`, { tutorId,subjectId, hourlyRate });  
+      return response.data;
+    } catch (error) {
+      console.error('Add subject to tutor failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to add subject to tutor',
+      };
     }
   },
 }
