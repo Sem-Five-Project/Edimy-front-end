@@ -8,15 +8,23 @@ export interface User {
   isVerified: boolean;
   createdAt: string;
   profileImage?: string | null; // Add this line
+  /**
+   * Backend now returns a role-specific primary entity id (studentId or tutorId).
+   * Historically the app used user.id as if it were the student id. To stay
+   * backward compatible we keep id but also expose these optional explicit
+   * fields. Prefer using studentId / tutorId where role specific logic is needed.
+   */
+  studentId?:number | null | undefined;
+  tutorId?: string | null;
   accountNonExpired?: boolean;
   accountNonLocked?: boolean;
   credentialsNonExpired?: boolean;
   enabled?: boolean;
-  educationLevel?: string | null;
+  educationLevel?: string | undefined;
   membership?: string | null;
   password?: string;
   updatedAt?: string;
-  stream?: string | null;
+  stream?: string | undefined;
 }
 
 export interface Subject {

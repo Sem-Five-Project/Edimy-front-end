@@ -54,7 +54,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   onCancel,
 }) => {
   const { formatPrice } = useCurrency();
-  const { user } = useAuth();
+  const { user, effectiveStudentId } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [payHereReady, setPayHereReady] = useState(false);
   const [orderMeta, setOrderMeta] = useState<InitPayHerePendingRes | null>(null);
@@ -63,7 +63,10 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   const [showFreshSessionMessage, setShowFreshSessionMessage] = useState(false);
   const paymentInitRef = useRef(false); // Additional ref-based tracking
 
-  const studentIdNum = user && Number(user.id) ? Number(user.id) : undefined;
+  // Prefer explicit studentId from backend; fall back to legacy user.id if numeric
+  const studentIdNum = effectiveStudentId !== null && effectiveStudentId !== undefined && !isNaN(Number(effectiveStudentId))
+    ? Number(effectiveStudentId)
+    : (user && !isNaN(Number(user.id)) ? Number(user.id) : undefined);
   const formatTime = (time: string) =>
     new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
       hour: "numeric",

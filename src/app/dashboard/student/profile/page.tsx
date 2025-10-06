@@ -39,21 +39,18 @@
     const firstName = user?.firstName ?? "";
     const lastName = user?.lastName ?? "";
     const username = user?.username ?? "";
-    const profilePicture = user?.profilePicture ?? "";
+    const profilePicture = user?.profileImage ?? "";
     const userId = user?.id ?? "";
+    const studentId = user?.studentId ?? null;
+    
 
     // Academic info via React Query (cached across navigations)
-    const {
-      data: academic,
-      isPending,
-      isFetching,
-      isError,
-      error,
-    } = useQuery<AcademicInfo>({
-      queryKey: ["studentProfileInfo", userId],
-      enabled: Boolean(userId),
+    const {data: academic,isPending,isFetching,isError,error,} = useQuery<AcademicInfo>({
+      queryKey: ["studentProfileInfo", studentId],
+      enabled: Boolean(studentId),
       queryFn: async () => {
-        const res = await studentAPI.loadStudentProfileInfo(userId);
+        console.log("fetch student profile info for id", studentId);
+        const res = await studentAPI.loadStudentProfileInfo(studentId);
         // The org API returns: { educationLevel, stream, classCount, sessionCount }
         return res.data;
       },

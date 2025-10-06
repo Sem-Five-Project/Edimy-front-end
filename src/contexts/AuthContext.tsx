@@ -21,6 +21,14 @@ interface AuthContextType {
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /** True if role === 'STUDENT' */
+  isStudent: boolean;
+  /** True if role === 'TUTOR' */
+  isTutor: boolean;
+  /** The role specific primary numeric id: studentId for STUDENT, tutorId for TUTOR (tutorId kept as any in User but surfaced numeric if convertible) */
+  actorId: number | null;
+  /** Student numeric id (only for students) */
+  effectiveStudentId: number | null;
   login: (accessToken: string, user: User) => void;
   loginWithResponse: (response: { accessToken: string; tokenType: string; user: User }) => void;
   logout: () => void;
@@ -49,6 +57,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuthStatus();
   }, []);
 
+  const toNum = (v: any): number | null => {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'number' && !Number.isNaN(v)) return v;
+    const n = Number(v);
+    return Number.isNaN(n) ? null : n;
+  };
+
+  const normalizeUser = (raw: any): User => {
+    const normStudentId = raw.role === 'STUDENT' ? (toNum(raw.studentId) ?? toNum(raw.id)) : toNum(raw.studentId);
+    const normTutorId = raw.role === 'TUTOR' ? (toNum(raw.tutorId) ?? toNum(raw.id)) : toNum(raw.tutorId);
+    return { ...raw, studentId: normStudentId, tutorId: normTutorId };
+  };
+
   const checkAuthStatus = async () => {
     try {
       const newToken = await refreshAccessToken();
@@ -60,9 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Test the token first
 
       const response = await authAPI.getCurrentUser();
-      if (response?.data?.user) {
-        setUser(response.data.user);
-      }
+      if (response?.data?.user) setUser(normalizeUser(response.data.user)); 
     } catch {
       setUser(null);
       setToken(null);
@@ -73,13 +92,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = (newToken: string, newUser: User) => {
     setToken(newToken);
-    setUser(newUser);
+    setUser(normalizeUser(newUser));
     setAuthToken(newToken);
   };
 
   const loginWithResponse = (response: { accessToken: string; tokenType: string; user: User }) => {
     setToken(response.accessToken);
-    setUser(response.user);
+    setUser(normalizeUser(response.user));
     setAuthToken(response.accessToken);
   };
 
@@ -110,13 +129,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       setAcademicLoading(true);
-      const res = await studentAPI.loadStudentAcademicInfo(user.id);
-      if (res?.success && res.data) {
-        const educationLevel = res.data.educationLevel ?? null;
-        const stream = res.data.stream ?? null;
-        updateUser({ educationLevel, stream });
+      if (user.studentId) {
+        const res = await studentAPI.loadStudentAcademicInfo(user.studentId);
+        if (res?.success && res.data) {
+          const educationLevel = res.data.educationLevel;
+          const stream = res.data.stream;
+          updateUser({ educationLevel, stream });
+          console.log('Loaded academic info:', res.data);
+        } else {
+          console.warn('Academic info fetch returned unexpected shape:', res);
+        }
       } else {
-        console.warn('Academic info fetch returned unexpected shape:', res);
+        console.warn('Cannot load academic info: studentId is missing or not a string.', user.studentId);
       }
     } catch (e) {
       console.warn('Academic info load failed:', e);
@@ -125,11 +149,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [user, academicLoading, updateUser]);
   const accessToken = token;
+  const isStudent = user?.role === 'STUDENT';
+  const isTutor = user?.role === 'TUTOR';
+  const actorId: number | null = isStudent
+    ? (user?.studentId ?? null)
+    : isTutor
+      ? (toNum(user?.tutorId) ?? null)
+      : null;
+  const effectiveStudentId: number | null = isStudent ? (user?.studentId ?? null) : null;
+
   const value: AuthContextType = {
     user,
     accessToken,
     isAuthenticated: !!user && !!token,
     isLoading,
+    isStudent,
+    isTutor,
+    actorId,
+    effectiveStudentId,
     login,
     loginWithResponse,
     logout,
