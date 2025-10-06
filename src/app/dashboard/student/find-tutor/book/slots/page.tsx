@@ -1301,10 +1301,10 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                       <div className="flex flex-wrap gap-2 pt-1">
                         <button
                           type="button"
-                          onClick={() => setOverrideExistingClass(true)}
+                          onClick={() => setOverrideExistingClass(!overrideExistingClass)}
                           className={`text-xs px-3 py-1 rounded-md font-medium transition border ${overrideExistingClass ? 'bg-red-600 text-white border-red-700 shadow' : 'bg-white dark:bg-gray-800 text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-gray-700'}`}
                         >
-                          {isMonthlyClassType ? 'Create a separate recurring class' : 'Book another one-time class'}
+                          {isMonthlyClassType ? 'Create a new recurring class' : 'Book new one-time class'}
                         </button>
                         <button
                           type="button"
