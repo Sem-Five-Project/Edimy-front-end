@@ -152,17 +152,17 @@ export const CLASS_TYPES: ClassType[] = [
  
   {
     id: 1,
-    name: 'Regular Class',
+    name: 'One Time Class',
     description: 'Weekly classes with flexible scheduling',
     durationWeeks: 4,
-    priceMultiplier: 0.95,
+    priceMultiplier: 1.0,
   },
   {
     id: 2,
-    name: 'Monthly Class',
+    name: 'Monthly Recurring Class',
     description: 'Committed monthly package with best rates',
     durationWeeks: 12,
-    priceMultiplier: 0.85,
+    priceMultiplier: 1.0,
   },
 ];
 
@@ -552,9 +552,9 @@ export interface NormalizedTutor {
   bio: string;
   rating: number;
   experienceMonths: number;
-  subjects: Array<{ name: string; hourlyRate: number }>;
+  subjects: Subject[];
   hourlyRate: number;
-  languages: string[];
+  languages: Language[];
 }
 
 
@@ -617,11 +617,11 @@ export const EDUCATION_LEVELS = [
 ]
 
 export const STREAMS = [
-  { value: "mathematics", label: "Mathematics Stream" },
-  { value: "biology", label: "Biology Stream" },
-  { value: "commerce", label: "Commerce Stream" },
-  { value: "arts", label: "Arts Stream" },
-  { value: "technology", label: "Technology Stream" },
+  { value: "Maths", label: "Mathematics Stream" },
+  { value: "Bio", label: "Biology Stream" },
+  { value: "Commerce", label: "Commerce Stream" },
+  { value: "Arts", label: "Arts Stream" },
+  { value: "Technology", label: "Technology Stream" },
 ]
 
 export const CURRENCYDETAIL = [

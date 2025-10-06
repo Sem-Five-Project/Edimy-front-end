@@ -26,13 +26,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { bookingAPI } from "@/lib/api";
 import { saveBookingCache, clearBookingCache } from "@/utils/bookingCache";
+import { MonthlyBookingData } from "@/contexts/BookingContext";
 
 interface PayHerePaymentProps {
   tutor: Tutor;
   selectedDate: Date;
-  selectedSlot: TimeSlot;
+  selectedSlot?: TimeSlot; // Optional for monthly bookings
   bookingPreferences: BookingPreferences;
   reservationTimer: number;
+  monthlyBookingData?: MonthlyBookingData; // Optional monthly booking data
   onBack: () => void;
   onPaymentSuccess: (bookingId?: number) => void;
   onPaymentError: (error: string) => void;
@@ -45,6 +47,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   selectedSlot,
   bookingPreferences,
   reservationTimer,
+  monthlyBookingData,
   onBack,
   onPaymentSuccess,
   onPaymentError,
@@ -80,17 +83,30 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
     return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
   };
 
-  const duration = calculateDuration(selectedSlot.startTime, selectedSlot.endTime);
-  const totalAmount = bookingPreferences.finalPrice || selectedSlot.price || 0;
+  // Determine if this is monthly booking
+  const isMonthly = bookingPreferences.selectedClassType?.id === 2;
+
+  // For single: calculate duration; for monthly: use slot count
+  const duration = !isMonthly && selectedSlot 
+    ? calculateDuration(selectedSlot.startTime, selectedSlot.endTime) 
+    : 0;
+  
+  // Total amount: prefer monthly cost if available, else finalPrice, else slot price
+  const totalAmount = isMonthly && monthlyBookingData
+    ? monthlyBookingData.totalCost
+    : (bookingPreferences.finalPrice || selectedSlot?.price || 0);
 
   // Save booking data to cache on mount and reset payment state for fresh session
   useEffect(() => {
-    saveBookingCache(
-      tutor.tutorProfileId || parseInt(String(tutor.id), 10),
-      selectedDate,
-      selectedSlot,
-      bookingPreferences
-    );
+    // Only save cache for single bookings (monthly doesn't need slot cache)
+    if (selectedSlot) {
+      saveBookingCache(
+        tutor.tutorProfileId || parseInt(String(tutor.id), 10),
+        selectedDate,
+        selectedSlot,
+        bookingPreferences
+      );
+    }
     
     // Reset payment initiation state when coming to payment page
     // This ensures a fresh 15-minute timer every time
@@ -168,8 +184,12 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
 
     try {
      
+      const slotRef = isMonthly 
+        ? `MONTHLY-${monthlyBookingData?.id || Date.now()}` 
+        : selectedSlot?.slotId || Date.now();
+      
       const actualPayload = {
-        orderId : `EDIMY-${Date.now()}_${selectedSlot.slotId}`, // Unique order ID with slot reference
+        orderId : `EDIMY-${Date.now()}_${slotRef}`, // Unique order ID with slot/monthly reference
         studentId: studentIdNum,
         amount: Number(totalAmount), // Ensure it's a number
         currency: "LKR",
@@ -204,7 +224,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       setPaymentInitiated(false); // Reset on error so it can be retried
       onPaymentError("Failed to initiate payment. Please try again.");
     } 
-  }, [studentIdNum, totalAmount, paymentInitiated, orderMeta, selectedSlot.slotId, onPaymentError]); // Remove initiatingPayment from deps
+  }, [studentIdNum, totalAmount, paymentInitiated, orderMeta, isMonthly, monthlyBookingData, selectedSlot, onPaymentError]);
 
   // Load PayHere script and initiate payment pending
   useEffect(() => {
@@ -344,15 +364,27 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
             return;
           }
 
-          const confirmPayload = {
-            paymentId: paymentId,
-            tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
-            slotId: selectedSlot.slotId,
-            subjectId: bookingPreferences.selectedSubject.subjectId,
-            languageId: bookingPreferences.selectedLanguage.languageId,
-            classTypeId: bookingPreferences.selectedClassType.id,
-            paymentTime: new Date().toISOString(),
-          };
+          const confirmPayload = isMonthly
+            ? {
+                paymentId: paymentId,
+                tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
+                // For monthly: send array of slot IDs or booking metadata
+                monthlyBookingId: monthlyBookingData?.id,
+                subjectId: bookingPreferences.selectedSubject.subjectId,
+                languageId: bookingPreferences.selectedLanguage.languageId,
+                classTypeId: bookingPreferences.selectedClassType.id,
+                paymentTime: new Date().toISOString(),
+                isMonthly: true,
+              }
+            : {
+                paymentId: paymentId,
+                tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
+                slotId: selectedSlot!.slotId,
+                subjectId: bookingPreferences.selectedSubject.subjectId,
+                languageId: bookingPreferences.selectedLanguage.languageId,
+                classTypeId: bookingPreferences.selectedClassType.id,
+                paymentTime: new Date().toISOString(),
+              };
           
           console.log("Confirming payment with paymentId:", confirmPayload);
           const confirmRes = await bookingAPI.confirmPayHerePayment(confirmPayload);
@@ -387,12 +419,14 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       // Step 4: Start PayHere payment
       const payment = {
         sandbox: true,
-        merchant_id: hashResponse.data.merchantId,
+        merchant_id: hashResponse.data.merchantId || "1228143", // Fallback to sandbox merchant ID
         return_url: `${window.location.origin}/payment/return`,
         cancel_url: `${window.location.origin}/payment/cancel`,
         notify_url: `${window.location.origin}/api/payment/notify`,
-        order_id: orderMeta.orderId || orderMeta.order_id,
-        items: `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} Session - ${duration}h`,
+        order_id: orderMeta.orderId || orderMeta.order_id || `EDIMY-${Date.now()}`,
+        items: isMonthly 
+          ? `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} - Monthly (${monthlyBookingData?.totalSlots || 0} slots)`
+          : `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} Session - ${duration}h`,
         amount: amountStr,
         currency: "LKR",
         hash: hashResponse.data.hash,
@@ -408,10 +442,13 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         delivery_country: "Sri Lanka",
         custom_1: JSON.stringify({
           tutorId: tutor.tutorProfileId,
-          slotId: selectedSlot.slotId,
-          language: bookingPreferences.selectedLanguage?.languageName,
-          subject: bookingPreferences.selectedSubject?.subjectName,
-          classType: bookingPreferences.selectedClassType?.name,
+          ...(isMonthly 
+            ? { monthlyBookingId: monthlyBookingData?.id, totalSlots: monthlyBookingData?.totalSlots }
+            : { slotId: selectedSlot?.slotId }
+          ),
+          language: bookingPreferences?.selectedLanguage?.languageName,
+          subject: bookingPreferences?.selectedSubject?.subjectName,
+          classType: bookingPreferences?.selectedClassType?.name,
         }),
         custom_2: selectedDate.toISOString(),
       };

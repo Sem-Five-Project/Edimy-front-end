@@ -511,10 +511,12 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
 
   // Load available slots when date or tutor changes
   useEffect(() => {
+    console.log("here 1",selectedDate)
     if (selectedDate) {
+      console.log("here 2",selectedDate)
       loadAvailableSlots(selectedDate);
     }
-  }, [selectedDate, tutor.tutorProfileId]);
+  }, [selectedDate, tutor.id]);
 
   // Handle reservation timer countdown
   useEffect(() => {
@@ -536,12 +538,13 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
   }, [reservationTimer]);
 
   const loadAvailableSlots = async (date: Date) => {
+    console.log("Loading slots for date:", date);
     setIsLoadingSlots(true);
     setError("");
     try {
       const dateString = date.toISOString().split("T")[0];
       console.log("Loading slots for tutor:", tutor);
-      const response = await tutorAPI.getTutorSlots(tutor.tutorProfileId.toString(), dateString);
+      const response = await tutorAPI.getTutorSlots(tutor.id.toString(), dateString);
       console.log("Response from API:", response);
       if (response.success) {
         console.log("Available slots:", response.data);
