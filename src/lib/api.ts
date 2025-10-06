@@ -21,9 +21,9 @@ interface BookingUpdateData {
   };
 }
 // Removed explicit .ts extension (not needed / causes TS error without allowImportingTsExtensions)
-import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject } from '@/types';
 // import { SubjectRequestBody, TutorSearchPayload } from '@/types';
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject, TutorSubject } from '@/types';
+import { Timestamp } from 'next/dist/server/lib/cache-handlers/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -687,8 +687,44 @@ export const tutorAPI = {
 //     },
 //   };
 // },
- 
+getNextMonthSlots: async (
+  availabilityIds: number[],
+  month: number,
+  year: number
+): Promise<ApiResponse<any>> => {
+  try {
+    if (!Array.isArray(availabilityIds) || availabilityIds.length === 0) {
+      return { success: false, error: 'No availability ids supplied', data: [] };
+    }
 
+    // Deduplicate & build comma list
+    const idsParam = Array.from(new Set(availabilityIds)).join(',');
+    const params = { availabilityIds: idsParam, year, month };
+
+    const endpoint = '/student/bookings/slots/next-month';
+    console.log('Fetching next month slots (GET):', endpoint, 'params:', params);
+
+    const response = await api.get(endpoint, { params });
+    console.log("Next month slots api response:", response);
+
+    // Backend sample shape:
+    // [
+    //   { "get_next_month_slots": [ { week_day,start_time,end_time,availability_id,available_dates:[] }, ... ] }
+    // ]
+    const raw = response.data;
+    return {
+      success: true,
+      data: raw
+    };
+  } catch (error: any) {
+    console.error('getNextMonthSlots (GET) error:', error);
+    return {
+      success: false,
+      error: error?.response?.data?.message || error.message || 'Failed to fetch next month slots',
+      data: []
+    };
+  }
+},
   searchTutorss : async (
     filters: FilterOptions,
     page: number = 1,
@@ -720,80 +756,156 @@ export const tutorAPI = {
       };
     }
   },
-  getTutorSlots: async (tutorId: string, date?: string, recurring?: boolean | null): Promise<ApiResponse<TimeSlot[]>> => {
-    try {
-      // Use the real backend endpoint
-      console.log('Fetching slots for tutorId:', tutorId, 'date:', date, 'recurring:', recurring);
+  // getTutorSlots: async (tutorId: string, date?: string, recurring?: boolean | null): Promise<ApiResponse<TimeSlot[]>> => {
+  //   console.log('getTutorSlots called with:', { tutorId, date, recurring });
+  //   try {
+  //     // Use the real backend endpoint
+  //     console.log('Fetching slots for tutorId:', tutorId, 'date:', date, 'recurring:', recurring);
 
-      // Build params depending on mode
-      const now = new Date();
-      const refDate = date ? new Date(date) : now;
-      const weekdayLong = refDate.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-      const monthNum = refDate.getMonth() + 1; // 1-12
-      const yearNum = refDate.getFullYear();
+  //     // Build params depending on mode
+  //     const now = new Date();
+  //     const refDate = date ? new Date(date) : now;
+  //     const weekdayLong = refDate.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  //     const monthNum = refDate.getMonth() + 1; // 1-12
+  //     const yearNum = refDate.getFullYear();
 
-      const params: Record<string, any> = { tutorId };
-      if (recurring) {
-        // Monthly search: send recurring, weekday, month, year; do NOT send date
-        params.recurring = true;
-        params.weekday = weekdayLong; // e.g., 'MONDAY'
-        params.month = monthNum; // 1-12
-        params.year = yearNum; // full year, e.g., 2025
-      } else {
-        // Regular search: send date only (plus tutorId)
-        params.date = date || now.toISOString().split('T')[0];
-      }
-      console.log('Get tutor slots params:', params);
+  //     const params: Record<string, any> = { tutorId };
+  //     if (recurring) {
+  //       // Monthly search: send recurring, weekday, month, year; do NOT send date
+  //       params.recurring = true;
+  //       params.weekday = weekdayLong; // e.g., 'MONDAY'
+  //       params.month = monthNum; // 1-12
+  //       params.year = yearNum; // full year, e.g., 2025
+  //     } else {
+  //       // Regular search: send date only (plus tutorId)
+  //       params.date = date || now.toISOString().split('T')[0];
+  //     }
+  //     console.log('Get tutor slots params:', params);
 
-      const response = await api.get(`/student/bookings/slots`, { params });
-      console.log('Get tutor slots response:', response);
+  //     const response = await api.get(`/student/bookings/slots`, { params });
+  //     console.log('Get tutor slots response:', response);
       
-      // Transform the response to ensure compatibility
-      const slots = response.data.map((slot: any) => ({
-        ...slot,
-        // Add compatibility fields for existing UI code
-        id: slot.slotId.toString(),
-        price: slot.hourlyRate || 50, // Fallback to 50 if no hourly rate
-      }));
+  //     // Transform the response to ensure compatibility
+  //     const slots = response.data.map((slot: any) => ({
+  //       ...slot,
+  //       // Add compatibility fields for existing UI code
+  //       id: slot.slotId.toString(),
+  //       price: slot.hourlyRate || 50, // Fallback to 50 if no hourly rate
+  //     }));
       
-      return {
-        success: true,
-        data: slots,
-      };
-    } catch (error) {
-      console.error('Get tutor slots failed:', error);
-      // Mock slots data with new structure
-      const mockSlots: TimeSlot[] = Array.from({ length: 4 }, (_, i) => ({
-        slotId: i + 1,
-        availabilityId: i + 1,
-        tutorId: parseInt(tutorId),
-        tutorName: 'Mock Tutor',
-        slotDate: date || new Date().toISOString().split('T')[0],
-        dayOfWeek: 'MONDAY',
-        startTime: `${9 + i * 2}:00:00`,
-        endTime: `${11 + i * 2}:00:00`,
-        status: Math.random() > 0.7 ? 'BOOKED' : 'AVAILABLE',
-        hourlyRate: 50 + Math.floor(Math.random() * 50),
-        tutorBio: null,
-        tutorExperience: 0,
-        isRecurring: true,
-        subjectName: null,
-        rating: 0.0,
-        // Compatibility fields
-        id: `slot-${tutorId}-${i}`,
-        startHour: 9 + i * 2,
-        startMinute: 0,
-        endHour: 11 + i * 2,
-        endMinute: 0,
-        price: 50 + Math.floor(Math.random() * 50),
-      }));
+  //     return {
+  //       success: true,
+  //       data: slots,
+  //     };
+  //   } catch (error) {
+  //     console.error('Get tutor slots failed:', error);
+  //     // Mock slots data with new structure
+  //     const mockSlots: TimeSlot[] = Array.from({ length: 4 }, (_, i) => ({
+  //       slotId: i + 1,
+  //       availabilityId: i + 1,
+  //       tutorId: parseInt(tutorId),
+  //       tutorName: 'Mock Tutor',
+  //       slotDate: date || new Date().toISOString().split('T')[0],
+  //       dayOfWeek: 'MONDAY',
+  //       startTime: `${9 + i * 2}:00:00`,
+  //       endTime: `${11 + i * 2}:00:00`,
+  //       status: Math.random() > 0.7 ? 'BOOKED' : 'AVAILABLE',
+  //       hourlyRate: 50 + Math.floor(Math.random() * 50),
+  //       tutorBio: null,
+  //       tutorExperience: 0,
+  //       isRecurring: true,
+  //       subjectName: null,
+  //       rating: 0.0,
+  //       // Compatibility fields
+  //       id: `slot-${tutorId}-${i}`,
+  //       startHour: 9 + i * 2,
+  //       startMinute: 0,
+  //       endHour: 11 + i * 2,
+  //       endMinute: 0,
+  //       price: 50 + Math.floor(Math.random() * 50),
+  //     }));
       
-      return {
-        success: true,
-        data: mockSlots,
-      };
+  //     return {
+  //       success: true,
+  //       data: mockSlots,
+  //     };
+  //   }
+  // },
+  getTutorSlots: async (
+  tutorId: string,
+  date?: string,
+  recurring?: boolean | null
+): Promise<ApiResponse<TimeSlot[]>> => {
+  console.log("getTutorSlots called with:", { tutorId, date, recurring });
+  try {
+    const now = new Date();
+    const refDate = date ? new Date(date) : now;
+
+    const weekdayLong = refDate
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toUpperCase();
+    const monthNum = refDate.getMonth() + 1;
+    const yearNum = refDate.getFullYear();
+
+    // Choose endpoint
+    const endpoint = recurring
+      ? "/student/bookings/slots/recurring"
+      : "/student/bookings/slots";
+
+    // Build params
+    const params: Record<string, any> = { tutorId };
+    if (recurring) {
+      params.weekday = weekdayLong;
+      params.month = monthNum;
+      params.year = yearNum;
+    } else {
+      params.date = date || now.toISOString().split("T")[0];
     }
-  },
+
+    console.log("Fetching slots from:", endpoint, "with params:", params);
+    const response = await api.get(endpoint, { params });
+
+
+console.log("Get tutor slots response:", response.data);
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    console.error("Get tutor slots failed:", error);
+
+    // Mock slots fallback
+    const mockSlots: TimeSlot[] = Array.from({ length: 4 }, (_, i) => ({
+      slotId: i + 1,
+      availabilityId: i + 1,
+      tutorId: parseInt(tutorId),
+      tutorName: "Mock Tutor",
+      slotDate: date || new Date().toISOString().split("T")[0],
+      dayOfWeek: "MONDAY",
+      startTime: `${9 + i * 2}:00:00`,
+      endTime: `${11 + i * 2}:00:00`,
+      status: Math.random() > 0.7 ? "BOOKED" : "AVAILABLE",
+      hourlyRate: 50 + Math.floor(Math.random() * 50),
+      tutorBio: null,
+      tutorExperience: 0,
+      isRecurring: recurring ?? false,
+      subjectName: null,
+      rating: 0.0,
+      id: `slot-${tutorId}-${i}`,
+      startHour: 9 + i * 2,
+      startMinute: 0,
+      endHour: 11 + i * 2,
+      endMinute: 0,
+      price: 50 + Math.floor(Math.random() * 50),
+    }));
+
+    return {
+      success: true,
+      data: mockSlots,
+    };
+  }
+},
+
 };
 export const studentAPI = {
   loadStudentAcademicInfo: async (
@@ -817,6 +929,61 @@ export const studentAPI = {
         data: {
           educationLevel: "undergraduate",
           stream: "arts",
+        },
+      };
+    }
+  },
+    loadStudentProfileInfo: async (
+    studentId: string
+  ): Promise<ApiResponse<{ educationLevel: string | null; stream: string | null;classCount:number|0 ;sessionCount :number|0 }>> => {
+    try {
+      
+      const response = await api.get(
+        `/student/profile/${studentId}/profile-info`
+      );
+      console.log("response of loadStudentProfileInfo :", response);
+
+      return {
+        success: true,
+        data: response.data, 
+      };
+    } catch (error) {
+      console.error("Load student profile info failed:", error);
+      // Mock data for frontend testing
+      return {
+        success: true,
+        data: {
+          educationLevel: null,
+          stream: null,
+          classCount:0,
+          sessionCount:0
+        },
+      };
+    }
+  },
+   loadStudentProfilePayment: async (
+studentId: string, timeFilter: string  ): Promise<ApiResponse<{ amount: number | 0; tutorName: string | null; subject: string | null; status: string | null; paymentTime: Timestamp | null;}>> => {
+    try {
+     const response = await api.get(
+        `/student/profile/${studentId}/profile-payment`
+      );
+      console.log("response of loadStudentProfilePayment :", response);
+
+      return {
+        success: true,
+        data: response.data, 
+      };
+    } catch (error) {
+      console.error("Load student profile info failed:", error);
+      // Mock data for frontend testing
+      return {
+        success: true,
+        data: {
+          amount: 0,
+          tutorName: null,
+          subject:null,
+          status:null,
+          paymentTime:null
         },
       };
     }
@@ -1133,26 +1300,64 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
       } as ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>;
     }
   },
+bookSlot: async (
+  slotId: number
+): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
+  try {
+    const response = await api.post('/bookings/book-slot', { slotId });
+    const raw = response.data;
 
-  bookSlot: async (
-    slotId: number
-  ): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
-    try {
-      // explicitly send JSON body { "slotId": <value> }
-      const response = await api.post('/bookings/book-slot', {
-        slotId: slotId,
-      });
-      console.log('Book slot response:', response);
-      return response.data;
-    } catch (error) {
-      console.error('Book slot failed:', error);
-      return {
-        success: false,
-        data: { bookingId: 0, status: 'FAILED' },
-        error: 'Failed to book slot',
-      } as ApiResponse<{ bookingId: number; status: string }>;
+    // Normalize possible backend shapes
+    // Shape A (wrapped): { success:true, data:{ bookingId, status } }
+    if (raw && typeof raw === 'object' && 'success' in raw && raw.data) {
+      return raw;
     }
-  },
+
+    // Shape B (flat): { bookingId, status, success? }
+    if (raw && typeof raw === 'object' && ('bookingId' in raw || 'status' in raw)) {
+      return {
+        success: raw.success !== false,
+        data: {
+          bookingId: raw.bookingId ?? 0,
+          status: raw.status ?? raw.bookingStatus ?? 'UNKNOWN',
+        },
+      };
+    }
+
+    // Fallback unexpected
+    return {
+      success: false,
+      data: { bookingId: 0, status: 'FAILED' },
+      error: 'Unexpected booking response format',
+    };
+  } catch (error) {
+    console.error('Book slot failed:', error);
+    return {
+      success: false,
+      data: { bookingId: 0, status: 'FAILED' },
+      error: 'Failed to book slot',
+    };
+  }
+},
+  // bookSlot: async (
+  //   slotId: number
+  // ): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
+  //   try {
+  //     // explicitly send JSON body { "slotId": <value> }
+  //     const response = await api.post('/bookings/book-slot', {
+  //       slotId: slotId,
+  //     });
+  //     console.log('Book slot response:', response);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Book slot failed:', error);
+  //     return {
+  //       success: false,
+  //       data: { bookingId: 0, status: 'FAILED' },
+  //       error: 'Failed to book slot',
+  //     } as ApiResponse<{ bookingId: number; status: string }>;
+  //   }
+  // },
 
   bookMonthlyClass: async (
     payload: BookMonthlyClassReq
@@ -1239,68 +1444,145 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
   },
 
   // Confirm PayHere payment and finalize booking, updating all related tables
-  confirmPayHerePayment: async (payload: {
-    paymentId: string; // Only paymentId received from initiatePaymentPending
-    slotId?: number; // Optional slotId for booking confirmation
-    tutorId: number; // Tutor associated with the slot
-    subjectId: number; // Subject associated with the booking
-    languageId: number; // Language associated with the booking
-    classTypeId: number; // Class type (e.g., online, in-person)
+confirmPayHerePayment: async (payload: {
+  paymentId: string;
+  slotId?: number;
+  tutorId: number;
+  subjectId: number;
+  languageId: number;
+  classTypeId: number;
+}): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
+  try {
+    console.log('Confirming PayHere payment with payload:', payload);
+    const response = await api.post('/payment/bookings/confirm', payload);
+    const paymentRaw = response.data;
+    console.log('Confirm PayHere payment response (raw):', paymentRaw);
 
-  }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
-    try {
-      console.log('Confirming PayHere payment with payload:', payload);
-      const response = await api.post('/payment/bookings/confirm', payload);
-      console.log('Confirm PayHere payment response:', response);
+    const paymentSuccess =
+      paymentRaw?.success === true ||
+      response.status === 200;
 
-      // If payment confirmation is successful and slotId is provided, book the slot
-      if (response.status ==200 && payload.slotId) {
-        console.log('Payment confirmed successfully, proceeding to book slot:', payload.slotId);
-        
-        try {
-          const bookingResponse = await bookingAPI.bookSlot(payload.slotId);
-          console.log('Book slot after payment response:', bookingResponse);
-          
-          if (bookingResponse.success) {
-            console.log('Slot booked successfully finished!!');
-            // Return combined response with booking information
-            return {
-              success: true,
-              data: {
-                success: true,
-                paymentId: response.data.paymentId,
-                bookingId: bookingResponse.data.bookingId
-              }
-            };
-          } else {
-            console.error('Failed to book slot after payment confirmation:', bookingResponse.error);
-            // Payment confirmed but booking failed - this should be handled carefully
-            return {
-              success: false,
-              data: { success: false },
-              error: `Payment confirmed but booking failed: ${bookingResponse.error}`,
-            } as unknown as ApiResponse<{ success: boolean }>;
-          }
-        } catch (bookingError) {
-          console.error('Error booking slot after payment:', bookingError);
-          return {
-            success: false,
-            data: { success: false },
-            error: 'Payment confirmed but slot booking failed',
-          } as unknown as ApiResponse<{ success: boolean }>;
-        }
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Confirm PayHere payment failed:', error);
+    if (!paymentSuccess) {
       return {
         success: false,
         data: { success: false },
-        error: 'Failed to confirm payment',
-      } as unknown as ApiResponse<{ success: boolean }>;
+        error: paymentRaw?.error || 'Payment confirmation failed',
+      };
     }
-  },
+
+    // If there is no slot to book (edge case)
+    if (!payload.slotId) {
+      return {
+        success: true,
+        data: {
+          success: true,
+          paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
+        },
+      };
+    }
+
+    // Proceed to book slot
+    console.log('Attempting to book slot after payment:', payload.slotId);
+    const bookingResponse = await bookingAPI.bookSlot(payload.slotId);
+    console.log('Slot booking response (normalized):', bookingResponse);
+
+    const bookingId =
+      bookingResponse?.data?.bookingId ??
+      (bookingResponse as any)?.bookingId ??
+      0;
+
+    const bookingOk = bookingResponse.success === true && bookingResponse.data?.status === 'BOOKED';
+
+    if (bookingOk) {
+      return {
+        success: true,
+        data: {
+          success: true,
+          paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
+          bookingId,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      data: { success: false },
+      error:
+        bookingResponse.error ||
+        'Payment confirmed but slot booking failed',
+    };
+  } catch (error) {
+    console.error('Confirm PayHere payment failed (exception):', error);
+    return {
+      success: false,
+      data: { success: false },
+      error: 'Failed to confirm payment',
+    };
+  }
+},
+
+  // confirmPayHerePayment: async (payload: {
+  //   paymentId: string; // Only paymentId received from initiatePaymentPending
+  //   slotId?: number; // Optional slotId for booking confirmation
+  //   tutorId: number; // Tutor associated with the slot
+  //   subjectId: number; // Subject associated with the booking
+  //   languageId: number; // Language associated with the booking
+  //   classTypeId: number; // Class type (e.g., online, in-person)
+
+  // }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
+  //   try {
+  //     console.log('Confirming PayHere payment with payload:', payload);
+  //     const response = await api.post('/payment/bookings/confirm', payload);
+  //     console.log('Confirm PayHere payment response:', response);
+
+  //     // If payment confirmation is successful and slotId is provided, book the slot
+  //     if (response.status ==200 && payload.slotId) {
+  //       console.log('Payment confirmed successfully, proceeding to book slot:', payload.slotId);
+        
+  //       try {
+  //         const bookingResponse = await bookingAPI.bookSlot(payload.slotId);
+  //         console.log('Book slot after payment response:', bookingResponse);
+          
+  //         if (bookingResponse.success) {
+  //           console.log('Slot booked successfully finished!!');
+  //           // Return combined response with booking information
+  //           return {
+  //             success: true,
+  //             data: {
+  //               success: true,
+  //               paymentId: response.data.paymentId,
+  //               bookingId: bookingResponse.data.bookingId
+  //             }
+  //           };
+  //         } else {
+  //           console.error('Failed to book slot after payment confirmation:', bookingResponse.error);
+  //           // Payment confirmed but booking failed - this should be handled carefully
+  //           return {
+  //             success: false,
+  //             data: { success: false },
+  //             error: `Payment confirmed but booking failed: ${bookingResponse.error}`,
+  //           } as unknown as ApiResponse<{ success: boolean }>;
+  //         }
+  //       } catch (bookingError) {
+  //         console.error('Error booking slot after payment:', bookingError);
+  //         return {
+  //           success: false,
+  //           data: { success: false },
+  //           error: 'Payment confirmed but slot booking failed',
+  //         } as unknown as ApiResponse<{ success: boolean }>;
+  //       }
+  //     }
+
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Confirm PayHere payment failed:', error);
+  //     return {
+  //       success: false,
+  //       data: { success: false },
+  //       error: 'Failed to confirm payment',
+  //     } as unknown as ApiResponse<{ success: boolean }>;
+  //   }
+  // },
   // Initialize PayHere payment. Backend must generate hash and return full payment payload
   initPayHere: async (payload: {
     bookingId: string;

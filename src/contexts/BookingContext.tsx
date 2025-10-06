@@ -2,6 +2,20 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { Tutor, TimeSlot, BookingPreferences } from '@/types';
+
+// Type for monthly booking summary stored after reserving multiple slots
+export interface MonthlyBookingData {
+  id: string; // reservation id
+  tutorId: string;
+  subjectId: string;
+  languageId: string;
+  totalSlots: number;
+  totalCost: number;
+  status: string;
+  createdAt: string;
+  startDate: string; // first occurrence date YYYY-MM-DD
+  endDate: string;   // last occurrence date YYYY-MM-DD
+}
 import { useRouter } from 'next/navigation';
 import { bookingAPI } from '@/lib/api';
 
@@ -42,6 +56,9 @@ interface BookingContextType {
   isBookingComplete: boolean;
   bookingId: string | null;
   setBookingId: (id: string | null) => void;
+  // Monthly booking aggregate (recurring selection)
+  monthlyBookingData: MonthlyBookingData | null;
+  setMonthlyBookingData: (data: MonthlyBookingData | null) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -62,6 +79,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   });
   const [reservationDetails, setReservationDetails] = useState<ReservationDetails | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [monthlyBookingData, setMonthlyBookingData] = useState<MonthlyBookingData | null>(null);
 
   // Timer effect for reservation
   useEffect(() => {
@@ -166,6 +184,7 @@ const goBack = async (slotId?: number): Promise<void> => {
     });
     setReservationDetails(null);
     setBookingId(null);
+    setMonthlyBookingData(null);
   };
 
   const isBookingComplete = currentStep === 'confirmation' && bookingId !== null;
@@ -190,6 +209,8 @@ const goBack = async (slotId?: number): Promise<void> => {
     isBookingComplete,
     bookingId,
     setBookingId,
+    monthlyBookingData,
+    setMonthlyBookingData,
   }), [
     currentStep,
     tutor,
@@ -198,7 +219,8 @@ const goBack = async (slotId?: number): Promise<void> => {
     bookingPreferences,
     reservationDetails,
     bookingId,
-    isBookingComplete
+    isBookingComplete,
+    monthlyBookingData,
   ]);
 
   return (

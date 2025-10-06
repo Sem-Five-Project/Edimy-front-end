@@ -50,11 +50,7 @@ export function StyledSelect({
           className="h-12 w-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-200/60 dark:border-gray-700/60 rounded-xl hover:border-blue-300 dark:hover:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-between px-4 py-2"
         >
           <div className="flex items-center gap-3 flex-1 truncate">
-            {icon && (
-              <span className="text-gray-500 dark:text-gray-400 transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400">
-                {icon}
-              </span>
-            )}
+
             <SelectValue
               placeholder={placeholder}
               className="text-gray-900 dark:text-gray-100 truncate text-base font-medium"

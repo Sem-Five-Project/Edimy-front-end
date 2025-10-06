@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
- import { ExtendedFilterOptions,NormalizedTutor,SessionPayload,RecurringPayload } from '@/types/index';
+import { ExtendedFilterOptions,NormalizedTutor,SessionPayload,RecurringPayload, Subject, Language } from '@/types/index';
 
 import {
   Search,
@@ -17,6 +18,7 @@ import {
 import {filterAPI} from '@/lib/api';
 import { ResponsiveTutorCard } from '@/components/ui/tutorcard'; // Adjust path as needed
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useBooking } from '@/contexts/BookingContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Import your modular components
@@ -83,6 +85,8 @@ const TutorCardSkeleton = () => (
 
 // Main Tutor Search Component
 const MainTutorSearchComponent: React.FC = () => {
+  const router = useRouter();
+  const { setTutor } = useBooking();
   const [searchTerm, setSearchTerm] = useState('');
   const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -353,31 +357,68 @@ const buildBackendPayload = useCallback(
 // Helper to format hours/minutes into HH:MM
 
 
+// Simple stable hash for generating deterministic IDs from names (kept in 32-bit space)
+const hashString = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0; // unsigned 32-bit
+  }
+  return hash; // already a non-negative int
+};
+
 const adaptTutor = (t: any): NormalizedTutor => {
-  const tutorId = t.tutorId ?? t.id ?? t.tutorProfileId ?? Math.random();
+    const tutorId = t.tutorId ?? t.id ?? t.tutorProfileId ?? Math.floor(Math.random() * 1_000_000);
   const first = t.firstName ?? t.first_name ?? '';
   const last = t.lastName ?? t.last_name ?? '';
-  const name =
-    (first || last)
-      ? [first, last].filter(Boolean).join(' ')
-      : t.name || `Tutor ${tutorId}`;
+  const name = (first || last) ? [first, last].filter(Boolean).join(' ') : (t.name || `Tutor ${tutorId}`);
 
-  // subjects could be: [{name,hourly_rate}] or [{subject, hourlyRate}] or string[]
-  let subjects: Array<{ name: string; hourlyRate: number }> = [];
+  // Subjects may arrive as:
+  //  - string[]
+  //  - [{ name/hourly_rate }, { subjectName, hourlyRate } ...]
+  //  - mixed
+  let subjects: Subject[] = [];
   if (Array.isArray(t.subjects)) {
-    subjects = t.subjects.map((s: any) => {
-      if (typeof s === 'string') return { name: s, hourlyRate: t.hourlyRate ?? 0 };
+    subjects = t.subjects.map((s: any, index: number) => {
+      if (typeof s === 'string') {
+        const subjName = s.trim();
+        return {
+          subjectId: hashString(subjName) || index, // fallback to index if hash 0
+          subjectName: subjName,
+          hourlyRate: t.hourlyRate ?? t.hourly_rate ?? 0
+        } as Subject;
+      }
+      const subjName = s.name || s.subjectName || s.subject || 'Unknown';
+      const subjId = s.subjectId ?? hashString(subjName);
       return {
-        name: s.name ?? s.subject ?? 'Unknown',
-        hourlyRate: s.hourly_rate ?? s.hourlyRate ?? 0
-      };
+        subjectId: subjId,
+        subjectName: subjName,
+        hourlyRate: s.hourly_rate ?? s.hourlyRate ?? t.hourlyRate ?? t.hourly_rate ?? 0
+      } as Subject;
     });
   }
 
-  const primaryRate =
-    subjects.length > 0
-      ? subjects[0].hourlyRate
-      : (t.hourlyRate ?? t.hourly_rate ?? 0);
+  // Languages may arrive as string[] or objects
+  let languages: Language[] = [];
+  if (Array.isArray(t.languages)) {
+    languages = t.languages.map((l: any, index: number) => {
+      if (typeof l === 'string') {
+        const langName = l.trim();
+        return {
+          languageId: hashString(langName + ':' + index),
+          languageName: langName
+        } as Language;
+      }
+      const langName = l.name || l.languageName || 'Unknown';
+      const langId = l.languageId ?? hashString(langName + ':' + index);
+      return {
+        languageId: langId,
+        languageName: langName
+      } as Language;
+    });
+  }
+
+  // Choose representative hourly rate (first subject if available, else tutor-level)
+  const primaryRate = subjects[0]?.hourlyRate ?? t.hourlyRate ?? t.hourly_rate ?? 0;
 
   return {
     id: tutorId,
@@ -387,8 +428,9 @@ const adaptTutor = (t: any): NormalizedTutor => {
     experienceMonths: Number(t.experienceMonths ?? t.experience_months ?? t.experience ?? 0),
     subjects,
     hourlyRate: primaryRate,
-    languages: Array.isArray(t.languages) ? t.languages : []
-  };
+    languages,
+    raw: t,
+  } as any; // cast to NormalizedTutor (raw retained for debugging)
 };
 
 // User explicitly applies filters
@@ -464,14 +506,12 @@ useEffect(() => {
   };
 const handleViewProfile = (tutor: NormalizedTutor) => {
   console.log('View profile clicked:', tutor);
-  // TODO: add navigation e.g. router.push(`/dashboard/student/tutors/${tutor.id}`);
+  router.push(`/dashboard/student/tutors/${tutor.id}`);
 };
 
 const handleBookTutor = (tutor: NormalizedTutor) => {
-  console.log('Book class clicked:', tutor);
-  // TODO: open booking modal or navigate to booking flow
-  // setSelectedTutor(tutor);
-  // setIsBookingOpen(true);
+  setTutor(tutor as any); // Set the full tutor object in the context
+  router.push('/dashboard/student/find-tutor/book/slots');
 };
   // Pagination
   const handlePageChange = (page: number) => {

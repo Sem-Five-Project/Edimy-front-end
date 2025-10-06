@@ -1,3 +1,10 @@
+/* Page-scoped Tailwind import (v4). Link this file only on the profile page
+   to keep Tailwind utilities and styles local to this page. */
 @import "tailwindcss";
 
-
+/* Profile-specific component styles (local to this file)
+@layer components {
+  .profile-card {
+    @apply p-6 rounded-xl shadow bg-white;
+  }
+} */

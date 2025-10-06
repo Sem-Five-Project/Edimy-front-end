@@ -39,20 +39,31 @@ export default function BookingPaymentPage() {
     goBack,
     setCurrentStep,
     setBookingId,
-    currentStep
+    currentStep,
+    monthlyBookingData,
   } = useBooking();
 
   const { formatPrice, selectedCurrency } = useCurrency();
   const [error, setError] = useState("");
   const [realTimeTimer, setRealTimeTimer] = useState<number>(0);
 
+  const isMonthly = bookingPreferences?.selectedClassType?.id === 2;
+
+  // Validation: redirect only if required data is missing for the active mode
   useEffect(() => {
-    if (!tutor || !selectedSlot || !bookingPreferences.selectedSubject || !bookingPreferences.selectedClassType) {
+    if (
+      !tutor ||
+      !bookingPreferences?.selectedSubject ||
+      !bookingPreferences?.selectedClassType ||
+      (!isMonthly && !selectedSlot) ||
+      (isMonthly && !monthlyBookingData)
+    ) {
+      console.log("Payment validation failed, redirecting to find-tutor");
       router.push("/dashboard/student/find-tutor");
       return;
     }
     setCurrentStep('payment');
-  }, [tutor, selectedSlot, bookingPreferences, router, setCurrentStep]);
+  }, [tutor, selectedSlot, bookingPreferences, monthlyBookingData, isMonthly, router, setCurrentStep]);
 
   // Real-time timer effect based on reservationDetails.expiresAt
   useEffect(() => {
@@ -115,16 +126,26 @@ export default function BookingPaymentPage() {
     router.push('/dashboard/student/find-tutor');
   };
 
-  if (!tutor || !selectedSlot || !bookingPreferences) {
+  // Loading state - check for required data based on booking mode
+  if (
+    !tutor ||
+    !bookingPreferences?.selectedSubject ||
+    !bookingPreferences?.selectedClassType ||
+    (!isMonthly && !selectedSlot) ||
+    (isMonthly && !monthlyBookingData)
+  ) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-400 animate-pulse">Loading payment details...</p>
+        </div>
       </div>
     );
   }
 
-  // If reservation has expired, show a different state
-  if (reservationDetails && realTimeTimer === 0) {
+  // If reservation has expired (only for single bookings), show expired state
+  if (!isMonthly && reservationDetails && realTimeTimer === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <BookingProgress currentStep={currentStep} />
@@ -233,37 +254,67 @@ export default function BookingPaymentPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Date & Time */}
-                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                        <Calendar className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Date</div>
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {selectedDate?.toLocaleDateString("en-US", {
-                            weekday: "long",
-                            month: "long",
-                            day: "numeric",
-                          })}
+                {isMonthly ? (
+                  /* Monthly Booking Summary */
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Range</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {monthlyBookingData!.startDate} → {monthlyBookingData!.endDate}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Time</div>
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Clock className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Total Slots</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {monthlyBookingData!.totalSlots}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  /* Single Booking Date & Time */
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Date</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {selectedDate?.toLocaleDateString("en-US", {
+                              weekday: "long",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Clock className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Time</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {selectedSlot ? `${formatTime(selectedSlot.startTime)} - ${formatTime(selectedSlot.endTime)}` : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Booking Details */}
                 <div className="space-y-3">
@@ -316,43 +367,62 @@ export default function BookingPaymentPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center py-2">
-                    <div className="flex items-center gap-2">
-                      <Timer className="h-4 w-4 text-gray-500" />
-                      <span className="text-gray-600 dark:text-gray-400">Duration</span>
+                  {!isMonthly && (
+                    <div className="flex justify-between items-center py-2">
+                      <div className="flex items-center gap-2">
+                        <Timer className="h-4 w-4 text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-400">Duration</span>
+                      </div>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {slotHours} hour{slotHours !== 1 ? 's' : ''}
+                      </span>
                     </div>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {slotHours} hour{slotHours !== 1 ? 's' : ''}
-                    </span>
-                  </div>
+                  )}
                 </div>
 
                 {/* Price Breakdown */}
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Hourly Rate</span>
-                    <span>{formatPrice(bookingPreferences.selectedSubject?.hourlyRate || 0)}/hr</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Duration</span>
-                    <span>{slotHours} hour{slotHours !== 1 ? 's' : ''}</span>
-                  </div>
-                  {bookingPreferences.selectedClassType?.priceMultiplier && bookingPreferences.selectedClassType.priceMultiplier !== 1.0 && (
-                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
-                      <span>Class Type Discount</span>
-                      <span>-{Math.round((1 - bookingPreferences.selectedClassType.priceMultiplier) * 100)}%</span>
-                    </div>
+                  {isMonthly ? (
+                    /* Monthly pricing */
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Slots</span>
+                        <span>{monthlyBookingData!.totalSlots}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Hourly Rate</span>
+                        <span>{formatPrice(bookingPreferences.selectedSubject?.hourlyRate || 0)}/hr</span>
+                      </div>
+                    </>
+                  ) : (
+                    /* Single pricing */
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Hourly Rate</span>
+                        <span>{formatPrice(bookingPreferences.selectedSubject?.hourlyRate || 0)}/hr</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Duration</span>
+                        <span>{slotHours} hour{slotHours !== 1 ? 's' : ''}</span>
+                      </div>
+                      {bookingPreferences.selectedClassType?.priceMultiplier && bookingPreferences.selectedClassType.priceMultiplier !== 1.0 && (
+                        <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                          <span>Class Type Discount</span>
+                          <span>-{Math.round((1 - bookingPreferences.selectedClassType.priceMultiplier) * 100)}%</span>
+                        </div>
+                      )}
+                    </>
                   )}
                   <div className="border-t border-gray-200 dark:border-gray-600 pt-2 mt-3">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
                       <div className="text-right">
                         <span className="text-2xl font-bold text-blue-600">
-                          {formatPrice(bookingPreferences.finalPrice)}
+                          {formatPrice(isMonthly ? (monthlyBookingData?.totalCost || bookingPreferences.finalPrice) : bookingPreferences.finalPrice)}
                         </span>
                         {selectedCurrency.code !== 'LKR' && (
                           <div className="text-xs text-gray-500">
-                            ≈ Rs. {bookingPreferences.finalPrice.toFixed(2)} LKR
+                            ≈ Rs. {(isMonthly ? (monthlyBookingData?.totalCost || bookingPreferences.finalPrice) : bookingPreferences.finalPrice).toFixed(2)} LKR
                           </div>
                         )}
                       </div>
@@ -385,9 +455,10 @@ export default function BookingPaymentPage() {
               <PayHerePayment
                 tutor={tutor}
                 selectedDate={selectedDate!}
-                selectedSlot={selectedSlot}
+                selectedSlot={isMonthly ? undefined : selectedSlot!}
                 bookingPreferences={bookingPreferences}
                 reservationTimer={realTimeTimer}
+                monthlyBookingData={isMonthly ? monthlyBookingData! : undefined}
                 onBack={handleBack}
                 onPaymentSuccess={handlePaymentSuccess}
                 onPaymentError={handlePaymentError}

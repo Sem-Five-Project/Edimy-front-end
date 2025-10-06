@@ -510,28 +510,39 @@ interface RawTutor {
   experience?: number | null;
   subjects?: RawSubject[];
   languages?: RawLanguage[];
+  hourlyRate?: number; // add for fallback pricing
 }
 
+// Align with core Subject/Language definitions for cross-component compatibility
 interface NormalizedSubject {
-  name: string;
+  subjectId: number;
+  subjectName: string;
   hourlyRate: number;
 }
 
-interface NormalizedTutor {
+export interface NormalizedTutor {
   id: number;
   name: string;
   initials: string;
-  profileImage: string | null;
+  profileImage?: string | null;
   bio: string;
   rating: number;
   experienceMonths: number;
   subjects: NormalizedSubject[];
-  hourlyRate: number;              // <-- added (primary / representative rate)
-  languages: string[];
+  hourlyRate: number; // representative
+  languages: { languageId: number; languageName: string }[]; // keep objects so booking flow can reuse IDs
   raw: RawTutor;
 }
 
 const normalizeTutor = (t: RawTutor): NormalizedTutor => {
+  // local hash util for deterministic IDs from names
+  const hashString = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+  };
   const id = t.tutorId ?? t.id ?? Math.floor(Math.random() * 1_000_000);
   const nameBase = [t.firstName, t.lastName].filter(Boolean).join(' ').trim();
   const name = nameBase || `Tutor ${id}`;
@@ -545,18 +556,38 @@ const normalizeTutor = (t: RawTutor): NormalizedTutor => {
       : 0;
 
   const subjects: NormalizedSubject[] = Array.isArray(t.subjects)
-    ? t.subjects.map(s => ({
-        name: s.name || s.subjectName || s.subject || 'Subject',
-        hourlyRate: s.hourly_rate ?? s.hourlyRate ?? s.rate ?? 0
-      }))
+    ? t.subjects.map((s, idx) => {
+        if (typeof s === 'string') {
+          return {
+            subjectId: Math.abs(hashString(s + ':' + idx)),
+            subjectName: s,
+            hourlyRate: t.hourlyRate ?? 0
+          };
+        }
+        const subjectName = (s as any).name || (s as any).subjectName || (s as any).subject || 'Subject';
+        const subjectId = (s as any).subjectId ?? Math.abs(hashString(subjectName + ':' + idx));
+        return {
+          subjectId,
+          subjectName,
+          hourlyRate: (s as any).hourly_rate ?? (s as any).hourlyRate ?? (s as any).rate ?? t.hourlyRate ?? 0
+        };
+      })
     : [];
 
-  const languages: string[] = Array.isArray(t.languages)
-    ? t.languages.map(l =>
-        typeof l === 'string'
-          ? l
-          : l.languageName || l.name || 'Unknown'
-      )
+  const languages: { languageId: number; languageName: string }[] = Array.isArray(t.languages)
+    ? t.languages.map((l: any, idx) => {
+        if (typeof l === 'string') {
+          return {
+            languageId: Math.abs(hashString(l + ':' + idx)),
+            languageName: l
+          };
+        }
+        const ln = l.name || l.languageName || 'Unknown';
+        return {
+          languageId: l.languageId ?? Math.abs(hashString(ln + ':' + idx)),
+            languageName: ln
+        };
+      })
     : [];
 
   return {
@@ -609,7 +640,7 @@ const SubjectsPricing: React.FC<{ subjects: NormalizedSubject[]; limit?: number;
       <div className="space-y-1">
         {display.map((s, i) => (
           <div key={i} className="flex items-center justify-between text-xs">
-            <span className="text-slate-600 dark:text-slate-400 truncate flex-1">{s.name}</span>
+            <span className="text-slate-600 dark:text-slate-400 truncate flex-1">{s.subjectName}</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-medium ml-2">
               Rs.{s.hourlyRate}/hr
             </span>
@@ -636,7 +667,7 @@ const SubjectsPricing: React.FC<{ subjects: NormalizedSubject[]; limit?: number;
         >
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             <BookOpen className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-            <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{s.name}</span>
+            <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{s.subjectName}</span>
           </div>
           <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
             Rs.{s.hourlyRate}/hr
@@ -727,7 +758,7 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor: raw, onViewProfile, onBook
             <div className="flex flex-wrap gap-1 mb-3">
               {tutor.languages.slice(0, 3).map((lang, i) => (
                 <Badge key={i} variant="secondary" className="text-xs px-2 py-0.5">
-                  {lang}
+                  {lang.languageName}
                 </Badge>
               ))}
             </div>
@@ -813,7 +844,7 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor: raw, onViewProfile, onBook
                   <div className="flex flex-wrap gap-1">
                     {tutor.languages.slice(0, 3).map((lang, i) => (
                       <Badge key={i} variant="secondary" className="text-xs px-2 py-0.5">
-                        {lang}
+                        {lang.languageName}
                       </Badge>
                     ))}
                     {tutor.languages.length > 3 && (
