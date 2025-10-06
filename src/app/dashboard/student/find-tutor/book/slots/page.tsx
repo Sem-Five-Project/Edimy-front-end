@@ -1,4 +1,6 @@
+
 "use client";
+import { useAuth } from '@/contexts/AuthContext';
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -174,6 +176,84 @@ const dateToYMD = (d: Date) =>
         }
       }, 0);
     }
+  };
+  const { actorId, isStudent } = useAuth();
+
+  // Existing class detection state
+  const [existingClassLoading, setExistingClassLoading] = useState(false);
+  const [existingClassData, setExistingClassData] = useState<null | { exists: boolean; class_id?: number; slots?: { weekday: string; start_time: string; end_time: string }[] }>(null);
+  const [existingClassError, setExistingClassError] = useState<string>('');
+  const [overrideExistingClass, setOverrideExistingClass] = useState(false); // user chooses to create a new class anyway
+
+  const classTypeToBackend = (ctId?: number | null): 'RECURRING' | 'ONE_TIME' | null => {
+    if (!ctId) return null;
+    return ctId === 2 ? 'RECURRING' : 'ONE_TIME';
+  };
+
+  // Effect: When all three selections are chosen, auto-check existing class
+  useEffect(() => {
+    const langId = preferences.selectedLanguage?.languageId;
+    const subjId = preferences.selectedSubject?.subjectId;
+    const ctId = preferences.selectedClassType?.id;
+    const ctBackend = classTypeToBackend(ctId);
+    console.log("Checking existing class for:", langId, subjId, ctBackend);
+
+    if (!tutor || !isStudent || !actorId || !langId || !subjId || !ctBackend) {
+      // Reset when incomplete or not student
+      setExistingClassData(null);
+      setExistingClassError('');
+      setOverrideExistingClass(false);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setExistingClassLoading(true);
+        setExistingClassError('');
+        setOverrideExistingClass(false);
+        const res = await bookingAPI.checkClassExist({
+          tutorId: tutor.id,
+          languageId: langId,
+          subjectId: subjId,
+          studentId: actorId,
+          classType: ctBackend,
+        });
+        console.log("Existing class check result:", res);
+        if (cancelled) return;
+        if (res.success) {
+          setExistingClassData(res.data);
+        } else {
+          setExistingClassData(null);
+          setExistingClassError(res.error || 'Failed to check class');
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          setExistingClassData(null);
+          setExistingClassError(e?.message || 'Failed to check class');
+        }
+      } finally {
+        if (!cancelled) setExistingClassLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [tutor, isStudent, actorId, preferences.selectedLanguage?.languageId, preferences.selectedSubject?.subjectId, preferences.selectedClassType?.id]);
+
+  // Helper to format weekday/time summary
+  const formatExistingSlotsSummary = (slots?: { weekday: string; start_time: string; end_time: string }[]) => {
+    if (!slots || slots.length === 0) return '';
+    // Group by weekday preserving order
+    const map: Record<string, string[]> = {};
+    slots.forEach(s => {
+      const key = s.weekday;
+      const range = `${s.start_time.slice(0,5)}-${s.end_time.slice(0,5)}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(range);
+    });
+    return Object.entries(map)
+      .map(([day, ranges]) => `${day.slice(0,3)}: ${ranges.join(', ')}`)
+      .join(' | ');
   };
 
   // Trigger load when tutor/date/class type changes
@@ -752,6 +832,11 @@ const formatMonthDay = (d: string) => {
 
 
 const handleContinue = async () => {
+  // Prevent continuation if an identical class already exists and user hasn't chosen to override
+  if (existingClassData?.exists && !overrideExistingClass) {
+    setError('You already have this class. Confirm creating a new one or reschedule.');
+    return;
+  }
   if (!isValid()) {
     setError("Please complete all selections to continue");
     return;
@@ -1175,6 +1260,70 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                 icon={<Users className="w-4 h-4" />}
               />
             </div>
+                          {(preferences.selectedLanguage && preferences.selectedSubject && preferences.selectedClassType && isStudent) && (
+                <div className="mt-4 md:col-span-3">
+                  {existingClassLoading && (
+                    <div className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">Checking for existing class...</div>
+                  )}
+                  {!existingClassLoading && existingClassError && (
+                    <div className="text-xs text-red-600 dark:text-red-400">{existingClassError}</div>
+                  )}
+                  {!existingClassLoading && existingClassData?.exists && (
+                    <div className="p-4 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                            You already have this {isMonthlyClassType ? 'recurring (monthly)' : 'one-time'} class
+                          </div>
+                          <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
+                            Class ID: {existingClassData.class_id}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {/* Navigate to class detail view placeholder */}}
+                          className="text-[10px] px-2 py-1 rounded-md bg-amber-200/70 dark:bg-amber-800/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 hover:bg-amber-200/90 transition"
+                        >View Class</button>
+                      </div>
+                      {existingClassData.slots && existingClassData.slots.length > 0 && (
+                        <div className="text-[11px] text-amber-800 dark:text-amber-300 bg-white/60 dark:bg-gray-800/40 p-2 rounded-md border border-amber-200 dark:border-amber-700">
+                          {isMonthlyClassType ? (
+                            <>{formatExistingSlotsSummary(existingClassData.slots)}</>
+                          ) : (
+                            // For one-time presume first slot describes the session
+                            (() => {
+                              const s = existingClassData.slots![0];
+                              return `${s.weekday.slice(0,3)} ${s.start_time.slice(0,5)}-${s.end_time.slice(0,5)}`;
+                            })()
+                          )}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setOverrideExistingClass(true)}
+                          className={`text-xs px-3 py-1 rounded-md font-medium transition border ${overrideExistingClass ? 'bg-red-600 text-white border-red-700 shadow' : 'bg-white dark:bg-gray-800 text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-gray-700'}`}
+                        >
+                          {isMonthlyClassType ? 'Create a separate recurring class' : 'Book another one-time class'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {/* Placeholder for future reschedule flow */}}
+                          className="text-xs px-3 py-1 rounded-md font-medium transition border bg-white dark:bg-gray-800 text-blue-700 border-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700"
+                        >
+                          {isMonthlyClassType ? 'Reschedule existing' : 'Change time'}
+                        </button>
+                      </div>
+                      {!overrideExistingClass && (
+                        <div className="text-[10px] text-amber-700 dark:text-amber-300 italic">Select an action above to proceed or override to create a new class.</div>
+                      )}
+                    </div>
+                  )}
+                  {!existingClassLoading && existingClassData && existingClassData.exists === false && (
+                    <div className="text-[11px] text-green-600 dark:text-green-400 mt-1">No existing class with this combination. You can proceed.</div>
+                  )}
+                </div>
+              )}
           </CardContent>
         </Card>
 
@@ -1293,6 +1442,8 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                   })()}
                 </div>
               )}
+              {/* Existing class notice */}
+
             </CardContent>
           </Card>
         )}
@@ -1914,6 +2065,8 @@ const languageOptions = tutor.languages?.map((language, index) => ({
         ) : null}
       </div>
 
+      {/* (Removed standalone one-time existing class box; integrated into preferences card) */}
+
       {/* Right Side - Total Amount & CTA */}
       <div className="lg:w-80 flex-shrink-0">
         <div className="bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 dark:from-blue-500/5 dark:via-purple-500/5 dark:to-pink-500/5 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 h-full">
@@ -1945,7 +2098,8 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                   } catch {}
                 }
               }}
-              disabled={!isValid() || isLoading || nextMonthPatternsLoading}
+              //disabled={!isValid() || isLoading || nextMonthPatternsLoading}
+              disabled={!isValid() || isLoading || nextMonthPatternsLoading || (existingClassData?.exists && !overrideExistingClass)}
               size="lg"
               className="w-full h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-bold rounded-xl border-0 relative overflow-hidden group"
             >

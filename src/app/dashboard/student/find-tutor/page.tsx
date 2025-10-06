@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 // Import your modular components
 import BasicFiltersComponent from './BasicFiltersComponent';
 import AdvancedFiltersComponent from './AdvancedFiltersComponent';
+import tr from '@mobiscroll/react/dist/src/i18n/tr.js';
 
 
 
@@ -444,42 +445,165 @@ const applyFiltersAndSearch = useCallback(async () => {
   setIsFilterOpen(false);
 }, [buildEffectiveFilters, searchTerm]);
 const initialAcademicSearchRef = useRef(false);
+const [requirementsLoaded, setRequirementsLoaded] = useState(false);
+const [educationLevel, setEducationLevel] = useState("");
+const [stream, setStream] = useState("");
+// useEffect(() => {
+//   let cancelled = false;
+//   (async () => {
+//     try {
+//           loadStudentAcademicInfo();
+
+//       const res = await api.get('/educational-requirements');
+//       if (cancelled) return;
+//       setEducationLevel(res.data?.educationLevel ?? null);
+//       setStream(res.data?.stream ?? null);
+//     } catch (e) {
+//       console.error('Failed to load requirements', e);
+//     } finally {
+//       if (!cancelled) setRequirementsLoaded(true);
+//     }
+//   })();
+//   return () => { cancelled = true; };
+// }, []);
+
+// Run search after requirements loaded (even if both null)
+useEffect(() => {
+  if (!requirementsLoaded) return;
+  searchTutors();
+}, [requirementsLoaded, educationLevel, stream,user?.role]);
+
+
+// useEffect(() => {
+//     let cancelled = false;
+//     console.log('Effect to load student academic info triggered');
+//     console.log("user educationLevel:", user?.educationLevel, "user stream:", user?.stream,"user :",user);
+// (async () => {
+  
+// try{
+// if (!user || user.role !== 'STUDENT') return;
+//   //if (initialAcademicSearchRef.current) return;
+
+//   if (user?.educationLevel === undefined || user?.stream === undefined) {
+//     // load then wait for next render
+//     console.log("heree")
+//     loadStudentAcademicInfo();
+//     return;
+//   }
+//   //initialAcademicSearchRef.current = true;
+//   setEducationLevel(user.educationLevel);
+//   setStream(user.stream);
+//   const edu = mapEducationLevel(user.educationLevel);
+//   const str = mapStream(user.stream);
+
+//   // Update filters (without depending on filters in deps)
+//   setFilters(prev => ({ ...prev, educationLevel: edu, stream: str }));
+
+//   const payload = buildBackendPayload(
+//     { ...filters, educationLevel: edu, stream: str },
+//     searchTerm
+//   );
+//   console.log('Running initial academic-based tutor search payload (one-shot):', payload);
+//   setIsLoading(true);
+//   filterAPI.searchTutors(payload, 1, 10)
+//     .then(res => {
+//       if (res.success) {
+//         const raw = res.data.content || [];
+//         const normalized = raw.map((t: any) => adaptTutor(t));
+//         setTutors(normalized);
+//         setTotalPages(res.data.totalPages || 1);
+//         setTotalResults(res.data.totalElements || (res.data.content?.length || 0));
+//       }
+//     })
+//     .finally(() => setIsLoading(false));
+// }catch(e){
+// console.error('Failed to load requirements', e);
+// }finally{
+// if(!cancelled)setRequirementsLoaded(true);
+// }
+// })
+  
+// }, []);
 
 useEffect(() => {
-  if (!user || user.role !== 'STUDENT') return;
-  if (initialAcademicSearchRef.current) return; 
-  if (!user.educationLevel || !user.stream) {
-    // load then wait for next render
-    loadStudentAcademicInfo();
-    return;
-  }
-  initialAcademicSearchRef.current = true;
+  // Use a flag to prevent state updates after the component has unmounted.
+  let isMounted = true;
 
-  const edu = mapEducationLevel(user.educationLevel);
-  const str = mapStream(user.stream);
+  const fetchTutorsBasedOnAcademicInfo = async () => {
+    // Guard clause: Don't run if there's no user, the user is not a student,
+    // or if the necessary academic info isn't available yet.
+    if (!user || user.role !== 'STUDENT' || user.educationLevel === undefined || user.stream === undefined) {
+      // If the info is missing, it implies another effect or process is loading it.
+      // We'll wait for the next render when `user` is updated.
+      return;
+    }
 
-  // Update filters (without depending on filters in deps)
-  setFilters(prev => ({ ...prev, educationLevel: edu, stream: str }));
-
-  const payload = buildBackendPayload(
-    { ...filters, educationLevel: edu, stream: str },
-    searchTerm
-  );
-  console.log('Running initial academic-based tutor search payload (one-shot):', payload);
-  setIsLoading(true);
-  filterAPI.searchTutors(payload, 1, 10)
-    .then(res => {
-      if (res.success) {
-        const raw = res.data.content || [];
-        const normalized = raw.map((t: any) => adaptTutor(t));
-        setTutors(normalized);
-        setTotalPages(res.data.totalPages || 1);
-        setTotalResults(res.data.totalElements || (res.data.content?.length || 0));
+    try {
+      console.log('Running initial academic-based tutor search...');
+      if (isMounted) {
+        setIsLoading(true);
       }
-    })
-    .finally(() => setIsLoading(false));
-}, [user?.role, user?.educationLevel, user?.stream, loadStudentAcademicInfo, buildBackendPayload]);
+      
+      // Map the user's academic info to the required format
+      const edu = mapEducationLevel(user.educationLevel);
+      const str = mapStream(user.stream);
+      
+      // Update local state and filters
+      if (isMounted) {
+        setEducationLevel(user.educationLevel);
+        setStream(user.stream);
+        setFilters(prev => ({ ...prev, educationLevel: edu, stream: str }));
+      }
 
+      // Build the payload with the fresh filter values
+      const payload = buildBackendPayload(
+        { ...filters, educationLevel: edu, stream: str },
+        searchTerm
+      );
+      
+      console.log('Payload for initial search:', payload);
+      const res = await filterAPI.searchTutors(payload, 1, 10);
+
+      if (isMounted && res.success) {
+        const rawTutors = res.data.content || [];
+        const normalizedTutors = rawTutors.map((t) => adaptTutor(t));
+        
+        setTutors(normalizedTutors);
+        setTotalPages(res.data.totalPages || 1);
+        setTotalResults(res.data.totalElements || 0);
+      }
+    } catch (e) {
+      console.error('Failed to perform initial tutor search:', e);
+      // Optionally set an error state here
+    } finally {
+      if (isMounted) {
+        setIsLoading(false);
+        setRequirementsLoaded(true);
+      }
+    }
+  };
+  
+  // This separate check handles the case where the student's academic info
+  // needs to be fetched first.
+  if (user && user.role === 'STUDENT' && (user.educationLevel === undefined || user.stream === undefined)) {
+    console.log("user :",user);
+    console.log("User academic info is missing, triggering load.");
+    loadStudentAcademicInfo();
+  }
+
+  fetchTutorsBasedOnAcademicInfo();
+
+  // The cleanup function will run when the component unmounts
+  // or when the effect re-runs (due to dependency changes).
+  return () => {
+    isMounted = false;
+  };
+  
+// --- DEPENDENCY ARRAY ---
+// This effect should re-run whenever the `user` object changes.
+// `loadStudentAcademicInfo` should be included if it's not a stable function
+// (i.e., not wrapped in `useCallback` in its parent component).
+}, [user, loadStudentAcademicInfo]); // FIX: Added dependencies
 
   const clearFilters = () => {
     const resetFilters = {

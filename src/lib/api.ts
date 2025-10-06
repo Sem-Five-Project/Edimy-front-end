@@ -317,11 +317,19 @@ export const authAPI = {
       console.log("login credentials main :",credentials)
       const response = await api.post('/auth/login', credentials);
         console.log("login response main :",response.data)
-
-      return {
-        success: true,
-        data: response.data,
-      };
+      // Normalize user shape to ensure studentId/tutorId present when role-specific id provided separately
+      const raw = response.data?.user || response.data?.data?.user || response.data.user; // flexible shapes
+      if (raw) {
+        const normalizedUser: User = {
+          ...raw,
+          studentId: raw.studentId ?? (raw.role === 'STUDENT' ? raw.studentId ?? raw.id ?? null : raw.studentId ?? null),
+          tutorId: raw.tutorId ?? (raw.role === 'TUTOR' ? raw.tutorId ?? raw.id ?? null : raw.tutorId ?? null),
+        };
+        // Rebuild response keeping any tokens
+        const rebuilt = { ...response.data, user: normalizedUser };
+        return { success: true, data: rebuilt };
+      }
+      return { success: true, data: response.data };
     } catch (error) {
       console.error('Login failed:', error);
       // Mock response for frontend testing
@@ -395,24 +403,7 @@ getCurrentUser: async (): Promise<ApiResponse<{ user: User }>> => {
 },
 
 
-  getCurrentUserr: async (token: string): Promise<ApiResponse<{ user: User }>> => {
-    try {
-      const response = await api.get('/auth/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log('Get current user response:', response);
-      return { success: true, data: response.data.data  };
-    } catch (error) {
-      console.error('Get current user failed:', error);
-      return { 
-        success: false, 
-        data: { user: {} as User },
-        error: 'Not authenticated' 
-      };
-    }
-  },
+
 
   logout: async (): Promise<ApiResponse<{ success: boolean }>> => {
     try {
@@ -496,6 +487,7 @@ export const filterAPI = {
   limit: number = 12
 ): Promise<ApiResponse<PageableResponse<Tutor>>> => {
   try {
+    console.log("call search tutors api")
     // If caller passed a minimal FilterOptions-style object, transform it to backend shape
     // Detect backend shape by presence of 'session' or 'recurring' or 'classType'
     let body: any;
@@ -909,9 +901,10 @@ console.log("Get tutor slots response:", response.data);
 };
 export const studentAPI = {
   loadStudentAcademicInfo: async (
-    studentId: string
+    studentId: number
   ): Promise<ApiResponse<{ educationLevel: string | null; stream: string | null }>> => {
     try {
+      console.log("studentId in loadStudentAcademicInfo :",studentId)
       const response = await api.get(
         `/student/profile/${studentId}/academic-info`
       );
@@ -934,7 +927,7 @@ export const studentAPI = {
     }
   },
     loadStudentProfileInfo: async (
-    studentId: string
+    studentId: number
   ): Promise<ApiResponse<{ educationLevel: string | null; stream: string | null;classCount:number|0 ;sessionCount :number|0 }>> => {
     try {
       
@@ -1003,6 +996,40 @@ export const bookingAPI = {
         success: false,
         data: { booking: {} as Booking, paymentUrl: '' },
         error: 'Failed to create booking',
+      };
+    }
+  },
+
+  // Check if a class with same tutor/language/subject/classType already exists for the student
+  checkClassExist: async (params: {
+    tutorId: number | string;
+    languageId: number | string;
+    subjectId: number | string;
+    studentId: number | string;
+    classType: 'RECURRING' | 'ONE_TIME';
+  }): Promise<ApiResponse<{ exists: boolean; class_id?: number; slots?: { weekday: string; start_time: string; end_time: string }[] }>> => {
+    try {
+      const query = {
+        tutorId: params.tutorId,
+        languageId: params.languageId,
+        subjectId: params.subjectId,
+        studentId: params.studentId,
+        classType: params.classType,
+      };
+      console.log('Checking existing class with params:', query);
+      const res = await api.get('/student/bookings/check-class-exist', { params: query });
+      const data = res?.data || {};
+      // Expect response like { exists: true/false, class_id?, slots? }
+      if (typeof data.exists === 'boolean') {
+        return { success: true, data };
+      }
+      return { success: true, data: { exists: false } };
+    } catch (e: any) {
+      console.error('checkClassExist error:', e?.response?.data || e.message);
+      return {
+        success: false,
+        data: { exists: false },
+        error: e?.response?.data?.message || e.message || 'Failed to check class existence',
       };
     }
   },
