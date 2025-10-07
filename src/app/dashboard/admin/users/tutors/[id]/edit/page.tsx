@@ -58,11 +58,19 @@ export default function TutorEditPage({ params }: TutorEditPageProps) {
   const fetchTutor = async () => {
     setLoading(true);
     try {
+      console.log('Fetching tutor with ID:', resolvedParams.id);
       const tutorData = await getTutorById(resolvedParams.id);
+      console.log('Fetched tutor data:', tutorData);
 
       if (tutorData) {
         setTutor(tutorData);
         setFormData({
+          adminNotes: tutorData.adminNotes || '',
+          verified: tutorData.verified,
+          rating: tutorData.rating || 0,
+          status: tutorData.status,
+        });
+        console.log('Set form data:', {
           adminNotes: tutorData.adminNotes || '',
           verified: tutorData.verified,
           rating: tutorData.rating || 0,
@@ -86,11 +94,39 @@ export default function TutorEditPage({ params }: TutorEditPageProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateTutorAdminFields(resolvedParams.id, formData);
+      console.log('Saving tutor with ID:', resolvedParams.id);
+      console.log('Form data being sent:', formData);
+      
+      // Validate and clean up the form data before sending
+      const cleanFormData = {
+        ...formData,
+        rating: isNaN(formData.rating) ? 0 : Math.max(0, Math.min(5, formData.rating)), // Clamp rating between 0-5
+        adminNotes: formData.adminNotes?.trim() || '', // Trim whitespace
+      };
+      
+      console.log('Cleaned form data:', cleanFormData);
+      
+      await updateTutorAdminFields(resolvedParams.id, cleanFormData);
       router.push(`/dashboard/admin/users/tutors/${resolvedParams.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving tutor:', error);
-      alert('Error saving changes. Please try again.');
+      
+      // More detailed error message based on error type
+      let errorMessage = 'Error saving changes. Please try again.';
+      
+      if (error?.response?.status === 500) {
+        errorMessage = 'Server error occurred. Please check the server logs and try again.';
+      } else if (error?.response?.status === 400) {
+        errorMessage = 'Invalid data provided. Please check your inputs.';
+      } else if (error?.response?.status === 404) {
+        errorMessage = 'Tutor not found. The tutor may have been deleted.';
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'You are not authorized to perform this action.';
+      } else if (error?.response?.data?.message) {
+        errorMessage = `Error: ${error.response.data.message}`;
+      }
+      
+      alert(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -251,8 +287,12 @@ export default function TutorEditPage({ params }: TutorEditPageProps) {
                 min="0"
                 max="5"
                 step="0.1"
-                value={formData.rating}
-                onChange={(e) => handleInputChange('rating', parseFloat(e.target.value) || 0)}
+                value={formData.rating || 0}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value) || 0;
+                  const clampedValue = Math.max(0, Math.min(5, value));
+                  handleInputChange('rating', clampedValue);
+                }}
                 placeholder="0.0"
                 className="w-32"
               />

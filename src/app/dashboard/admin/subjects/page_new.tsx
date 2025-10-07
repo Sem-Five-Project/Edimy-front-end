@@ -27,7 +27,7 @@ export default function SubjectManagement() {
   const [formData, setFormData] = useState({
     name: '',
     educationLevel: '' as EducationLevel | '',
-    stream: 'none' as HighSchoolStreamType | 'none' | ''
+    stream: '' as HighSchoolStreamType | ''
   });
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function SubjectManagement() {
       const newSubjectData = {
         name: formData.name,
         educationLevel: formData.educationLevel,
-        ...(formData.stream && formData.stream !== 'none' && { stream: formData.stream })
+        ...(formData.stream && { stream: formData.stream })
       };
 
       await subjectAPI.createSubject(newSubjectData);
@@ -128,7 +128,7 @@ export default function SubjectManagement() {
     setFormData({
       name: '',
       educationLevel: '',
-      stream: 'none'
+      stream: ''
     });
   };
 
@@ -189,24 +189,24 @@ export default function SubjectManagement() {
               </div>
             </div>
             <Select value={educationFilter} onValueChange={setEducationFilter}>
-              <SelectTrigger className="w-full lg:w-48 bg-gray-800 border-gray-600 text-white">
+              <SelectTrigger className="w-full lg:w-48">
                 <SelectValue placeholder="Education Level" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                <SelectItem value="all" className="text-white hover:bg-gray-700">All Levels</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
                 {Object.values(EducationLevel).map((level) => (
-                  <SelectItem key={level} value={level} className="text-white hover:bg-gray-700">{level.replace(/_/g, ' ')}</SelectItem>
+                  <SelectItem key={level} value={level}>{level.replace(/_/g, ' ')}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={streamFilter} onValueChange={setStreamFilter}>
-              <SelectTrigger className="w-full lg:w-48 bg-gray-800 border-gray-600 text-white">
+              <SelectTrigger className="w-full lg:w-48">
                 <SelectValue placeholder="Stream" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                <SelectItem value="all" className="text-white hover:bg-gray-700">All Streams</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">All Streams</SelectItem>
                 {Object.values(HighSchoolStreamType).map((stream) => (
-                  <SelectItem key={stream} value={stream} className="text-white hover:bg-gray-700">{stream}</SelectItem>
+                  <SelectItem key={stream} value={stream}>{stream}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -312,60 +312,59 @@ export default function SubjectManagement() {
 
       {/* Create Subject Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">Add New Subject</DialogTitle>
-            <DialogDescription className="text-gray-300">
+            <DialogTitle>Add New Subject</DialogTitle>
+            <DialogDescription>
               Create a new subject for your educational platform.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 bg-gray-800 p-4 rounded-lg">
+          <div className="space-y-4">
             {error && (
-              <div className="text-red-500 text-sm bg-red-900/20 p-2 rounded">{error}</div>
+              <div className="text-red-600 text-sm">{error}</div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-300 font-medium">Subject Name</Label>
+            <div>
+              <Label htmlFor="name">Subject Name</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="Enter subject name"
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="educationLevel" className="text-gray-300 font-medium">Education Level</Label>
+            <div>
+              <Label htmlFor="educationLevel">Education Level</Label>
               <Select value={formData.educationLevel} onValueChange={(value) => setFormData({...formData, educationLevel: value as EducationLevel})}>
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Select education level" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectContent>
                   {Object.values(EducationLevel).map((level) => (
-                    <SelectItem key={level} value={level} className="text-white hover:bg-gray-700">{level.replace(/_/g, ' ')}</SelectItem>
+                    <SelectItem key={level} value={level}>{level.replace(/_/g, ' ')}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="stream" className="text-gray-300 font-medium">Stream (Optional)</Label>
-              <Select value={formData.stream} onValueChange={(value) => setFormData({...formData, stream: value === 'none' ? 'none' : value as HighSchoolStreamType})}>
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+            <div>
+              <Label htmlFor="stream">Stream (Optional)</Label>
+              <Select value={formData.stream} onValueChange={(value) => setFormData({...formData, stream: value as HighSchoolStreamType})}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select stream (optional)" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
-                  <SelectItem value="none" className="text-white hover:bg-gray-700">None</SelectItem>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
                   {Object.values(HighSchoolStreamType).map((stream) => (
-                    <SelectItem key={stream} value={stream} className="text-white hover:bg-gray-700">{stream}</SelectItem>
+                    <SelectItem key={stream} value={stream}>{stream}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border-gray-600 text-gray-300 hover:bg-gray-800">
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateSubject} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleCreateSubject} disabled={isLoading}>
               Create Subject
             </Button>
           </DialogFooter>
@@ -374,35 +373,32 @@ export default function SubjectManagement() {
 
       {/* View Subject Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">Subject Details</DialogTitle>
+            <DialogTitle>Subject Details</DialogTitle>
           </DialogHeader>
           {currentSubject && (
-            <div className="space-y-4 bg-gray-800 p-4 rounded-lg">
-              <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Name</Label>
-                <p className="text-white bg-gray-700 px-3 py-2 rounded">{currentSubject.name}</p>
+            <div className="space-y-4">
+              <div>
+                <Label>Name</Label>
+                <p className="text-sm text-gray-600">{currentSubject.name}</p>
               </div>
-              <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Education Level</Label>
-                <p className="text-white bg-gray-700 px-3 py-2 rounded">{currentSubject.educationLevel.replace(/_/g, ' ')}</p>
+              <div>
+                <Label>Education Level</Label>
+                <p className="text-sm text-gray-600">{currentSubject.educationLevel.replace(/_/g, ' ')}</p>
               </div>
-              <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Stream</Label>
-                <p className="text-white bg-gray-700 px-3 py-2 rounded">{currentSubject.stream || 'N/A'}</p>
+              <div>
+                <Label>Stream</Label>
+                <p className="text-sm text-gray-600">{currentSubject.stream || 'N/A'}</p>
               </div>
-              <div className="space-y-2">
-                <Label className="text-gray-300 font-medium">Subject ID</Label>
-                <p className="text-white bg-gray-700 px-3 py-2 rounded">{currentSubject.subjectId}</p>
+              <div>
+                <Label>Subject ID</Label>
+                <p className="text-sm text-gray-600">{currentSubject.subjectId}</p>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button 
-              onClick={() => setIsViewDialogOpen(false)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <Button onClick={() => setIsViewDialogOpen(false)}>
               Close
             </Button>
           </DialogFooter>

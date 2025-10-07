@@ -32,10 +32,7 @@ export const NAV_DATA = [
             title: "Pending Approvals",
             url: "/dashboard/admin/verification/pending",
           },
-          {
-            title: "Verified Tutors",
-            url: "/dashboard/admin/verification/verified",
-          },
+      
           {
             title: "Re-verification",
             url: "/dashboard/admin/verification/re-verify",
@@ -53,11 +50,7 @@ export const NAV_DATA = [
           {
             title: "Ongoing Sessions",
             url: "/dashboard/admin/sessions/ongoing",
-          },
-          {
-            title: "Session Reports",
-            url: "/dashboard/admin/sessions/reports",
-          },
+          }
         ],
       },
       {
@@ -73,39 +66,9 @@ export const NAV_DATA = [
             url: "/dashboard/admin/payments/payouts",
           },
           {
-            title: "Payment Disputes",
-            url: "/dashboard/admin/payments/disputes",
-          },
-          {
             title: "Pricing Policies",
             url: "/dashboard/admin/payments/pricing",
-          },
-          {
-            title: "Financial Reports",
-            url: "/dashboard/admin/payments/reports",
-          },
-        ],
-      },
-      {
-        title: "Reports & Analytics",
-        icon: Icons.PieChart,
-        items: [
-          {
-            title: "KPI Dashboard",
-            url: "/dashboard/admin/analytics/kpi",
-          },
-          {
-            title: "Session Trends",
-            url: "/dashboard/admin/analytics/sessions",
-          },
-          {
-            title: "Payment Trends",
-            url: "/dashboard/admin/analytics/payments",
-          },
-          {
-            title: "User Analytics",
-            url: "/dashboard/admin/analytics/users",
-          },
+          }
         ],
       },
       {
@@ -131,14 +94,6 @@ export const NAV_DATA = [
         icon: Icons.FourCircle,
         items: [
           {
-            title: "Support Tickets",
-            url: "/dashboard/admin/support/tickets",
-          },
-          {
-            title: "Escalations",
-            url: "/dashboard/admin/support/escalations",
-          },
-          {
             title: "FAQ Management",
             url: "/dashboard/admin/support/faq",
           },
@@ -153,40 +108,18 @@ export const NAV_DATA = [
             url: "/dashboard/admin/subjects",
           },
           {
-            title: "Tag Management",
+            title: "Class Management",
             url: "/dashboard/admin/tags",
           },
         ],
       },
       {
-        title: "Review Moderation",
-        icon: Icons.StarRating,
+        title: "ADMIN",
+        icon: Icons.User,
         items: [
           {
-            title: "Ratings & Reviews",
-            url: "/dashboard/admin/ratings-reviews",
-          },
-          {
-            title: "Complaints",
-            url: "/dashboard/admin/complaints",
-          },
-        ],
-      },
-      {
-        title: "Security",
-        icon: Icons.LockShield,
-        items: [
-          {
-            title: "Access Logs",
-            url: "/dashboard/admin/security/logs",
-          },
-          {
-            title: "Fraud Detection",
-            url: "/dashboard/admin/security/fraud",
-          },
-          {
-            title: "GDPR Compliance",
-            url: "/dashboard/admin/security/gdpr",
+            title: "Create Admin",
+            url: "/dashboard/admin/ADMIN/create",
           },
         ],
       }

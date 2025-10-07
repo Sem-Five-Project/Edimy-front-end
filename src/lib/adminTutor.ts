@@ -44,6 +44,18 @@ export interface TutorDto {
     statuses: TutorLanguage[];
 }
 
+export interface TutorApprovalsDto {
+    tutorId: number;
+    userName: string;
+    subjects: SubjectInfoDto[];
+    submissionDate: string; // ISO date string
+}
+
+export interface SubjectInfoDto {
+    id: number;
+    name: string;
+    verificationDocs: string;
+}
 const API_BASE_URL = '/tutors'; // no need full URL since baseURL is already set
 
 // Fetch all tutors (admin only) with pagination and filtering
@@ -74,6 +86,12 @@ export async function getAllTutors(
     return response.data;
 }
 
+export interface ReverificationsDto {
+    tutorId: number;
+    userName: string;
+    subjectInfo: SubjectInfoDto[];
+}
+
 // Update a tutor profile
 export async function updateTutor(id: string, tutorDto: Partial<TutorDto>): Promise<TutorDto> {
     const response = await api.put<TutorDto>(`${API_BASE_URL}/${id}`, tutorDto);
@@ -87,8 +105,35 @@ export async function updateTutorAdminFields(id: string, adminData: {
     rating?: number;
     status?: 'ACTIVE' | 'SUSPENDED';
 }): Promise<TutorDto> {
-    const response = await api.put<TutorDto>(`${API_BASE_URL}/${id}/admin`, adminData);
-    return response.data;
+    console.log('🚀 updateTutorAdminFields called with:');
+    console.log('ID:', id);
+    console.log('Admin Data:', adminData);
+    
+    // Convert ID to number since backend expects numeric ID
+    const tutorId = Number(id);
+    if (isNaN(tutorId)) {
+        throw new Error('Invalid tutor ID: must be numeric');
+    }
+    console.log('Converted tutor ID:', tutorId);
+    
+    // Use the same pattern as student admin API - without API_BASE_URL prefix
+    const endpoint = `/tutors/${tutorId}/admin`;
+    console.log('API endpoint:', endpoint);
+    
+    try {
+        const response = await api.put<TutorDto>(endpoint, adminData);
+        console.log('✅ API PUT response:', response);
+        console.log('Response status:', response.status);
+        console.log('Response data:', response.data);
+        return response.data;
+    } catch (error: any) {
+        console.error('❌ API PUT error:', error);
+        console.error('Error response:', error?.response);
+        console.error('Error status:', error?.response?.status);
+        console.error('Error data:', error?.response?.data);
+        console.error('Request config:', error?.config);
+        throw error;
+    }
 }
 
 // Fetch a tutor by ID (admin or student)
@@ -140,5 +185,19 @@ export async function getTutorStatistics(): Promise<{
         averageRating: number;
         newTutorsThisMonth: number;
     }>(`${API_BASE_URL}/statistics`);
+    return response.data;
+}
+
+// Fetch pending tutor approvals (admin only)
+export async function getPendingTutorApprovals(): Promise<TutorApprovalsDto[]> {
+    const response = await api.get<TutorApprovalsDto[]>(`${API_BASE_URL}/pending-approvals`);
+    return response.data;
+}
+
+/**
+ * Fetch tutor reverification requests (admin only)
+ */
+export async function getTutorReverificationRequests(): Promise<ReverificationsDto[]> {
+    const response = await api.get<ReverificationsDto[]>(`${API_BASE_URL}/reverification-requests`);
     return response.data;
 }
