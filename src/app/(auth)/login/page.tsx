@@ -1,4 +1,5 @@
 "use client";
+"use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Eye, EyeOff, Loader2, Shield, ArrowRight } from 'lucide-react';
 import { Eye, EyeOff, Loader2, Shield, ArrowRight } from 'lucide-react';
 import { authAPI } from '@/lib/api';
 import { sendFCMTokenAfterLogin } from '@/lib/api';
@@ -72,7 +74,28 @@ export default function LoginPage() {
 
         // Reset attempt count on successful login
         setAttemptCount(0);
+      console.log('Login response:', response);
+      
+      if (response.success) {
+        const user = response.data.user;
+        const token = response.data.accessToken;
+        console.log('Login response token:', token);
+        
+        // Login user
+        login(token, user);
 
+        // Reset attempt count on successful login
+        setAttemptCount(0);
+
+        // Send FCM token after successful login
+        console.log("🔥 About to send FCM token for user:", user.email || user.username);
+        try {
+          await sendFCMTokenAfterLogin(user.email || user.username);
+          console.log("🔥 FCM token sending completed");
+        } catch (fcmError) {
+          console.error("🔥 FCM token sending failed:", fcmError);
+          // Don't block login flow for FCM errors
+        }
         // Send FCM token after successful login
         console.log("🔥 About to send FCM token for user:", user.email || user.username);
         try {
@@ -295,4 +318,5 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
 }

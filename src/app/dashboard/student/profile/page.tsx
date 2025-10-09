@@ -1,392 +1,421 @@
 "use client";
-import React, { useState } from 'react';
-import { User, Edit2, Save, X, Camera, Mail, Phone, MapPin, Calendar, Book, Clock, CreditCard, Star, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useRouter } from 'next/navigation';
 
-const ProfilePage = () => {
-  const { actualTheme } = useTheme();
-  const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    username: 'johndoe123',
-    email: 'john.doe@email.com',
-    phone: '+1 (555) 123-4567',
-    location: 'New York, NY',
-    dateOfBirth: '1995-06-15',
-    bio: 'Passionate student focused on mathematics and computer science. Always eager to learn new concepts and apply them in real-world scenarios.',
-    profileImage: '/api/placeholder/150/150',
-    preferences: {
-      subject: 'Mathematics',
-      age: 28,
-      learningStyle: 'Visual',
-      availability: 'Evenings',
-      timezone: 'EST'
-    }
-  });
+  import type React from "react";
+  import { useEffect, useMemo, useState } from "react";
+  import { useQuery, useQueryClient } from "@tanstack/react-query";
+  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+  import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+  import { Button } from "@/components/ui/button";
+  import { Badge } from "@/components/ui/badge";
+  import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog";
+  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+  import { Input } from "@/components/ui/input";
+  import { Label } from "@/components/ui/label";
+  import { CreditCard, BookOpen, Calendar, Edit, GraduationCap, CheckCircle2, Loader2 } from "lucide-react";
+  import Link from "next/link";
+  import { EDUCATION_LEVELS, STREAMS } from "@/types";
+  import {studentAPI } from "@/lib/api";
+  import { useAuth } from "@/contexts/AuthContext";
 
-  const [tempData, setTempData] = useState(profileData);
-
-  const handleEdit = () => {
-    setTempData(profileData);
-    setIsEditing(true);
+  type AcademicInfo = {
+    educationLevel: string | null;
+    stream: string | null;
+    classCount?: number | 0;
+    sessionCount?: number | 0;
   };
 
-  const handleSave = () => {
-    setProfileData(tempData);
-    setIsEditing(false);
-  };
+  export default function ProfilePage() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
 
-  const handleCancel = () => {
-    setTempData(profileData);
-    setIsEditing(false);
-  };
+    // Base profile from auth context (no network fetch)
+    const firstName = user?.firstName ?? "";
+    const lastName = user?.lastName ?? "";
+    const username = user?.username ?? "";
+    const profilePicture = user?.profileImage ?? "";
+    const userId = user?.id ?? "";
+    const studentId = user?.studentId ?? null;
+    
 
-  const handleInputChange = (field: string, value: string) => {
-    setTempData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+    // Academic info via React Query (cached across navigations)
+    const {data: academic,isPending,isFetching,isError,error,} = useQuery<AcademicInfo>({
+      queryKey: ["studentProfileInfo", studentId],
+      enabled: Boolean(studentId),
+      queryFn: async () => {
+        console.log("fetch student profile info for id", studentId);
+        const res = await studentAPI.loadStudentProfileInfo(studentId);
+        // The org API returns: { educationLevel, stream, classCount, sessionCount }
+        return res.data;
+      },
+      // Extra safety; also configured in provider defaults
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+    });
 
-  const handlePreferenceChange = (field: string, value: string | number) => {
-    setTempData(prev => ({
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        [field]: value
+    const isAcademicLoading = isPending || isFetching;
+
+    // Local edit state for academic fields only
+    const [editForm, setEditForm] = useState<Pick<AcademicInfo, "educationLevel" | "stream">>({
+      educationLevel: "",
+      stream: "",
+    });
+    const [isEditOpen, setIsEditOpen] = useState(false);
+
+    useEffect(() => {
+      if (academic) {
+        setEditForm({
+          educationLevel: academic.educationLevel ?? "",
+          stream: academic.stream ?? "",
+        });
       }
-    }));
-  };
+    }, [academic]);
 
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
+    const educationLevelLabel = useMemo(
+      () => EDUCATION_LEVELS.find((l) => l.value === (academic?.educationLevel ?? ""))?.label ?? "Not set",
+      [academic?.educationLevel]
+    );
+    const streamLabel = useMemo(
+      () => STREAMS.find((s) => s.value === (academic?.stream ?? ""))?.label ?? "Not set",
+      [academic?.stream]
+    );
 
-  const quickStats = [
-    { label: 'Classes Completed', value: '24', icon: Book, color: 'from-blue-500 to-blue-600' },
-    ];
+    // const handleSaveProfile = async () => {
+    //   if (!userId) return;
+    //   try {
+    //     // Save to backend
+    //     await studentAPI.updateStudentProfile(userId, {
+    //       educationLevel: editForm.educationLevel,
+    //       stream: editForm.stream,
+    //     });
 
-  const quickActions = [
-    {
-      title: 'Previous Classes',
-      description: 'View and rate your completed classes',
-      icon: Book,
-      color: 'from-blue-500 to-blue-600',
-      action: () => router.push('/dashboard/student/profile/previous-classes')
-    },
-    {
-      title: 'Payment History',
-      description: 'Check your transaction history',
-      icon: CreditCard,
-      color: 'from-green-500 to-green-600',
-      action: () => router.push('/dashboard/student/profile/payments')
-    }
-  ];
+    //     // Optimistically update cached query data so we don't refetch
+    //     queryClient.setQueryData<AcademicInfo>(["studentProfileInfo", userId], (prev) => ({
+    //       educationLevel: editForm.educationLevel,
+    //       stream: editForm.stream,
+    //       classCount: prev?.classCount ?? 0,
+    //       sessionCount: prev?.sessionCount ?? 0,
+    //     }));
 
-  return (
-    <div className={`min-h-screen ${actualTheme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50'} p-4`}>
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
-        <Card className="rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="flex items-center space-x-6">
-              <div className="relative">
-                <img
-                  src={profileData.profileImage}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-2xl object-cover border-4 border-gradient-to-r from-blue-500 to-purple-600 shadow-lg"
-                />
-                {isEditing && (
-                  <Button className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors">
-                    <Camera className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-              <div>
-                <h1 className={`text-3xl font-bold ${actualTheme === 'dark' ? 'text-white' : 'bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent'}`}>
-                  {profileData.firstName} {profileData.lastName}
-                </h1>
-                <p className={`font-medium ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>@{profileData.username}</p>
-                <div className="flex items-center space-x-4 mt-2 text-sm">
-                  <span className={`flex items-center ${actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}><Mail className="w-4 h-4 mr-1" />{profileData.email}</span>
-                  <span className={`flex items-center ${actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}><MapPin className="w-4 h-4 mr-1" />{profileData.location}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex space-x-3">
-              {isEditing ? (
-                <>
-                  <Button
-                    onClick={handleCancel}
-                    variant="outline"
-                    className="flex items-center space-x-2"
-                  >
-                    <X className="w-4 h-4" />
-                    <span>Cancel</span>
-                  </Button>
-                  <Button
-                    onClick={handleSave}
-                    className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={handleEdit}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  <span>Edit Profile</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        </Card>
+    //     setIsEditOpen(false);
+    //   } catch (e) {
+    //     console.error("Failed to update profile:", e);
+    //   }
+    // };
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          {quickStats.map((stat, index) => (
-            <Card key={index} className="rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:transform hover:scale-105 transition-all duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color} shadow-lg`}>
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <p className={`text-2xl font-bold mb-1 ${actualTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{stat.value}</p>
-              <p className={`text-sm font-medium ${actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{stat.label}</p>
-            </Card>
-          ))}
-        </div>
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        // Only local preview; not persisted
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          // In this page we only preview; if you want to persist, add API + cache update
+        };
+        reader.readAsDataURL(file);
+      }
+    };
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Personal Information */}
-          <div className="lg:col-span-2">
-            <Card className="rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <h2 className={`text-xl font-bold mb-6 flex items-center ${actualTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                <User className="w-5 h-5 mr-2 text-blue-500" />
-                Personal Information
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>First Name</label>
-                  {isEditing ? (
-                    <Input
-                      type="text"
-                      value={tempData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    />
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'}`}>{profileData.firstName}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Last Name</label>
-                  {isEditing ? (
-                    <Input
-                      type="text"
-                      value={tempData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    />
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'}`}>{profileData.lastName}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Username</label>
-                  {isEditing ? (
-                    <Input
-                      type="text"
-                      value={tempData.username}
-                      onChange={(e) => handleInputChange('username', e.target.value)}
-                    />
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'}`}>@{profileData.username}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
-                  {isEditing ? (
-                    <Input
-                      type="email"
-                      value={tempData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                    />
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'}`}>{profileData.email}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Phone</label>
-                  {isEditing ? (
-                    <Input
-                      type="tel"
-                      value={tempData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                    />
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'}`}>{profileData.phone}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Date of Birth</label>
-                  {isEditing ? (
-                    <Input
-                      type="date"
-                      value={tempData.dateOfBirth}
-                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                    />
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'}`}>
-                      {new Date(profileData.dateOfBirth).toLocaleDateString()} ({calculateAge(profileData.dateOfBirth)} years)
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Bio</label>
-                {isEditing ? (
-                  <Textarea
-                    value={tempData.bio}
-                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                    rows={4}
-                  />
-                ) : (
-                  <p className={`px-4 py-3 rounded-xl ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'}`}>{profileData.bio}</p>
-                )}
-              </div>
-            </Card>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">Student Profile</h1>
+            <p className="text-slate-600">Manage your learning journey</p>
           </div>
 
-          {/* Learning Preferences & Quick Actions */}
-          <div className="space-y-6">
-            
-            {/* Learning Preferences */}
-            <Card className="rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <h3 className={`text-lg font-bold mb-4 flex items-center ${actualTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                <Book className="w-5 h-5 mr-2 text-purple-500" />
-                Learning Preferences
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Subject</label>
-                  {isEditing ? (
-                    <Select value={tempData.preferences.subject} onValueChange={(value) => handlePreferenceChange('subject', value)}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Mathematics">Mathematics</SelectItem>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Computer Science">Computer Science</SelectItem>
-                        <SelectItem value="English">English</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-purple-50 text-gray-800'}`}>{profileData.preferences.subject}</p>
-                  )}
+          {/* Profile Card */}
+          <Card className="mb-8 border-blue-200 bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="text-white text-2xl">Basic Information</CardTitle>
+              <CardDescription className="text-blue-100">Your personal details and academic information</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Profile Picture */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
+                      <AvatarImage src={profilePicture || "/placeholder.svg"} alt={firstName} />
+                      <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold">
+                        {firstName?.[0] || ""}
+                        {lastName?.[0] || ""}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                      <DialogTrigger asChild>
+                        <Button
+                          size="icon"
+                          className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg bg-white text-blue-600 hover:bg-blue-50 border-2 border-blue-200"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md bg-white border-blue-200 shadow-2xl">
+                        <DialogHeader>
+                          <DialogTitle className="text-slate-900 text-xl">Edit Profile</DialogTitle>
+                          <DialogDescription className="text-slate-600">Update your profile information</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="picture" className="text-slate-700 font-medium">Profile Picture</Label>
+                            <Input
+                              id="picture"
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="mt-2 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="firstName" className="text-slate-700 font-medium">First Name</Label>
+                              <Input
+                                id="firstName"
+                                value={firstName}
+                                disabled
+                                className="mt-2 border-slate-300 bg-slate-100 cursor-not-allowed"
+                              />
+                              <p className="text-xs text-slate-500 mt-1">From account</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="lastName" className="text-slate-700 font-medium">Last Name</Label>
+                              <Input
+                                id="lastName"
+                                value={lastName}
+                                disabled
+                                className="mt-2 border-slate-300 bg-slate-100 cursor-not-allowed"
+                              />
+                              <p className="text-xs text-slate-500 mt-1">From account</p>
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor="username" className="text-slate-700 font-medium">Username</Label>
+                            <Input
+                              id="username"
+                              value={username}
+                              disabled
+                              className="mt-2 border-slate-300 bg-slate-100 cursor-not-allowed"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">From account</p>
+                          </div>
+                          <div>
+                            <Label htmlFor="education" className="text-slate-700 font-medium">Education Level</Label>
+                            <Select
+                              value={editForm.educationLevel ?? ""}
+                              onValueChange={(value) => setEditForm((p) => ({ ...p, educationLevel: value }))}
+                            >
+                              <SelectTrigger className="mt-2 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                                <SelectValue placeholder="Select education level" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-slate-200">
+                                {EDUCATION_LEVELS.map((level) => (
+                                  <SelectItem key={level.value} value={level.value} className="hover:bg-blue-50">
+                                    {level.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="stream" className="text-slate-700 font-medium">Stream</Label>
+                            <Select
+                              value={editForm.stream ?? ""}
+                              onValueChange={(value) => setEditForm((p) => ({ ...p, stream: value }))}
+                            >
+                              <SelectTrigger className="mt-2 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                                <SelectValue placeholder="Select stream" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-slate-200">
+                                {STREAMS.map((stream) => (
+                                  <SelectItem key={stream.value} value={stream.value} className="hover:bg-blue-50">
+                                    {stream.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {/* <Button onClick={handleSaveProfile} className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+                            Save Changes
+                          </Button> */}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Learning Style</label>
-                  {isEditing ? (
-                    <Select value={tempData.preferences.learningStyle} onValueChange={(value) => handlePreferenceChange('learningStyle', value)}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select learning style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Visual">Visual</SelectItem>
-                        <SelectItem value="Auditory">Auditory</SelectItem>
-                        <SelectItem value="Kinesthetic">Kinesthetic</SelectItem>
-                        <SelectItem value="Reading/Writing">Reading/Writing</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-purple-50 text-gray-800'}`}>{profileData.preferences.learningStyle}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Availability</label>
-                  {isEditing ? (
-                    <Select value={tempData.preferences.availability} onValueChange={(value) => handlePreferenceChange('availability', value)}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select availability" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Mornings">Mornings</SelectItem>
-                        <SelectItem value="Afternoons">Afternoons</SelectItem>
-                        <SelectItem value="Evenings">Evenings</SelectItem>
-                        <SelectItem value="Weekends">Weekends</SelectItem>
-                        <SelectItem value="Flexible">Flexible</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className={`px-4 py-3 rounded-xl font-medium ${actualTheme === 'dark' ? 'bg-gray-700 text-white' : 'bg-purple-50 text-gray-800'}`}>{profileData.preferences.availability}</p>
-                  )}
-                </div>
-              </div>
-            </Card>
 
-            {/* Quick Actions */}
-            <Card className="rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <h3 className={`text-lg font-bold mb-4 ${actualTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Quick Actions</h3>
-              
-              <div className="space-y-3">
-                {quickActions.map((action, index) => (
-                  <Button
-                    key={index}
-                    onClick={action.action}
-                    variant="outline"
-                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${actualTheme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${action.color} shadow-md`}>
-                        <action.icon className="w-4 h-4 text-white" />
+                {/* Profile Details */}
+                <div className="flex-1 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="text-blue-100 text-sm">First Name</Label>
+                      <p className="text-lg font-semibold text-white mt-1">{firstName || "Not set"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-blue-100 text-sm">Last Name</Label>
+                      <p className="text-lg font-semibold text-white mt-1">{lastName || "Not set"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-blue-100 text-sm">Username</Label>
+                      <p className="text-lg font-semibold text-white mt-1">@{username || "Not set"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-blue-100 text-sm">Education Level</Label>
+                      {isAcademicLoading ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-200" />
+                          <span className="text-sm text-blue-200">Loading...</span>
+                        </div>
+                      ) : isError ? (
+                        <p className="text-lg font-semibold text-white mt-1">Failed to load</p>
+                      ) : (
+                        <p className="text-lg font-semibold text-white mt-1">{educationLevelLabel}</p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-blue-100 text-sm">Stream</Label>
+                      {isAcademicLoading ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-200" />
+                          <span className="text-sm text-blue-200">Loading...</span>
+                        </div>
+                      ) : isError ? (
+                        <p className="text-lg font-semibold text-white mt-1">Failed to load</p>
+                      ) : (
+                        <p className="text-lg font-semibold text-white mt-1">{streamLabel}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-blue-400">
+                    <div className="flex items-center gap-3 p-4 rounded-lg bg-white/20 backdrop-blur-sm shadow-md hover:bg-white/30 transition-all">
+                      <div className="p-2 rounded-full bg-white/30">
+                        <BookOpen className="h-5 w-5 text-white" />
                       </div>
-                      <div className="text-left">
-                        <p className={`font-semibold ${actualTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>{action.title}</p>
-                        <p className={`text-sm ${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{action.description}</p>
+                      <div>
+                        {isAcademicLoading ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin text-white" />
+                          </div>
+                        ) : isError ? (
+                          <p className="text-white">—</p>
+                        ) : (
+                          <p className="text-2xl font-bold text-white">{academic?.classCount ?? 0}</p>
+                        )}
+                        <p className="text-sm text-blue-100">Classes Attended</p>
                       </div>
                     </div>
-                    <ChevronRight className={`w-5 h-5 ${actualTheme === 'dark' ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                  </Button>
-                ))}
+                    <div className="flex items-center gap-3 p-4 rounded-lg bg-white/20 backdrop-blur-sm shadow-md hover:bg-white/30 transition-all">
+                      <div className="p-2 rounded-full bg-white/30">
+                        <CheckCircle2 className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        {isAcademicLoading ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin text-white" />
+                          </div>
+                        ) : isError ? (
+                          <p className="text-white">—</p>
+                        ) : (
+                          <p className="text-2xl font-bold text-white">{academic?.sessionCount ?? 0}</p>
+                        )}
+                        <p className="text-sm text-blue-100">Sessions Attended</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </Card>
+            </CardContent>
+          </Card>
+
+          {/* Navigation Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Payment History Card */}
+            <Link href="/dashboard/student/profile/payments">
+              <div className="relative cursor-pointer group">
+                <Card className="relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-slate-200 bg-white shadow-md overflow-hidden">
+                  <CardHeader className="relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 group-hover:from-green-100 group-hover:to-emerald-100 transition-all duration-300">
+                        <div className="relative">
+                          <CreditCard className="h-7 w-7 text-green-600" />
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                        </div>
+                      </div>
+                      <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-sm transition-all duration-300 hover:scale-105 px-3 py-1">
+                        View All
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-slate-900 text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                      Payment History
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 mt-2 text-base leading-relaxed">
+                      Track all your payment transactions, invoices, and billing details in one place
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </Link>
+
+            {/* Current Classes Card */}
+            <Link href="/dashboard/student/profile/classes">
+              <div className="relative cursor-pointer group">
+                <Card className="relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-slate-200 bg-white shadow-md overflow-hidden">
+                  <CardHeader className="relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 group-hover:from-blue-100 group-hover:to-indigo-100 transition-all duration-300 shadow-inner border border-blue-100">
+                        <GraduationCap className="h-7 w-7 text-blue-600" />
+                      </div>
+                      <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 shadow-sm transition-all duration-300 hover:scale-105 px-3 py-1">
+                        Manage
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-slate-900 text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      Current Classes
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 mt-2 text-base leading-relaxed">
+                      Access your enrolled classes, study materials, and recorded lecture videos
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </Link>
+
+            {/* My Bookings Card */}
+            <Link href="/dashboard/student/profile/bookings">
+              <div className="relative cursor-pointer group">
+                <Card className="relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-slate-200 bg-white shadow-md overflow-hidden">
+                  <CardHeader className="relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 group-hover:from-purple-100 group-hover:to-pink-100 transition-all duration-300 shadow-inner border border-purple-100">
+                        <Calendar className="h-7 w-7 text-purple-600" />
+                      </div>
+                      <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 shadow-sm transition-all duration-300 hover:scale-105 px-3 py-1">
+                        Schedule
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-slate-900 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      My Bookings
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 mt-2 text-base leading-relaxed">
+                      View and manage your upcoming class schedules and appointment bookings
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-export default ProfilePage;
+    );
+  }

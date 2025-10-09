@@ -119,20 +119,12 @@ export default function BookingConfirmationPage() {
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Sparkles className="h-6 w-6 text-green-600" />
                 <div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Booking Reference</div>
                   <div className="text-xl font-bold text-green-600">{bookingId}</div>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                onClick={copyBookingId}
-                className="hover:bg-green-50 dark:hover:bg-green-900/20 border-green-300 dark:border-green-700"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy ID
-              </Button>
+              
             </div>
           </CardContent>
         </Card>

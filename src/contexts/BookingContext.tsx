@@ -2,10 +2,25 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { Tutor, TimeSlot, BookingPreferences } from '@/types';
+
+// Type for monthly booking summary stored after reserving multiple slots
+export interface MonthlyBookingData {
+  id: string; // reservation id
+  tutorId: string;
+  subjectId: string;
+  languageId: string;
+  totalSlots: number;
+  totalCost: number;
+  status: string;
+  createdAt: string;
+  startDate: string; // first occurrence date YYYY-MM-DD
+  endDate: string;   // last occurrence date YYYY-MM-DD
+}
 import { useRouter } from 'next/navigation';
+import { bookingAPI } from '@/lib/api';
 
 interface ReservationDetails {
-  reservationId: string;
+  reservationSlotId: string;
   expiresAt: string;
   timer: number;
 }
@@ -34,13 +49,16 @@ interface BookingContextType {
   // Navigation helpers
   canProceedToStep: (step: BookingStep) => boolean;
   proceedToStep: (step: BookingStep) => void;
-  goBack: () => void;
+  goBack: (slotId?: number) => Promise<void>;
   
   // State management
   resetBookingState: () => void;
   isBookingComplete: boolean;
   bookingId: string | null;
   setBookingId: (id: string | null) => void;
+  // Monthly booking aggregate (recurring selection)
+  monthlyBookingData: MonthlyBookingData | null;
+  setMonthlyBookingData: (data: MonthlyBookingData | null) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -61,6 +79,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   });
   const [reservationDetails, setReservationDetails] = useState<ReservationDetails | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [monthlyBookingData, setMonthlyBookingData] = useState<MonthlyBookingData | null>(null);
 
   // Timer effect for reservation
   useEffect(() => {
@@ -127,23 +146,30 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const goBack = () => {
-    switch (currentStep) {
-      case 'slot-selection':
-        setCurrentStep('tutor-selection');
-        router.push('/dashboard/student/find-tutor');
-        break;
-      case 'payment':
-        setCurrentStep('slot-selection');
-        router.push('/dashboard/student/find-tutor/book/slots');
-        break;
-      case 'confirmation':
-        // Usually can't go back from confirmation, but if needed
-        setCurrentStep('payment');
-        router.push('/dashboard/student/find-tutor/book/payment');
-        break;
-    }
-  };
+
+const goBack = async (slotId?: number): Promise<void> => {
+  switch (currentStep) {
+    case 'slot-selection':
+      setCurrentStep('tutor-selection');
+      router.push('/dashboard/student/find-tutor');
+      break;
+
+    case 'payment':
+      if (slotId) {
+        await bookingAPI.releaseSlot(slotId);
+      }
+      setCurrentStep('slot-selection');
+      router.push('/dashboard/student/find-tutor/book/slots');
+      break;
+
+    case 'confirmation':
+      setCurrentStep('payment');
+      router.push('/dashboard/student/find-tutor/book/payment');
+      break;
+  }
+};
+
+
 
   const resetBookingState = () => {
     setCurrentStep('tutor-selection');
@@ -158,6 +184,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
     setReservationDetails(null);
     setBookingId(null);
+    setMonthlyBookingData(null);
   };
 
   const isBookingComplete = currentStep === 'confirmation' && bookingId !== null;
@@ -182,6 +209,8 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     isBookingComplete,
     bookingId,
     setBookingId,
+    monthlyBookingData,
+    setMonthlyBookingData,
   }), [
     currentStep,
     tutor,
@@ -190,7 +219,8 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     bookingPreferences,
     reservationDetails,
     bookingId,
-    isBookingComplete
+    isBookingComplete,
+    monthlyBookingData,
   ]);
 
   return (

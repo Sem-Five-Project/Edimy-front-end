@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Eye, EyeOff, Check, X, Loader2, User, Mail, Lock, UserCheck, Shield, ArrowRight, Users, BookOpen, Trophy } from 'lucide-react';
+import { Eye, EyeOff, Check, X, Loader2, User, Mail, Lock, UserCheck, Shield, ArrowRight, Users, BookOpen, Trophy } from 'lucide-react';
 import { authAPI } from '@/lib/api';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -223,6 +224,7 @@ export default function Register() {
     switch (usernameStatus) {
       case 'checking':
         return <Loader2 className="h-4 w-4 animate-spin text-slate-500" />;
+        return <Loader2 className="h-4 w-4 animate-spin text-slate-500" />;
       case 'available':
         return <Check className="h-4 w-4 text-green-500" />;
       case 'taken':
@@ -331,6 +333,9 @@ export default function Register() {
                 Join our platform to connect with tutors or start teaching
               </CardDescription>
             </CardHeader>
+            
+            <CardContent className="px-8 pb-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
             
             <CardContent className="px-8 pb-8">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -489,10 +494,12 @@ export default function Register() {
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   
                   {formData.password && (
+                    <div className="space-y-3">
                     <div className="space-y-3">
                       <div className="flex items-center space-x-3">
                         <div className="flex-1 bg-slate-200 rounded-full h-2">
@@ -544,9 +551,11 @@ export default function Register() {
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
                     <p className="text-sm text-red-600 flex items-center gap-1">
                       <X className="h-3 w-3" />
                       Passwords do not match
@@ -562,11 +571,13 @@ export default function Register() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
                       Creating Account...
                     </>
                   ) : (
                     <>
                       {formData.role === 'TUTOR' ? 'Continue to Tutor Setup' : 'Create Account'}
+                      <ArrowRight className="ml-3 h-5 w-5" />
                       <ArrowRight className="ml-3 h-5 w-5" />
                     </>
                   )}

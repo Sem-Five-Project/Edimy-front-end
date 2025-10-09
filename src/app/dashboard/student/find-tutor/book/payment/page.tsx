@@ -26,6 +26,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useRouter } from "next/navigation";
 import { PayHerePayment } from "../../PayHerePayment";
+import { Slot } from "@radix-ui/react-slot";
 
 export default function BookingPaymentPage() {
   const router = useRouter();
@@ -38,19 +39,52 @@ export default function BookingPaymentPage() {
     goBack,
     setCurrentStep,
     setBookingId,
-    currentStep
+    currentStep,
+    monthlyBookingData,
   } = useBooking();
 
   const { formatPrice, selectedCurrency } = useCurrency();
   const [error, setError] = useState("");
+  const [realTimeTimer, setRealTimeTimer] = useState<number>(0);
 
+  const isMonthly = bookingPreferences?.selectedClassType?.id === 2;
+
+  // Validation: redirect only if required data is missing for the active mode
   useEffect(() => {
-    if (!tutor || !selectedSlot || !bookingPreferences.selectedSubject || !bookingPreferences.selectedClassType) {
+    if (
+      !tutor ||
+      !bookingPreferences?.selectedSubject ||
+      !bookingPreferences?.selectedClassType ||
+      (!isMonthly && !selectedSlot) ||
+      (isMonthly && !monthlyBookingData)
+    ) {
+      console.log("Payment validation failed, redirecting to find-tutor");
       router.push("/dashboard/student/find-tutor");
       return;
     }
     setCurrentStep('payment');
-  }, [tutor, selectedSlot, bookingPreferences, router, setCurrentStep]);
+  }, [tutor, selectedSlot, bookingPreferences, monthlyBookingData, isMonthly, router, setCurrentStep]);
+
+  // Real-time timer effect based on reservationDetails.expiresAt
+  useEffect(() => {
+    if (!reservationDetails?.expiresAt) return;
+    
+    const updateTimer = () => {
+      const secs = Math.max(
+        0,
+        Math.floor((new Date(reservationDetails.expiresAt).getTime() - Date.now()) / 1000)
+      );
+      setRealTimeTimer(secs);
+    };
+
+    // Update immediately
+    updateTimer();
+    
+    // Then update every second
+    const id = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(id);
+  }, [reservationDetails?.expiresAt]);
 
   const formatTime = (time: string) =>
     new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
@@ -64,7 +98,13 @@ export default function BookingPaymentPage() {
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
+ const handleBack = async () => {
 
+    if (selectedSlot?.slotId) {
+      console.log('Going back, releasing slot:', selectedSlot.slotId);
+      await goBack(selectedSlot.slotId); 
+    }
+  };
   const calculateSlotHours = () => {
     if (!selectedSlot) return 0;
     const start = new Date(`2000-01-01T${selectedSlot.startTime}`);
@@ -72,8 +112,8 @@ export default function BookingPaymentPage() {
     return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
   };
 
-  const handlePaymentSuccess = () => {
-    const bookingId = `BK${Date.now()}`;
+  const handlePaymentSuccess = (bookingIdFromAPI?: number) => {
+    const bookingId = bookingIdFromAPI ? String(bookingIdFromAPI) : `BK${Date.now()}`;
     setBookingId(bookingId);
     router.push('/dashboard/student/find-tutor/book/confirmation');
   };
@@ -82,10 +122,48 @@ export default function BookingPaymentPage() {
     setError(errorMessage);
   };
 
-  if (!tutor || !selectedSlot || !bookingPreferences) {
+  const handleCancel = () => {
+    router.push('/dashboard/student/find-tutor');
+  };
+
+  // Loading state - check for required data based on booking mode
+  if (
+    !tutor ||
+    !bookingPreferences?.selectedSubject ||
+    !bookingPreferences?.selectedClassType ||
+    (!isMonthly && !selectedSlot) ||
+    (isMonthly && !monthlyBookingData)
+  ) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-400 animate-pulse">Loading payment details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If reservation has expired (only for single bookings), show expired state
+  if (!isMonthly && reservationDetails && realTimeTimer === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <BookingProgress currentStep={currentStep} />
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
+          <Alert variant="destructive" className="animate-in slide-in-from-top-2 duration-300">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <span className="font-medium">Slot reservation has expired!</span>
+              <span className="text-sm block mt-1">Please return to slot selection to book a new time.</span>
+            </AlertDescription>
+          </Alert>
+          <div className="text-center">
+            <Button onClick={() => router.push('/dashboard/student/find-tutor')} className="mt-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Slot Selection
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -102,7 +180,7 @@ export default function BookingPaymentPage() {
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
-            onClick={goBack}
+            onClick={handleBack}
             className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -117,13 +195,42 @@ export default function BookingPaymentPage() {
         </div>
 
         {/* Timer Alert */}
-        {reservationDetails && reservationDetails.timer > 0 && (
-          <Alert className="animate-in slide-in-from-top-2 duration-300 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
-            <Timer className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800 dark:text-orange-300">
-              <span className="font-medium">Slot reserved for: </span>
-              <span className="font-bold text-lg">{formatTimer(reservationDetails.timer)}</span>
-              <span className="text-sm block mt-1">Complete payment before time expires</span>
+        {reservationDetails && realTimeTimer > 0 && (
+          <Alert className={`animate-in slide-in-from-top-2 duration-300 ${
+            realTimeTimer <= 60 
+              ? "border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800" 
+              : "border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800"
+          }`}>
+            <Timer className={`h-4 w-4 ${realTimeTimer <= 60 ? "text-red-600 animate-pulse" : "text-orange-600"}`} />
+            <AlertDescription className={realTimeTimer <= 60 ? "text-red-800 dark:text-red-300" : "text-orange-800 dark:text-orange-300"}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium">Slot reserved for: </span>
+                  <span className={`font-bold text-lg ${realTimeTimer <= 60 ? "text-red-600 animate-pulse" : ""}`}>
+                    {formatTimer(realTimeTimer)}
+                  </span>
+                  <span className="text-sm block mt-1">
+                    {realTimeTimer <= 60 ? "⚠️ Hurry! Time running out!" : "Complete payment before time expires"}
+                  </span>
+                </div>
+                <Badge 
+                  variant={realTimeTimer <= 60 ? "destructive" : "secondary"} 
+                  className="text-xs ml-4"
+                >
+                  {realTimeTimer <= 60 ? "URGENT" : "RESERVED"}
+                </Badge>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Timer Expired Alert */}
+        {reservationDetails && realTimeTimer === 0 && (
+          <Alert variant="destructive" className="animate-in slide-in-from-top-2 duration-300">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <span className="font-medium">Slot reservation has expired!</span>
+              <span className="text-sm block mt-1">Please select a new slot to continue booking.</span>
             </AlertDescription>
           </Alert>
         )}
@@ -147,37 +254,67 @@ export default function BookingPaymentPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Date & Time */}
-                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                        <Calendar className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Date</div>
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {selectedDate?.toLocaleDateString("en-US", {
-                            weekday: "long",
-                            month: "long",
-                            day: "numeric",
-                          })}
+                {isMonthly ? (
+                  /* Monthly Booking Summary */
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Range</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {monthlyBookingData!.startDate} → {monthlyBookingData!.endDate}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Time</div>
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Clock className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Total Slots</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {monthlyBookingData!.totalSlots}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  /* Single Booking Date & Time */
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Date</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {selectedDate?.toLocaleDateString("en-US", {
+                              weekday: "long",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                          <Clock className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">Time</div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {selectedSlot ? `${formatTime(selectedSlot.startTime)} - ${formatTime(selectedSlot.endTime)}` : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Booking Details */}
                 <div className="space-y-3">
@@ -230,43 +367,62 @@ export default function BookingPaymentPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center py-2">
-                    <div className="flex items-center gap-2">
-                      <Timer className="h-4 w-4 text-gray-500" />
-                      <span className="text-gray-600 dark:text-gray-400">Duration</span>
+                  {!isMonthly && (
+                    <div className="flex justify-between items-center py-2">
+                      <div className="flex items-center gap-2">
+                        <Timer className="h-4 w-4 text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-400">Duration</span>
+                      </div>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {slotHours} hour{slotHours !== 1 ? 's' : ''}
+                      </span>
                     </div>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {slotHours} hour{slotHours !== 1 ? 's' : ''}
-                    </span>
-                  </div>
+                  )}
                 </div>
 
                 {/* Price Breakdown */}
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Hourly Rate</span>
-                    <span>{formatPrice(bookingPreferences.selectedSubject?.hourlyRate || 0)}/hr</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Duration</span>
-                    <span>{slotHours} hour{slotHours !== 1 ? 's' : ''}</span>
-                  </div>
-                  {bookingPreferences.selectedClassType?.priceMultiplier && bookingPreferences.selectedClassType.priceMultiplier !== 1.0 && (
-                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
-                      <span>Class Type Discount</span>
-                      <span>-{Math.round((1 - bookingPreferences.selectedClassType.priceMultiplier) * 100)}%</span>
-                    </div>
+                  {isMonthly ? (
+                    /* Monthly pricing */
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Slots</span>
+                        <span>{monthlyBookingData!.totalSlots}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Hourly Rate</span>
+                        <span>{formatPrice(bookingPreferences.selectedSubject?.hourlyRate || 0)}/hr</span>
+                      </div>
+                    </>
+                  ) : (
+                    /* Single pricing */
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Hourly Rate</span>
+                        <span>{formatPrice(bookingPreferences.selectedSubject?.hourlyRate || 0)}/hr</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Duration</span>
+                        <span>{slotHours} hour{slotHours !== 1 ? 's' : ''}</span>
+                      </div>
+                      {bookingPreferences.selectedClassType?.priceMultiplier && bookingPreferences.selectedClassType.priceMultiplier !== 1.0 && (
+                        <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                          <span>Class Type Discount</span>
+                          <span>-{Math.round((1 - bookingPreferences.selectedClassType.priceMultiplier) * 100)}%</span>
+                        </div>
+                      )}
+                    </>
                   )}
                   <div className="border-t border-gray-200 dark:border-gray-600 pt-2 mt-3">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
                       <div className="text-right">
                         <span className="text-2xl font-bold text-blue-600">
-                          {formatPrice(bookingPreferences.finalPrice)}
+                          {formatPrice(isMonthly ? (monthlyBookingData?.totalCost || bookingPreferences.finalPrice) : bookingPreferences.finalPrice)}
                         </span>
                         {selectedCurrency.code !== 'LKR' && (
                           <div className="text-xs text-gray-500">
-                            ≈ Rs. {bookingPreferences.finalPrice.toFixed(2)} LKR
+                            ≈ Rs. {(isMonthly ? (monthlyBookingData?.totalCost || bookingPreferences.finalPrice) : bookingPreferences.finalPrice).toFixed(2)} LKR
                           </div>
                         )}
                       </div>
@@ -299,47 +455,21 @@ export default function BookingPaymentPage() {
               <PayHerePayment
                 tutor={tutor}
                 selectedDate={selectedDate!}
-                selectedSlot={selectedSlot}
+                selectedSlot={isMonthly ? undefined : selectedSlot!}
                 bookingPreferences={bookingPreferences}
-                reservationTimer={reservationDetails?.timer || 0}
-                onBack={goBack}
+                reservationTimer={realTimeTimer}
+                monthlyBookingData={isMonthly ? monthlyBookingData! : undefined}
+                onBack={handleBack}
                 onPaymentSuccess={handlePaymentSuccess}
                 onPaymentError={handlePaymentError}
+                onCancel={handleCancel}
               />
             </CardContent>
           </Card>
         </div>
 
         {/* Bottom Action Bar */}
-        <Card className="animate-in slide-in-from-bottom-4 duration-500 delay-300 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950/20 dark:to-gray-900 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <DollarSign className="h-8 w-8 text-blue-600" />
-                <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Amount</div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {formatPrice(bookingPreferences.finalPrice)}
-                  </div>
-                  {selectedCurrency.code !== 'LKR' && (
-                    <div className="text-xs text-gray-400">
-                      ≈ Rs. {bookingPreferences.finalPrice.toFixed(2)} LKR
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {reservationDetails && reservationDetails.timer > 0 && (
-                <div className="text-center">
-                  <div className="text-sm text-orange-600 dark:text-orange-400">Time Remaining</div>
-                  <div className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                    {formatTimer(reservationDetails.timer)}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );
