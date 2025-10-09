@@ -18,11 +18,11 @@ export interface PayHerePaymentRequest {
   address: string;
   city: string;
   country: string;
-  delivery_address?: string;
-  delivery_city?: string;
-  delivery_country?: string;
-  custom_1?: string;
-  custom_2?: string;
+  // delivery_address?: string;
+  // delivery_city?: string;
+  // delivery_country?: string;
+  // custom_1?: string;
+  // custom_2?: string;
 }
 
 declare global {

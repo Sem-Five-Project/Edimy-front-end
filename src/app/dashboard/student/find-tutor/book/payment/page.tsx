@@ -33,7 +33,7 @@ export default function BookingPaymentPage() {
   const {
     tutor,
     selectedDate,
-    selectedSlot,
+  // selectedSlot removed from context model
     bookingPreferences,
     reservationDetails,
     goBack,
@@ -41,6 +41,7 @@ export default function BookingPaymentPage() {
     setBookingId,
     currentStep,
     monthlyBookingData,
+    lockedSlotIds,
   } = useBooking();
 
   const { formatPrice, selectedCurrency } = useCurrency();
@@ -48,22 +49,32 @@ export default function BookingPaymentPage() {
   const [realTimeTimer, setRealTimeTimer] = useState<number>(0);
 
   const isMonthly = bookingPreferences?.selectedClassType?.id === 2;
+  const [oneTimeSlotDetail, setOneTimeSlotDetail] = useState<any | null>(null);
+
+  // Load one-time slot detail from sessionStorage if not monthly
+  useEffect(() => {
+    if (!isMonthly) {
+      try {
+        const raw = sessionStorage.getItem('oneTimeSlotDetail');
+        if (raw) setOneTimeSlotDetail(JSON.parse(raw));
+      } catch {}
+    }
+  }, [isMonthly]);
 
   // Validation: redirect only if required data is missing for the active mode
   useEffect(() => {
     if (
       !tutor ||
       !bookingPreferences?.selectedSubject ||
-      !bookingPreferences?.selectedClassType ||
-      (!isMonthly && !selectedSlot) ||
-      (isMonthly && !monthlyBookingData)
+      !bookingPreferences?.selectedClassType
+
     ) {
       console.log("Payment validation failed, redirecting to find-tutor");
       router.push("/dashboard/student/find-tutor");
       return;
     }
     setCurrentStep('payment');
-  }, [tutor, selectedSlot, bookingPreferences, monthlyBookingData, isMonthly, router, setCurrentStep]);
+  }, [tutor, oneTimeSlotDetail, bookingPreferences, isMonthly, router, setCurrentStep]);
 
   // Real-time timer effect based on reservationDetails.expiresAt
   useEffect(() => {
@@ -99,16 +110,14 @@ export default function BookingPaymentPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
  const handleBack = async () => {
-
-    if (selectedSlot?.slotId) {
-      console.log('Going back, releasing slot:', selectedSlot.slotId);
-      await goBack(selectedSlot.slotId); 
-    }
-  };
+   // We now rely on context's lockedSlotIds; Payment back should release ALL reserved slots (single or multiple).
+   console.log('Going back from payment. Locked slots:', lockedSlotIds);
+   await goBack(); // context will pick up lockedSlotIds and bulk release
+ };
   const calculateSlotHours = () => {
-    if (!selectedSlot) return 0;
-    const start = new Date(`2000-01-01T${selectedSlot.startTime}`);
-    const end = new Date(`2000-01-01T${selectedSlot.endTime}`);
+    if (!oneTimeSlotDetail) return 0;
+    const start = new Date(`2000-01-01T${oneTimeSlotDetail.startTime}`);
+    const end = new Date(`2000-01-01T${oneTimeSlotDetail.endTime}`);
     return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
   };
 
@@ -128,11 +137,10 @@ export default function BookingPaymentPage() {
 
   // Loading state - check for required data based on booking mode
   if (
-    !tutor ||
-    !bookingPreferences?.selectedSubject ||
-    !bookingPreferences?.selectedClassType ||
-    (!isMonthly && !selectedSlot) ||
-    (isMonthly && !monthlyBookingData)
+  !tutor ||
+  !bookingPreferences?.selectedSubject ||
+  !bookingPreferences?.selectedClassType 
+ 
   ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -196,28 +204,21 @@ export default function BookingPaymentPage() {
 
         {/* Timer Alert */}
         {reservationDetails && realTimeTimer > 0 && (
-          <Alert className={`animate-in slide-in-from-top-2 duration-300 ${
-            realTimeTimer <= 60 
-              ? "border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800" 
-              : "border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800"
-          }`}>
-            <Timer className={`h-4 w-4 ${realTimeTimer <= 60 ? "text-red-600 animate-pulse" : "text-orange-600"}`} />
-            <AlertDescription className={realTimeTimer <= 60 ? "text-red-800 dark:text-red-300" : "text-orange-800 dark:text-orange-300"}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-medium">Slot reserved for: </span>
-                  <span className={`font-bold text-lg ${realTimeTimer <= 60 ? "text-red-600 animate-pulse" : ""}`}>
-                    {formatTimer(realTimeTimer)}
-                  </span>
-                  <span className="text-sm block mt-1">
-                    {realTimeTimer <= 60 ? "⚠️ Hurry! Time running out!" : "Complete payment before time expires"}
-                  </span>
+          <Alert className="animate-in slide-in-from-top-2 duration-300 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
+            <Timer className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 dark:text-orange-300 text-sm leading-relaxed">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="font-semibold text-orange-700 dark:text-orange-300">Complete payment within 15 minutes</div>
+                  <p className="text-xs sm:text-[13px]">
+                    Your selected slot{lockedSlotIds.length > 1 ? 's are' : ' is'} reserved for <span className="font-bold">{formatTimer(realTimeTimer)}</span>. After the timer expires the reservation will be automatically released and the slot may taken by another student.
+                  </p>
+                  <p className="text-[11px] opacity-80">
+                    If a payment attempt is made right at the end and the booking cannot be confirmed, any captured amount may refunded within 2–10 business days.
+                  </p>
                 </div>
-                <Badge 
-                  variant={realTimeTimer <= 60 ? "destructive" : "secondary"} 
-                  className="text-xs ml-4"
-                >
-                  {realTimeTimer <= 60 ? "URGENT" : "RESERVED"}
+                <Badge variant="secondary" className="whitespace-nowrap text-xs bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-200">
+                  {formatTimer(realTimeTimer)} LEFT
                 </Badge>
               </div>
             </AlertDescription>
@@ -308,7 +309,7 @@ export default function BookingPaymentPage() {
                         <div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">Time</div>
                           <div className="font-semibold text-gray-900 dark:text-white">
-                            {selectedSlot ? `${formatTime(selectedSlot.startTime)} - ${formatTime(selectedSlot.endTime)}` : 'N/A'}
+                            {oneTimeSlotDetail ? `${formatTime(oneTimeSlotDetail.startTime)} - ${formatTime(oneTimeSlotDetail.endTime)}` : 'N/A'}
                           </div>
                         </div>
                       </div>
@@ -455,7 +456,14 @@ export default function BookingPaymentPage() {
               <PayHerePayment
                 tutor={tutor}
                 selectedDate={selectedDate!}
-                selectedSlot={isMonthly ? undefined : selectedSlot!}
+                lockedSlotIds={lockedSlotIds}
+                selectedSlot={isMonthly ? undefined : oneTimeSlotDetail ? {
+                  slotId: oneTimeSlotDetail.slotId,
+                  startTime: oneTimeSlotDetail.startTime,
+                  endTime: oneTimeSlotDetail.endTime,
+                  price: oneTimeSlotDetail.price,
+                  hourlyRate: oneTimeSlotDetail.price,
+                } as any : undefined}
                 bookingPreferences={bookingPreferences}
                 reservationTimer={realTimeTimer}
                 monthlyBookingData={isMonthly ? monthlyBookingData! : undefined}

@@ -1237,27 +1237,7 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
     }
   },
 // ...existing code...
-  reserveSlots: async (
-    slotIds: number[],
-    options?: { recurring?: boolean | null; weekday?: number | null }
-  ): Promise<ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>> => {
-    try {
-      // Backend expects only a list of slot IDs
-      console.log('Reserving slots with slotIds:', slotIds);
-      const body = { slotIds };
-      console.log('Reserving slots with body:', body);
-      const response = await api.post('/bookings/slots/reserve', body);
-      console.log('Reserve slots response:', response);
-      return response.data;
-    } catch (error) {
-      console.error('Reserve slots failed:', error);
-      return {
-        success: false,
-        data: { reservationId: '', expiresAt: '', reserved: [], failed: [] },
-        error: 'Failed to reserve slots',
-      } as ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>;
-    }
-  },
+
 // ...existing code...
   reserveSlot1: async (
     slotId: number,
@@ -1327,11 +1307,71 @@ validateSlotAvailability: async (slotId: string): Promise<boolean> => {
       } as ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>;
     }
   },
-bookSlot: async (
-  slotId: number
+// bookSlot: async (
+//   slotId: number
+// ): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
+//   try {
+//     const response = await api.post('/bookings/book-slot', { slotId });
+//     const raw = response.data;
+
+//     // Normalize possible backend shapes
+//     // Shape A (wrapped): { success:true, data:{ bookingId, status } }
+//     if (raw && typeof raw === 'object' && 'success' in raw && raw.data) {
+//       return raw;
+//     }
+
+//     // Shape B (flat): { bookingId, status, success? }
+//     if (raw && typeof raw === 'object' && ('bookingId' in raw || 'status' in raw)) {
+//       return {
+//         success: raw.success !== false,
+//         data: {
+//           bookingId: raw.bookingId ?? 0,
+//           status: raw.status ?? raw.bookingStatus ?? 'UNKNOWN',
+//         },
+//       };
+//     }
+
+//     // Fallback unexpected
+//     return {
+//       success: false,
+//       data: { bookingId: 0, status: 'FAILED' },
+//       error: 'Unexpected booking response format',
+//     };
+//   } catch (error) {
+//     console.error('Book slot failed:', error);
+//     return {
+//       success: false,
+//       data: { bookingId: 0, status: 'FAILED' },
+//       error: 'Failed to book slot',
+//     };
+//   }
+// },
+  // bookSlot: async (
+  //   slotId: number
+  // ): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
+  //   try {
+  //     // explicitly send JSON body { "slotId": <value> }
+  //     const response = await api.post('/bookings/book-slot', {
+  //       slotId: slotId,
+  //     });
+  //     console.log('Book slot response:', response);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Book slot failed:', error);
+  //     return {
+  //       success: false,
+  //       data: { bookingId: 0, status: 'FAILED' },
+  //       error: 'Failed to book slot',
+  //     } as ApiResponse<{ bookingId: number; status: string }>;
+  //   }
+  // },
+
+
+bookSlots: async (
+  slotIds: number[]
 ): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
   try {
-    const response = await api.post('/bookings/book-slot', { slotId });
+    const response = await api.post('/bookings/book-slots', { slotIds });
     const raw = response.data;
 
     // Normalize possible backend shapes
@@ -1365,27 +1405,7 @@ bookSlot: async (
       error: 'Failed to book slot',
     };
   }
-},
-  // bookSlot: async (
-  //   slotId: number
-  // ): Promise<ApiResponse<{ bookingId: number; status: string }>> => {
-  //   try {
-  //     // explicitly send JSON body { "slotId": <value> }
-  //     const response = await api.post('/bookings/book-slot', {
-  //       slotId: slotId,
-  //     });
-  //     console.log('Book slot response:', response);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error('Book slot failed:', error);
-  //     return {
-  //       success: false,
-  //       data: { bookingId: 0, status: 'FAILED' },
-  //       error: 'Failed to book slot',
-  //     } as ApiResponse<{ bookingId: number; status: string }>;
-  //   }
-  // },
-
+},  
   bookMonthlyClass: async (
     payload: BookMonthlyClassReq
   ): Promise<ApiResponse<BookMonthlyClassRes>> => {
@@ -1451,13 +1471,35 @@ bookSlot: async (
       };
     }
   },
-
+  reserveSlots: async (
+    slotIds: number[],
+    options?: { recurring?: boolean | null; weekday?: number | null }
+  ): Promise<ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>> => {
+    try {
+      // Backend expects only a list of slot IDs
+      console.log('Reserving slots with slotIds:', slotIds);
+      const body = { slotIds };
+      console.log('Reserving slots with body:', body);
+      const response = await api.post('/bookings/slots/reserve', body);
+      console.log('Reserve slots response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Reserve slots failed:', error);
+      return {
+        success: false,
+        data: { reservationId: '', expiresAt: '', reserved: [], failed: [] },
+        error: 'Failed to reserve slots',
+      } as ApiResponse<{ reservationId: string; expiresAt: string; reserved: number[]; failed?: number[] }>;
+    }
+  },
   // Bulk release locked slots
   releaseSlots: async (
     slotIds: number[]
   ): Promise<ApiResponse<{ released: number[]; failed?: number[] }>> => {
     try {
-      const response = await api.post('/bookings/release-bulk', { slotIds });
+      const body = { slotIds };
+      console.log('Releasing slots with body:', body);
+      const response = await api.post('/bookings/slots/release', body);
       console.log('Release bulk slots response:', response);
       return response.data;
     } catch (error) {
@@ -1473,11 +1515,17 @@ bookSlot: async (
   // Confirm PayHere payment and finalize booking, updating all related tables
 confirmPayHerePayment: async (payload: {
   paymentId: string;
-  slotId?: number;
+  slots: Record<string, number[]>; // JSONB map: { availability_id: [slot_ids...] }
   tutorId: number;
   subjectId: number;
   languageId: number;
   classTypeId: number;
+  studentId: number;
+  paymentTime: string; // ISO timestamp
+  amount: number;
+  month: number | null;
+  year: number | null;
+  isMonthly?: boolean;
 }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
   try {
     console.log('Confirming PayHere payment with payload:', payload);
@@ -1485,57 +1533,57 @@ confirmPayHerePayment: async (payload: {
     const paymentRaw = response.data;
     console.log('Confirm PayHere payment response (raw):', paymentRaw);
 
-    const paymentSuccess =
-      paymentRaw?.success === true ||
-      response.status === 200;
+    // const paymentSuccess =
+    //   paymentRaw?.success === true ||
+    //   response.status === 200;
 
-    if (!paymentSuccess) {
-      return {
-        success: false,
-        data: { success: false },
-        error: paymentRaw?.error || 'Payment confirmation failed',
-      };
-    }
+    // if (!paymentSuccess) {
+    //   return {
+    //     success: false,
+    //     data: { success: false },
+    //     error: paymentRaw?.error || 'Payment confirmation failed',
+    //   };
+    // }
 
-    // If there is no slot to book (edge case)
-    if (!payload.slotId) {
-      return {
-        success: true,
-        data: {
-          success: true,
-          paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
-        },
-      };
-    }
+    // // If there is no slot to book (edge case)
+    // if (!payload.slotIds) {
+    //   return {
+    //     success: true,
+    //     data: {
+    //       success: true,
+    //       paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
+    //     },
+    //   };
+    // }
 
-    // Proceed to book slot
-    console.log('Attempting to book slot after payment:', payload.slotId);
-    const bookingResponse = await bookingAPI.bookSlot(payload.slotId);
-    console.log('Slot booking response (normalized):', bookingResponse);
+    // // Proceed to book slot
+    // console.log('Attempting to book slot after payment:', payload.slotIds);
+    // const bookingResponse = await bookingAPI.bookSlot(payload.slotIds);
+    // console.log('Slot booking response (normalized):', bookingResponse);
 
-    const bookingId =
-      bookingResponse?.data?.bookingId ??
-      (bookingResponse as any)?.bookingId ??
-      0;
+    // const bookingId =
+    //   bookingResponse?.data?.bookingId ??
+    //   (bookingResponse as any)?.bookingId ??
+    //   0;
 
-    const bookingOk = bookingResponse.success === true && bookingResponse.data?.status === 'BOOKED';
+    // const bookingOk = bookingResponse.success === true && bookingResponse.data?.status === 'BOOKED';
 
-    if (bookingOk) {
-      return {
-        success: true,
-        data: {
-          success: true,
-          paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
-          bookingId,
-        },
-      };
-    }
-
+    // if (bookingOk) {
+    //   return {
+    //     success: true,
+    //     data: {
+    //       success: true,
+    //       paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
+    //       bookingId,
+    //     },
+    //   };
+    // }
+//commented booking response 10-08
     return {
       success: false,
       data: { success: false },
       error:
-        bookingResponse.error ||
+      //  bookingResponse.error ||
         'Payment confirmed but slot booking failed',
     };
   } catch (error) {

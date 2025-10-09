@@ -413,16 +413,16 @@ export interface RecurringSlot {
 }
 
 export interface MonthlyClassBooking {
-  id: string;
-  tutorId: string;
-  subjectId: string;
-  languageId: string;
-  patterns: SelectedSlotPattern[];
-  weekBreakdown: WeekBreakdown[];
+  // id: string;
+  // tutorId: string;
+  // subjectId: string;
+  // languageId: string;
+  // patterns: SelectedSlotPattern[];
+  // weekBreakdown: WeekBreakdown[];
   totalSlots: number;
   totalCost: number;
-  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
-  createdAt: string;
+  //status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  //createdAt: string;
   startDate: string;
   endDate: string;
 }
