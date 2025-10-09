@@ -33,7 +33,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useRouter } from "next/navigation";
 import { bookingAPI, tutorAPI } from "@/lib/api";
-import { TimeSlot, CLASS_TYPES, BookingPreferences, type MonthlyClassBooking as MonthlyBookingType, type SelectedSlotPattern, type RecurringSlot, type WeekBreakdown, type BookMonthlyClassReq } from "@/types";
+import { TimeSlot, CLASS_TYPES, BookingPreferences, MonthlyClassBooking, type SelectedSlotPattern, type RecurringSlot, type WeekBreakdown, type BookMonthlyClassReq } from "@/types";
 import { Checkbox } from "@radix-ui/react-checkbox";
 
 export default function BookingSlotsPage() {
@@ -45,8 +45,9 @@ export default function BookingSlotsPage() {
     proceedToStep,
     setCurrentStep,
     setReservationDetails,
-    setSelectedSlot,
+    setLockedSlotIds,
     setBookingPreferences,
+    bookingPreferences,
     currentStep,
     setMonthlyBookingData,
   } = useBooking();
@@ -75,12 +76,23 @@ export default function BookingSlotsPage() {
   const [excludedOccurrenceIds, setExcludedOccurrenceIds] = useState<string[]>([]);
   // Pre-payment option to also book next month with the same recurring times
   const [alsoBookNextMonth, setAlsoBookNextMonth] = useState<boolean>(false);
-const [preferences, setPreferences] = useState<BookingPreferences>({
-  selectedLanguage: null,
-  selectedSubject: tutor?.subjects && tutor.subjects.length === 1 ? tutor.subjects[0] : null,
-  selectedClassType: null,
-  finalPrice: 0,
-});
+  // Use bookingPreferences from context directly so selections persist across steps
+  const preferences = bookingPreferences;
+  // Auto-preselect single subject/language if only one and none selected yet
+  useEffect(() => {
+    if (!tutor) return;
+    const next: BookingPreferences = { ...bookingPreferences };
+    let changed = false;
+    if (!next.selectedSubject && tutor.subjects && tutor.subjects.length === 1) {
+      next.selectedSubject = tutor.subjects[0];
+      changed = true;
+    }
+    if (!next.selectedLanguage && tutor.languages && tutor.languages.length === 1) {
+      next.selectedLanguage = tutor.languages[0];
+      changed = true;
+    }
+    if (changed) setBookingPreferences(next);
+  }, [tutor]);
  const [selectedWeekDays,setSelectedWeekDays] = useState<string[]>([]);
 
   // ADD this new state to mirror selected slot IDs for monthly
@@ -832,11 +844,6 @@ const formatMonthDay = (d: string) => {
 
 
 const handleContinue = async () => {
-  // Prevent continuation if an identical class already exists and user hasn't chosen to override
-  if (existingClassData?.exists && !overrideExistingClass) {
-    setError('You already have this class. Confirm creating a new one or reschedule.');
-    return;
-  }
   if (!isValid()) {
     setError("Please complete all selections to continue");
     return;
@@ -906,25 +913,25 @@ const handleContinue = async () => {
       const firstDate = validOccurrences[0].date;
       const lastDate = validOccurrences[validOccurrences.length - 1].date;
 console.log("h1")
-      const booking: MonthlyBookingType = {
-        id: response.data?.reservationId || `monthly-${Date.now()}`,
-        tutorId: String(tutor!.id),
-        subjectId: String(preferences.selectedSubject!.subjectId),
-        languageId: String(
-          (preferences.selectedLanguage || tutor!.languages[0]).languageId
-        ),
-        patterns: [],
-        weekBreakdown: [],
+      const booking: MonthlyClassBooking = {
+        //id: response.data?.reservationId || `monthly-${Date.now()}`,
+        //tutorId: String(tutor!.id),
+        //subjectId: String(preferences.selectedSubject!.subjectId),
+        // languageId: String(
+        //   (preferences.selectedLanguage || tutor!.languages[0]).languageId
+        // ),
+        //patterns: [],
+        //weekBreakdown: [],
         totalSlots: slotIds.length,
         totalCost: monthlyTotal,
-        status: "PENDING",
-        createdAt: new Date().toISOString(),
+        //status: "PENDING",
+        //createdAt: new Date().toISOString(),
         startDate: firstDate,
         endDate: lastDate
       };
 console.log("h2")
-
-      setMonthlyBookingData(booking);
+      
+          setMonthlyBookingData(booking);
           const finalPreferences = {
             ...preferences,
             finalPrice: monthlyTotal
@@ -933,7 +940,7 @@ console.log("h3")
 
       setBookingPreferences(finalPreferences);
 console.log("h4")
-
+          setLockedSlotIds(slotIds)
       setReservationDetails({
         reservationSlotId: response.data?.reservationId || `temp-${Date.now()}`,
         expiresAt:
@@ -992,7 +999,8 @@ console.log("h5")
       finalPrice: calculatePrice()
     };
 
-    setSelectedSlot(selectedSlotLocal);
+    //setSelectedSlot(selectedSlotLocal);
+    setLockedSlotIds([selectedSlotLocal.slotId]);
     setBookingPreferences(finalPreferences);
     setReservationDetails({
       reservationSlotId: singleResp.data?.reservationId || `temp-${Date.now()}`,
@@ -1222,7 +1230,10 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                   value={preferences.selectedSubject?.subjectId.toString() || ""}
                   onValueChange={(value) => {
                     const subject = tutor.subjects.find(s => s.subjectId.toString() === value);
-                    setPreferences({ ...preferences, selectedSubject: subject || null });
+                    setBookingPreferences({
+                      ...bookingPreferences,
+                      selectedSubject: subject || null,
+                    });
                   }}
                   placeholder="Choose subject"
                   options={subjectOptions}
@@ -1237,7 +1248,10 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                     value={preferences.selectedLanguage?.languageId.toString() || ""}
                     onValueChange={(value) => {
                       const lang = tutor.languages.find(l => l.languageId.toString() === value) || null;
-                      setPreferences(prev => ({ ...prev, selectedLanguage: lang }));
+                      setBookingPreferences({
+                        ...bookingPreferences,
+                        selectedLanguage: lang,
+                      });
                     }}
                     placeholder="Choose language"
                     options={languageOptions}
@@ -1251,8 +1265,11 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                 value={preferences.selectedClassType?.id?.toString() || ""}
                 onValueChange={(value) => {
                   const classType = CLASS_TYPES.find(ct => ct.id === Number(value));
-                  setAvailableSlots([])
-                  setPreferences({ ...preferences, selectedClassType: classType || null });
+                  setAvailableSlots([]);
+                  setBookingPreferences({
+                    ...bookingPreferences,
+                    selectedClassType: classType || null,
+                  });
                 }}
                 placeholder="Choose class type"
                 options={classTypeOptions}
@@ -1260,7 +1277,7 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                 icon={<Users className="w-4 h-4" />}
               />
             </div>
-                          {(preferences.selectedLanguage && preferences.selectedSubject && preferences.selectedClassType && isStudent) && (
+              {(preferences.selectedLanguage && preferences.selectedSubject && preferences.selectedClassType && isStudent) && (
                 <div className="mt-4 md:col-span-3">
                   {existingClassLoading && (
                     <div className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">Checking for existing class...</div>
@@ -1442,8 +1459,6 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                   })()}
                 </div>
               )}
-              {/* Existing class notice */}
-
             </CardContent>
           </Card>
         )}
@@ -2065,8 +2080,6 @@ const languageOptions = tutor.languages?.map((language, index) => ({
         ) : null}
       </div>
 
-      {/* (Removed standalone one-time existing class box; integrated into preferences card) */}
-
       {/* Right Side - Total Amount & CTA */}
       <div className="lg:w-80 flex-shrink-0">
         <div className="bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 dark:from-blue-500/5 dark:via-purple-500/5 dark:to-pink-500/5 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 h-full">
@@ -2099,7 +2112,6 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                 }
               }}
               //disabled={!isValid() || isLoading || nextMonthPatternsLoading}
-              disabled={!isValid() || isLoading || nextMonthPatternsLoading || (existingClassData?.exists && !overrideExistingClass)}
               size="lg"
               className="w-full h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-bold rounded-xl border-0 relative overflow-hidden group"
             >

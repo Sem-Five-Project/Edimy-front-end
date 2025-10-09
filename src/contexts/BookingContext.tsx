@@ -1,21 +1,21 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
-import { Tutor, TimeSlot, BookingPreferences } from '@/types';
+import { Tutor, TimeSlot, BookingPreferences, type MonthlyClassBooking as MonthlyBookingData } from '@/types';
 
 // Type for monthly booking summary stored after reserving multiple slots
-export interface MonthlyBookingData {
-  id: string; // reservation id
-  tutorId: string;
-  subjectId: string;
-  languageId: string;
-  totalSlots: number;
-  totalCost: number;
-  status: string;
-  createdAt: string;
-  startDate: string; // first occurrence date YYYY-MM-DD
-  endDate: string;   // last occurrence date YYYY-MM-DD
-}
+// export interface MonthlyBookingData {
+//   id: string; // reservation id
+//   tutorId: string;
+//   subjectId: string;
+//   languageId: string;
+//   totalSlots: number;
+//   totalCost: number;
+//   status: string;
+//   createdAt: string;
+//   startDate: string; // first occurrence date YYYY-MM-DD
+//   endDate: string;   // last occurrence date YYYY-MM-DD
+// }
 import { useRouter } from 'next/navigation';
 import { bookingAPI } from '@/lib/api';
 
@@ -37,8 +37,7 @@ interface BookingContextType {
   setTutor: (tutor: Tutor | null) => void;
   selectedDate: Date | null;
   setSelectedDate: (date: Date | null) => void;
-  selectedSlot: TimeSlot | null;
-  setSelectedSlot: (slot: TimeSlot | null) => void;
+  // (single one-time slot details not stored here anymore)
   bookingPreferences: BookingPreferences;
   setBookingPreferences: (prefs: BookingPreferences) => void;
   
@@ -49,7 +48,7 @@ interface BookingContextType {
   // Navigation helpers
   canProceedToStep: (step: BookingStep) => boolean;
   proceedToStep: (step: BookingStep) => void;
-  goBack: (slotId?: number) => Promise<void>;
+  goBack: () => Promise<void>;
   
   // State management
   resetBookingState: () => void;
@@ -59,6 +58,10 @@ interface BookingContextType {
   // Monthly booking aggregate (recurring selection)
   monthlyBookingData: MonthlyBookingData | null;
   setMonthlyBookingData: (data: MonthlyBookingData | null) => void;
+
+  // Locked slots (single for one-time, many for monthly) to release on back/cancel
+  lockedSlotIds: number[];
+  setLockedSlotIds: (slotIds: number[]) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -70,7 +73,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [currentStep, setCurrentStep] = useState<BookingStep>('tutor-selection');
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  // removed singleSlotSnapshot state
   const [bookingPreferences, setBookingPreferences] = useState<BookingPreferences>({
     selectedSubject: null,
     selectedLanguage: null,
@@ -80,6 +83,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [reservationDetails, setReservationDetails] = useState<ReservationDetails | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [monthlyBookingData, setMonthlyBookingData] = useState<MonthlyBookingData | null>(null);
+  const [lockedSlotIds, setLockedSlotIds] = useState<number[]>([]);
 
   // Timer effect for reservation
   useEffect(() => {
@@ -89,7 +93,8 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
         setReservationDetails(prev => {
           if (!prev || prev.timer <= 1) {
             // Timer expired - reset slot selection
-            setSelectedSlot(null);
+            // clear locks on expiry
+            setLockedSlotIds([]);
             setCurrentStep('slot-selection');
             return null;
           }
@@ -107,15 +112,13 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     switch (step) {
       case 'slot-selection':
         return tutor !== null;
-      case 'payment':
-        return (
-          tutor !== null &&
-          selectedDate !== null &&
-          selectedSlot !== null &&
-          bookingPreferences.selectedSubject !== null &&
-          bookingPreferences.selectedClassType !== null &&
-          (tutor.languages.length <= 1 || bookingPreferences.selectedLanguage !== null)
-        );
+      case 'payment': {
+        if (!tutor || !selectedDate) return false;
+        if (!bookingPreferences.selectedSubject || !bookingPreferences.selectedClassType) return false;
+        if (tutor.languages.length > 1 && !bookingPreferences.selectedLanguage) return false;
+        if (monthlyBookingData) return lockedSlotIds.length > 0; // monthly flow
+        return lockedSlotIds.length === 1; // one-time flow
+      }
       case 'confirmation':
         return bookingId !== null;
       default:
@@ -147,35 +150,46 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
 
-const goBack = async (slotId?: number): Promise<void> => {
+const goBack = async (): Promise<void> => {
   switch (currentStep) {
-    case 'slot-selection':
+    case 'slot-selection': {
       setCurrentStep('tutor-selection');
       router.push('/dashboard/student/find-tutor');
       break;
-
-    case 'payment':
-      if (slotId) {
-        await bookingAPI.releaseSlot(slotId);
+    }
+    case 'payment': {
+      // Always release whatever is in lockedSlotIds
+      const toRelease = lockedSlotIds.length > 0 ? lockedSlotIds : [];
+      if (toRelease.length > 0) {
+        console.log("Releasing locked slots:", toRelease);
+        await bookingAPI.releaseSlots(toRelease);
       }
+      setLockedSlotIds([]);
+      // Clear reservation so UI resets cleanly
+      setReservationDetails(null);
+      // Clear any persisted one-time slot data
+
       setCurrentStep('slot-selection');
       router.push('/dashboard/student/find-tutor/book/slots');
       break;
-
-    case 'confirmation':
+    }
+    case 'confirmation': {
       setCurrentStep('payment');
       router.push('/dashboard/student/find-tutor/book/payment');
       break;
+    }
   }
 };
 
-
+useEffect(()=>{
+  console.log("Locked slot IDs changed:", lockedSlotIds);
+}, [lockedSlotIds]);
 
   const resetBookingState = () => {
     setCurrentStep('tutor-selection');
     setTutor(null);
     setSelectedDate(new Date());
-    setSelectedSlot(null);
+    setLockedSlotIds([]);
     setBookingPreferences({
       selectedSubject: null,
       selectedLanguage: null,
@@ -185,6 +199,8 @@ const goBack = async (slotId?: number): Promise<void> => {
     setReservationDetails(null);
     setBookingId(null);
     setMonthlyBookingData(null);
+    setLockedSlotIds([]);
+
   };
 
   const isBookingComplete = currentStep === 'confirmation' && bookingId !== null;
@@ -196,8 +212,7 @@ const goBack = async (slotId?: number): Promise<void> => {
     setTutor,
     selectedDate,
     setSelectedDate,
-    selectedSlot,
-    setSelectedSlot,
+  // no slot snapshot
     bookingPreferences,
     setBookingPreferences,
     reservationDetails,
@@ -211,16 +226,20 @@ const goBack = async (slotId?: number): Promise<void> => {
     setBookingId,
     monthlyBookingData,
     setMonthlyBookingData,
+    lockedSlotIds,
+    setLockedSlotIds: (slotIds: number[]) => setLockedSlotIds(slotIds),
   }), [
     currentStep,
     tutor,
     selectedDate,
-    selectedSlot,
+    //selectedSlot,
+    lockedSlotIds,
     bookingPreferences,
     reservationDetails,
     bookingId,
     isBookingComplete,
     monthlyBookingData,
+    lockedSlotIds,
   ]);
 
   return (

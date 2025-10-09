@@ -21,12 +21,12 @@ import {
   Star,
   Crown
 } from "lucide-react";
-import { Tutor, TimeSlot, BookingPreferences, InitPayHerePendingRes, ValidatePayHereWindowRes } from "@/types";
+import { Tutor, TimeSlot, BookingPreferences, InitPayHerePendingRes, ValidatePayHereWindowRes,MonthlyClassBooking } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { bookingAPI } from "@/lib/api";
 import { saveBookingCache, clearBookingCache } from "@/utils/bookingCache";
-import { MonthlyBookingData } from "@/contexts/BookingContext";
+// import { MonthlyBookingData } from "@/contexts/BookingContext";
 
 interface PayHerePaymentProps {
   tutor: Tutor;
@@ -34,16 +34,18 @@ interface PayHerePaymentProps {
   selectedSlot?: TimeSlot; // Optional for monthly bookings
   bookingPreferences: BookingPreferences;
   reservationTimer: number;
-  monthlyBookingData?: MonthlyBookingData; // Optional monthly booking data
+  monthlyBookingData?: MonthlyClassBooking; // Optional monthly booking data
   onBack: () => void;
   onPaymentSuccess: (bookingId?: number) => void;
   onPaymentError: (error: string) => void;
   onCancel: () => void;
+  lockedSlotIds: number[]; // Array of locked slot IDs for this booking
 }
 
 export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   tutor,
   selectedDate,
+  lockedSlotIds,
   selectedSlot,
   bookingPreferences,
   reservationTimer,
@@ -58,7 +60,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [payHereReady, setPayHereReady] = useState(false);
   const [orderMeta, setOrderMeta] = useState<InitPayHerePendingRes | null>(null);
-  const [remaining, setRemaining] = useState<number>(0);
+  // Removed separate internal payment window timer; we now rely solely on parent reservationTimer
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [showFreshSessionMessage, setShowFreshSessionMessage] = useState(false);
   const paymentInitRef = useRef(false); // Additional ref-based tracking
@@ -117,49 +119,9 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
     setPaymentInitiated(false);
     paymentInitRef.current = false; // Reset ref flag
     setOrderMeta(null);
-    setRemaining(0);
   }, [tutor, selectedDate, selectedSlot, bookingPreferences]);
 
-  // Timer for accurate remaining time display with page visibility handling
-  useEffect(() => {
-    const expiresAt = orderMeta?.expiresAt || orderMeta?.expires_at;
-    if (!expiresAt) return;
-    
-    const updateTimer = () => {
-      const secs = Math.max(
-        0,
-        Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)
-      );
-      setRemaining(secs);
-    };
-
-    // Update immediately
-    updateTimer();
-    
-    // Set up regular interval
-    const id = setInterval(updateTimer, 1000);
-    
-    // Handle page visibility changes to maintain accuracy
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Page became visible - immediately update timer to show accurate time
-        console.log("Page became visible - updating timer immediately");
-        updateTimer();
-      }
-    };
-
-    // Listen for visibility changes (tab switching)
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Also listen for focus events as backup
-    window.addEventListener('focus', updateTimer);
-    
-    return () => {
-      clearInterval(id);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', updateTimer);
-    };
-  }, [orderMeta?.expiresAt, orderMeta?.expires_at]);
+  // No separate internal timer effect anymore; parent component handles reservation countdown.
   // Initiate payment pending when PayHere loads - using useCallback to prevent recreation
   const initiatePaymentPendingFunction = useCallback(async () => {
     // Multiple layers of protection against duplicate calls
@@ -187,12 +149,12 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
 
     try {
      
-      const slotRef = isMonthly 
-        ? `MONTHLY-${monthlyBookingData?.id || Date.now()}` 
-        : selectedSlot?.slotId || Date.now();
+      // const slotRef = isMonthly 
+      //   ? `MONTHLY-${monthlyBookingData?.id || Date.now()}` 
+      //   : selectedSlot?.slotId || Date.now();
       
       const actualPayload = {
-        orderId : `EDIMY-${Date.now()}_${slotRef}`, // Unique order ID with slot/monthly reference
+        orderId : `EDIMY-${Date.now()}`, // Unique order ID with slot/monthly reference
         studentId: studentIdNum,
         amount: Number(totalAmount), // Ensure it's a number
         currency: "LKR",
@@ -348,18 +310,79 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       }
 
       // Step 3: Prepare PayHere callbacks
+      // window.payhere.onCompleted = async (completedOrderId: string) => {
+      //   console.log("Payment completed. OrderID:" + completedOrderId);
+      //   try {
+      //     setIsProcessing(true);
+
+      //     // Build simplified confirmation payload (only paymentId from initiation)
+      //     const paymentId = orderMeta.paymentId|| orderMeta.order_id;
+      //     if (!paymentId) {
+      //       throw new Error("Payment ID not found");
+      //     }
+          
+      //     // Ensure required booking preference fields exist
+      //     if (!bookingPreferences.selectedSubject || !bookingPreferences.selectedLanguage || !bookingPreferences.selectedClassType) {
+      //       console.error("Missing booking preference details:", bookingPreferences);
+      //       onPaymentError("Missing booking preference details (subject/language/class type). Please re-select and try again.");
+      //       setIsProcessing(false);
+      //       return;
+      //     }
+
+      //     const confirmPayload = isMonthly
+      //       ? {
+      //           paymentId: paymentId,
+      //           studentId: studentIdNum,
+      //           tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
+      //           slotIds: lockedSlotIds,
+      //           subjectId: bookingPreferences.selectedSubject.subjectId,
+      //           languageId: bookingPreferences.selectedLanguage.languageId,
+      //           classTypeId: bookingPreferences.selectedClassType.id,
+      //           paymentTime: new Date(),
+      //           month: new Date().getMonth() + 1 ,
+      //           year:new Date().getFullYear()
+      //         }
+      //       : {
+      //           paymentId: paymentId,
+      //           studentId: studentIdNum,
+      //           tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
+      //           slotIds: lockedSlotIds,
+      //           subjectId: bookingPreferences.selectedSubject.subjectId,
+      //           languageId: bookingPreferences.selectedLanguage.languageId,
+      //           classTypeId: bookingPreferences.selectedClassType.id,
+      //           paymentTime: new Date(),
+      //           month:null,
+      //           year:null
+      //         };
+          
+      //     console.log("Confirming payment with paymentId:", confirmPayload);
+      //     const confirmRes = await bookingAPI.confirmPayHerePayment(confirmPayload);
+      //     console.log("Payment confirmation response:", confirmRes);
+          
+      //     if (confirmRes?.success) {
+      //       const bookingId = (confirmRes as any)?.data?.bookingId as number | undefined;
+      //       clearBookingCache();
+      //       onPaymentSuccess(bookingId);
+      //     } else {
+      //       onPaymentError(confirmRes?.error || "Payment confirmation failed");
+      //     }
+      //   } catch (e: any) {
+      //     console.error("Confirm PayHere payment error:", e);
+      //     onPaymentError(e?.message || "Payment confirmation failed");
+      //   } finally {
+      //     setIsProcessing(false);
+      //   }
+      // };
       window.payhere.onCompleted = async (completedOrderId: string) => {
         console.log("Payment completed. OrderID:" + completedOrderId);
         try {
           setIsProcessing(true);
 
-          // Build simplified confirmation payload (only paymentId from initiation)
           const paymentId = orderMeta.paymentId|| orderMeta.order_id;
           if (!paymentId) {
             throw new Error("Payment ID not found");
           }
-          
-          // Ensure required booking preference fields exist
+
           if (!bookingPreferences.selectedSubject || !bookingPreferences.selectedLanguage || !bookingPreferences.selectedClassType) {
             console.error("Missing booking preference details:", bookingPreferences);
             onPaymentError("Missing booking preference details (subject/language/class type). Please re-select and try again.");
@@ -367,42 +390,43 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
             return;
           }
 
-          const confirmPayload = isMonthly
-            ? {
-                paymentId: paymentId,
-                tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
-                // For monthly: send array of slot IDs or booking metadata
-                monthlyBookingId: monthlyBookingData?.id,
-                subjectId: bookingPreferences.selectedSubject.subjectId,
-                languageId: bookingPreferences.selectedLanguage.languageId,
-                classTypeId: bookingPreferences.selectedClassType.id,
-                paymentTime: new Date().toISOString(),
-                isMonthly: true,
-              }
-            : {
-                paymentId: paymentId,
-                tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
-                slotId: selectedSlot!.slotId,
-                subjectId: bookingPreferences.selectedSubject.subjectId,
-                languageId: bookingPreferences.selectedLanguage.languageId,
-                classTypeId: bookingPreferences.selectedClassType.id,
-                paymentTime: new Date().toISOString(),
-              };
-          
-          console.log("Confirming payment with paymentId:", confirmPayload);
+          // Build required fields
+          const nowIso = new Date().toISOString();
+          // Derive month/year for recurring from monthlyBookingData.startDate if present; fall back to selectedDate
+          const recurringBaseDate = monthlyBookingData?.startDate
+            ? new Date(monthlyBookingData.startDate)
+            : selectedDate;
+
+          const month = isMonthly ? (recurringBaseDate.getMonth() + 1) : null;
+          const year  = isMonthly ? recurringBaseDate.getFullYear() : null;
+
+          // Backend expects JSONB map: { availability_id: [slot_ids...] }
+          // If you later have availability IDs, replace "default" key with real ids and group accordingly.
+          const slotsPayload: Record<string, number[]> = {
+            default: Array.isArray(lockedSlotIds) ? lockedSlotIds : []
+          };
+
+          const confirmPayload = {
+            // required
+            paymentId: paymentId,
+            slots: slotsPayload,                  // JSONB map
+            tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
+            subjectId: bookingPreferences.selectedSubject.subjectId,
+            languageId: bookingPreferences.selectedLanguage.languageId,
+            classTypeId: bookingPreferences.selectedClassType.id,
+            studentId: Number(studentIdNum),
+            paymentTime: nowIso,                  // TIMESTAMP (ISO)
+            amount: Number(totalAmount),          // NUMERIC
+            month: month,                         // SMALLINT or null
+            year: year,                           // SMALLINT or null
+            isMonthly: !!isMonthly,               // keep if your API still uses it
+          };
+
+          console.log("Confirming payment with payload:", confirmPayload);
           const confirmRes = await bookingAPI.confirmPayHerePayment(confirmPayload);
-          console.log("Payment confirmation response:", confirmRes);
-          
-          if (confirmRes?.success) {
-            const bookingId = (confirmRes as any)?.data?.bookingId as number | undefined;
-            clearBookingCache();
-            onPaymentSuccess(bookingId);
-          } else {
-            onPaymentError(confirmRes?.error || "Payment confirmation failed");
-          }
+          // ...existing code...
         } catch (e: any) {
-          console.error("Confirm PayHere payment error:", e);
-          onPaymentError(e?.message || "Payment confirmation failed");
+          // ...existing code...
         } finally {
           setIsProcessing(false);
         }
@@ -433,27 +457,34 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         amount: amountStr,
         currency: "LKR",
         hash: hashResponse.data.hash,
-        first_name: "Student",
-        last_name: "User",
-        email: "student@example.com",
-        phone: "+94701234567",
-        address: "Colombo",
-        city: "Colombo",
+        first_name: user?.firstName || "Student",
+        last_name: user?.lastName || "User",
+        email: user?.email || "no-reply@example.com",
+        // first_name: "Student",
+        // last_name: "User",
+        // email: "student@example.com",
+        // phone: "+94701234567",
+        phone: "0000000000",
+        address: "N/A",
+        city: "N/A",
         country: "Sri Lanka",
-        delivery_address: "Colombo",
-        delivery_city: "Colombo",
-        delivery_country: "Sri Lanka",
-        custom_1: JSON.stringify({
-          tutorId: tutor.tutorProfileId,
-          ...(isMonthly 
-            ? { monthlyBookingId: monthlyBookingData?.id, totalSlots: monthlyBookingData?.totalSlots }
-            : { slotId: selectedSlot?.slotId }
-          ),
-          language: bookingPreferences?.selectedLanguage?.languageName,
-          subject: bookingPreferences?.selectedSubject?.subjectName,
-          classType: bookingPreferences?.selectedClassType?.name,
-        }),
-        custom_2: selectedDate.toISOString(),
+        //address: "Colombo",
+        //city: "Colombo",
+        //country: "Sri Lanka",
+        // delivery_address: "Colombo",
+        // delivery_city: "Colombo",
+        // delivery_country: "Sri Lanka",
+        // custom_1: JSON.stringify({
+        // tutorId: tutor.tutorProfileId,
+        //   ...(isMonthly 
+        //     ? { monthlyBookingId: monthlyBookingData?.id, totalSlots: monthlyBookingData?.totalSlots }
+        //     : { slotId: selectedSlot?.slotId }
+        //   ),
+        //   language: bookingPreferences?.selectedLanguage?.languageName,
+        //   subject: bookingPreferences?.selectedSubject?.subjectName,
+        //   classType: bookingPreferences?.selectedClassType?.name,
+        // }),
+        // custom_2: selectedDate.toISOString(),
       };
 
       console.log("Payment object:", payment);
@@ -531,21 +562,13 @@ return (
 
 
       {/* Fresh session indicator */}
-      {showFreshSessionMessage && (
-        <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/50 rounded-lg">
-          <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium">Fresh 15-minute payment window started</span>
-          </div>
-        </div>
-      )}
 
       {/* Proceed to Payment Button */}
       <Button
         onClick={handlePayHerePayment}
-        disabled={isProcessing || remaining === 0 || !payHereReady || !orderMeta}
+  disabled={isProcessing || reservationTimer === 0 || !payHereReady || !orderMeta}
         className={`flex-1 group relative overflow-hidden h-16 text-lg font-semibold rounded-xl transition-all duration-300 shadow-lg ${
-          isProcessing || remaining === 0 || !payHereReady || !orderMeta
+          isProcessing || reservationTimer === 0 || !payHereReady || !orderMeta
             ? "bg-gray-400 cursor-not-allowed text-gray-600"
             : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white hover:shadow-blue-500/25 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-600"
         }`}
@@ -564,21 +587,19 @@ return (
             <>
               <div className="flex flex-col items-center">
                 <span>Proceed to Payment</span>
-                <span className="text-sm opacity-80">
-                  Rs. {totalAmount.toFixed(2)} • {formatTimer(remaining)} left
-                </span>
+                <span className="text-sm opacity-80">Rs. {totalAmount.toFixed(2)}</span>
               </div>
             </>
           )}
         </div>
       </Button>
     </div>
-      {/* Timer expired alert - Professional Warning */}
-      {remaining === 0 && orderMeta && (
+      {/* Timer expired alert - rely on parent to redirect; keep fallback for safety */}
+      {reservationTimer === 0 && orderMeta && (
         <Alert className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800/50 rounded-xl">
           <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
           <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
-            Your payment window has expired. Please select a new slot to continue.
+            Reservation time exceeded. Please go back and select slots again.
           </AlertDescription>
         </Alert>
       )}
@@ -593,12 +614,12 @@ return (
         </Alert>
       )}
 
-      {/* Payment Window Info - Show remaining time */}
-      {orderMeta && remaining > 0 && (
+      {/* Static instruction (no dynamic countdown here) */}
+      {orderMeta && reservationTimer > 0 && (
         <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800/50 rounded-xl">
           <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200 font-medium">
-            Payment window active. Complete your payment within {formatTimer(remaining)}.
+          <AlertDescription className="text-green-800 dark:text-green-200 text-sm leading-relaxed">
+            Please complete the payment within 10 minutes after initiating the PayHere payment window.
           </AlertDescription>
         </Alert>
       )}
