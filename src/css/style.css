@@ -61,7 +61,7 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    @apply size-2;
+    @apply w-2 h-2;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {

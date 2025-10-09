@@ -1,154 +1,228 @@
 "use client";
 
-import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
-import Image from "next/image";
+import { useEffect, useState } from "react";
+import { getCurrentAdmin, AdminUser } from "@/lib/admin";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
 
-import { useState } from "react";
-import { CameraIcon } from "./_components/icons";
-import { SocialAccounts } from "./_components/social-accounts";
+export default function AdminProfilePage() {
+    const [admin, setAdmin] = useState<AdminUser | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-export default function Page() {
-  const [data, setData] = useState({
-    name: "Danish Heilium",
-    profilePhoto: "/images/user/user-03.png",
-    coverPhoto: "/images/cover/cover-01.png",
-  });
+    useEffect(() => {
+        const fetchAdminDetails = async () => {
+            try {
+                setIsLoading(true);
+                const adminData = await getCurrentAdmin();
+                setAdmin(adminData);
+            } catch (err: any) {
+                setError(err.message || "Failed to load admin details");
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-  const handleChange = (e: any) => {
-    if (e.target.name === "profilePhoto" ) {
-      const file = e.target?.files[0];
+        fetchAdminDetails();
+    }, []);
 
-      setData({
-        ...data,
-        profilePhoto: file && URL.createObjectURL(file),
-      });
-    } else if (e.target.name === "coverPhoto") {
-      const file = e.target?.files[0];
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
-      setData({
-        ...data,
-        coverPhoto: file && URL.createObjectURL(file),
-      });
-    } else {
-      setData({
-        ...data,
-        [e.target.name]: e.target.value,
-      });
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-dark-5 dark:text-dark-6">Loading admin details...</p>
+                </div>
+            </div>
+        );
     }
-  };
 
-  return (
-    <div className="mx-auto w-full max-w-[970px]">
-      <Breadcrumb pageName="Profile" />
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Card className="p-8 text-center max-w-md">
+                    <div className="text-red-500 mb-4">
+                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-dark dark:text-white mb-2">Error Loading Profile</h3>
+                    <p className="text-dark-5 dark:text-dark-6">{error}</p>
+                </Card>
+            </div>
+        );
+    }
 
-      <div className="overflow-hidden rounded-[10px] bg-white shadow-1 dark:bg-gray-900 dark:shadow-card">
-        <div className="relative z-20 h-35 md:h-65">
-          <Image
-            src={data?.coverPhoto}
-            alt="profile cover"
-            className="h-full w-full rounded-tl-[10px] rounded-tr-[10px] object-cover object-center"
-            width={970}
-            height={260}
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
-          />
-          <div className="absolute bottom-1 right-1 z-10 xsm:bottom-4 xsm:right-4">
-            <label
-              htmlFor="cover"
-              className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-[15px] py-[5px] text-body-sm font-medium text-white hover:bg-opacity-90"
-            >
-              <input
-                type="file"
-                name="coverPhoto"
-                id="coverPhoto"
-                className="sr-only"
-                onChange={handleChange}
-                accept="image/png, image/jpg, image/jpeg"
-              />
+    if (!admin) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Card className="p-8 text-center max-w-md">
+                    <p className="text-dark-5 dark:text-dark-6">No admin data found</p>
+                </Card>
+            </div>
+        );
+    }
 
-              <CameraIcon />
+    return (
+        <div>
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-dark dark:text-white mb-2">
+                    Admin Profile
+                </h1>
+                <p className="text-lg text-dark-5 dark:text-dark-6">
+                    View and manage your administrator account details
+                </p>
+            </div>
 
-              <span>Edit</span>
-            </label>
-          </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Profile Overview Card */}
+                <Card className="lg:col-span-1 p-6">
+                    <div className="text-center">
+                        <div className="mb-4">
+                            <Avatar className="w-24 h-24 mx-auto">
+                                {admin.profileImage ? (
+                                    <img src={admin.profileImage} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                                ) : (
+                                    <div className="w-full h-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                                        {admin.firstName.charAt(0)}{admin.lastName.charAt(0)}
+                                    </div>
+                                )}
+                            </Avatar>
+                        </div>
+                        
+                        <h2 className="text-xl font-bold text-dark dark:text-white mb-1">
+                            {admin.firstName} {admin.lastName}
+                        </h2>
+                        
+                        <p className="text-dark-5 dark:text-dark-6 mb-3">@{admin.username}</p>
+                        
+                        <Badge variant={admin.role === 'ADMIN' ? 'default' : 'secondary'} className="mb-4">
+                            {admin.role}
+                        </Badge>
+
+                        <div className="space-y-2 text-sm">
+                            <div className="flex items-center justify-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${admin.enabled ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                <span className="text-dark-5 dark:text-dark-6">
+                                    {admin.enabled ? 'Account Active' : 'Account Disabled'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Account Details Card */}
+                <Card className="lg:col-span-2 p-6">
+                    <h3 className="text-xl font-bold text-dark dark:text-white mb-6">Account Details</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-dark dark:text-white mb-1">
+                                    User ID
+                                </label>
+                                <p className="text-dark-5 dark:text-dark-6">#{admin.id}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-dark dark:text-white mb-1">
+                                    Email Address
+                                </label>
+                                <p className="text-dark-5 dark:text-dark-6">{admin.email}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-dark dark:text-white mb-1">
+                                    Username
+                                </label>
+                                <p className="text-dark-5 dark:text-dark-6">{admin.username}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-dark dark:text-white mb-1">
+                                    Role
+                                </label>
+                                <Badge variant="outline">{admin.role}</Badge>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-dark dark:text-white mb-1">
+                                    Account Created
+                                </label>
+                                <p className="text-dark-5 dark:text-dark-6">{formatDate(admin.createdAt)}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-dark dark:text-white mb-1">
+                                    Last Updated
+                                </label>
+                                <p className="text-dark-5 dark:text-dark-6">{formatDate(admin.updatedAt)}</p>
+                            </div>
+
+                            {admin.lastLogin && (
+                                <div>
+                                    <label className="block text-sm font-medium text-dark dark:text-white mb-1">
+                                        Last Login
+                                    </label>
+                                    <p className="text-dark-5 dark:text-dark-6">{formatDate(admin.lastLogin)}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Account Status Card */}
+                <Card className="lg:col-span-3 p-6">
+                    <h3 className="text-xl font-bold text-dark dark:text-white mb-6">Account Status</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className={`w-3 h-3 rounded-full ${admin.enabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <div>
+                                <p className="text-sm font-medium text-dark dark:text-white">Account Enabled</p>
+                                <p className="text-xs text-dark-5 dark:text-dark-6">{admin.enabled ? 'Yes' : 'No'}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className={`w-3 h-3 rounded-full ${admin.accountNonExpired ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <div>
+                                <p className="text-sm font-medium text-dark dark:text-white">Account Non-Expired</p>
+                                <p className="text-xs text-dark-5 dark:text-dark-6">{admin.accountNonExpired ? 'Yes' : 'No'}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className={`w-3 h-3 rounded-full ${admin.accountNonLocked ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <div>
+                                <p className="text-sm font-medium text-dark dark:text-white">Account Non-Locked</p>
+                                <p className="text-xs text-dark-5 dark:text-dark-6">{admin.accountNonLocked ? 'Yes' : 'No'}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className={`w-3 h-3 rounded-full ${admin.credentialsNonExpired ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <div>
+                                <p className="text-sm font-medium text-dark dark:text-white">Credentials Non-Expired</p>
+                                <p className="text-xs text-dark-5 dark:text-dark-6">{admin.credentialsNonExpired ? 'Yes' : 'No'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </div>
         </div>
-        <div className="px-4 pb-6 text-center lg:pb-8 xl:pb-11.5">
-          <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 rounded-full bg-white/20 p-1 backdrop-blur sm:h-44 sm:max-w-[176px] sm:p-3">
-            <div className="relative drop-shadow-2">
-              {data?.profilePhoto && (
-                <>
-                  <Image
-                    src={data?.profilePhoto}
-                    width={160}
-                    height={160}
-                    className="overflow-hidden rounded-full"
-                    alt="profile"
-                  />
-
-                  <label
-                    htmlFor="profilePhoto"
-                    className="absolute bottom-0 right-0 flex size-8.5 cursor-pointer items-center justify-center rounded-full bg-primary text-white hover:bg-opacity-90 sm:bottom-2 sm:right-2"
-                  >
-                    <CameraIcon />
-
-                    <input
-                      type="file"
-                      name="profilePhoto"
-                      id="profilePhoto"
-                      className="sr-only"
-                      onChange={handleChange}
-                      accept="image/png, image/jpg, image/jpeg"
-                    />
-                  </label>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="mt-4">
-            <h3 className="mb-1 text-heading-6 font-bold text-dark dark:text-white">
-              {data?.name}
-            </h3>
-            <p className="font-medium">Ui/Ux Designer</p>
-            <div className="mx-auto mb-5.5 mt-5 grid max-w-[370px] grid-cols-3 rounded-[5px] border border-stroke py-[9px] shadow-1 dark:border-dark-3 dark:bg-dark-2 dark:shadow-card">
-              <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-dark-3 xsm:flex-row">
-                <span className="font-medium text-dark dark:text-white">
-                  259
-                </span>
-                <span className="text-body-sm">Posts</span>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-dark-3 xsm:flex-row">
-                <span className="font-medium text-dark dark:text-white">
-                  129K
-                </span>
-                <span className="text-body-sm">Followers</span>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-1 px-4 xsm:flex-row">
-                <span className="font-medium text-dark dark:text-white">
-                  2K
-                </span>
-                <span className="text-body-sm-sm">Following</span>
-              </div>
-            </div>
-
-            <div className="mx-auto max-w-[720px]">
-              <h4 className="font-medium text-dark dark:text-white">
-                About Me
-              </h4>
-              <p className="mt-4">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Pellentesque posuere fermentum urna, eu condimentum mauris
-                tempus ut. Donec fermentum blandit aliquet. Etiam dictum dapibus
-                ultricies. Sed vel aliquet libero. Nunc a augue fermentum,
-                pharetra ligula sed, aliquam lacus.
-              </p>
-            </div>
-
-            <SocialAccounts />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

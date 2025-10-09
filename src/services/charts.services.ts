@@ -40,58 +40,81 @@ export async function getDevicesUsedData(
 export async function getPaymentsOverviewData(
   timeFrame?: "monthly" | "yearly" | (string & {}),
 ) {
-  // Fake delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    // Replace with your actual API endpoint
+    const response = await fetch(`/api/admin/payments/overview?timeFrame=${timeFrame || 'monthly'}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        // Add authentication headers if needed
+        // 'Authorization': `Bearer ${token}`,
+      },
+    });
 
-  if (timeFrame === "yearly") {
+    if (!response.ok) {
+      throw new Error('Failed to fetch payments overview data');
+    }
+
+    const data = await response.json();
+    
+    // Ensure the data matches the expected format
+    return {
+      received: data.received || [],
+      due: data.due || [],
+    };
+  } catch (error) {
+    console.error('Error fetching payments overview data:', error);
+    
+    // Fallback to mock data in case of error (optional)
+    if (timeFrame === "yearly") {
+      return {
+        received: [
+          { x: 2020, y: 450 },
+          { x: 2021, y: 620 },
+          { x: 2022, y: 780 },
+          { x: 2023, y: 920 },
+          { x: 2024, y: 1080 },
+        ],
+        due: [
+          { x: 2020, y: 1480 },
+          { x: 2021, y: 1720 },
+          { x: 2022, y: 1950 },
+          { x: 2023, y: 2300 },
+          { x: 2024, y: 1200 },
+        ],
+      };
+    }
+
     return {
       received: [
-        { x: 2020, y: 450 },
-        { x: 2021, y: 620 },
-        { x: 2022, y: 780 },
-        { x: 2023, y: 920 },
-        { x: 2024, y: 1080 },
+        { x: "Jan", y: 0 },
+        { x: "Feb", y: 20 },
+        { x: "Mar", y: 35 },
+        { x: "Apr", y: 45 },
+        { x: "May", y: 35 },
+        { x: "Jun", y: 55 },
+        { x: "Jul", y: 65 },
+        { x: "Aug", y: 50 },
+        { x: "Sep", y: 65 },
+        { x: "Oct", y: 75 },
+        { x: "Nov", y: 60 },
+        { x: "Dec", y: 75 },
       ],
       due: [
-        { x: 2020, y: 1480 },
-        { x: 2021, y: 1720 },
-        { x: 2022, y: 1950 },
-        { x: 2023, y: 2300 },
-        { x: 2024, y: 1200 },
+        { x: "Jan", y: 15 },
+        { x: "Feb", y: 9 },
+        { x: "Mar", y: 17 },
+        { x: "Apr", y: 32 },
+        { x: "May", y: 25 },
+        { x: "Jun", y: 68 },
+        { x: "Jul", y: 80 },
+        { x: "Aug", y: 68 },
+        { x: "Sep", y: 84 },
+        { x: "Oct", y: 94 },
+        { x: "Nov", y: 74 },
+        { x: "Dec", y: 62 },
       ],
     };
   }
-
-  return {
-    received: [
-      { x: "Jan", y: 0 },
-      { x: "Feb", y: 20 },
-      { x: "Mar", y: 35 },
-      { x: "Apr", y: 45 },
-      { x: "May", y: 35 },
-      { x: "Jun", y: 55 },
-      { x: "Jul", y: 65 },
-      { x: "Aug", y: 50 },
-      { x: "Sep", y: 65 },
-      { x: "Oct", y: 75 },
-      { x: "Nov", y: 60 },
-      { x: "Dec", y: 75 },
-    ],
-    due: [
-      { x: "Jan", y: 15 },
-      { x: "Feb", y: 9 },
-      { x: "Mar", y: 17 },
-      { x: "Apr", y: 32 },
-      { x: "May", y: 25 },
-      { x: "Jun", y: 68 },
-      { x: "Jul", y: 80 },
-      { x: "Aug", y: 68 },
-      { x: "Sep", y: 84 },
-      { x: "Oct", y: 94 },
-      { x: "Nov", y: 74 },
-      { x: "Dec", y: 62 },
-    ],
-  };
 }
 
 export async function getWeeksProfitData(timeFrame?: string) {
@@ -100,7 +123,7 @@ export async function getWeeksProfitData(timeFrame?: string) {
 
   if (timeFrame === "last week") {
     return {
-      sales: [
+      completed: [
         { x: "Sat", y: 33 },
         { x: "Sun", y: 44 },
         { x: "Mon", y: 31 },
@@ -109,7 +132,7 @@ export async function getWeeksProfitData(timeFrame?: string) {
         { x: "Thu", y: 33 },
         { x: "Fri", y: 55 },
       ],
-      revenue: [
+      upcoming: [
         { x: "Sat", y: 10 },
         { x: "Sun", y: 20 },
         { x: "Mon", y: 17 },
@@ -122,7 +145,7 @@ export async function getWeeksProfitData(timeFrame?: string) {
   }
 
   return {
-    sales: [
+    completed: [
       { x: "Sat", y: 44 },
       { x: "Sun", y: 55 },
       { x: "Mon", y: 41 },
@@ -131,7 +154,7 @@ export async function getWeeksProfitData(timeFrame?: string) {
       { x: "Thu", y: 43 },
       { x: "Fri", y: 65 },
     ],
-    revenue: [
+    upcoming: [
       { x: "Sat", y: 13 },
       { x: "Sun", y: 23 },
       { x: "Mon", y: 20 },

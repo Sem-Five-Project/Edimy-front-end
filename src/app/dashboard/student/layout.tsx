@@ -1,3 +1,12 @@
+// <<<<<<< admin2
+// export default function StudentDashboardLayout({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   return <>{children}</>;
+// }
+// =======
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,3 +39,4 @@ export default function StudentDashboardLayout({ children }: { children: React.R
 
   return <>{children}</>;
 }
+

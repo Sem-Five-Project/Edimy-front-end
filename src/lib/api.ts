@@ -25,7 +25,7 @@ interface BookingUpdateData {
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject, TutorSubject } from '@/types';
 import { Timestamp } from 'next/dist/server/lib/cache-handlers/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -251,6 +251,24 @@ const processQueue = (error: any, token: string | null = null) => {
       return response.data;
     } catch (error) {
       throw error;
+    }
+  };
+
+  // API Health Check
+  export const checkApiHealth = async (): Promise<{ isHealthy: boolean; message: string }> => {
+    try {
+      console.log('🔍 Checking API health at:', API_BASE_URL + '/health');
+      const response = await plainAxios.get('/health', { timeout: 3000 });
+      return {
+        isHealthy: response.status === 200,
+        message: `API is healthy (${response.status})`
+      };
+    } catch (error: any) {
+      console.log('❌ API health check failed:', error.message);
+      return {
+        isHealthy: false,
+        message: `API is not available: ${error.message}`
+      };
     }
   };
 
