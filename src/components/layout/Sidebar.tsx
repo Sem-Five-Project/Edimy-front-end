@@ -1,222 +1,60 @@
-// // import React from 'react';
-// // import { useSidebar } from '@/components/ui/sidebar';
-
-// // interface DashboardSidebarProps {
-// //   userRole?: string;
-// // }
-
-// // const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ userRole }) => {
-// //   const { toggleSidebar } = useSidebar();
-
-// //   return (
-// //     <aside className="w-64 bg-gray-800 text-white min-h-screen">
-// //       <div className="p-4">
-// //         <h2 className="text-lg font-bold">Dashboard</h2>
-// //         <button onClick={toggleSidebar} className="mt-2 text-sm">
-// //           Toggle Sidebar
-// //         </button>
-// //       </div>
-// //       <nav className="mt-4">
-// //         <ul>
-// //           <li>
-// //             <a href="/dashboard" className="block p-2 hover:bg-gray-700">
-// //               Home
-// //             </a>
-// //           </li>
-// //           {userRole === 'STUDENT' && (
-// //             <>
-// //               <li>
-// //                 <a href="/dashboard/student/profile" className="block p-2 hover:bg-gray-700">
-// //                   Profile
-// //                 </a>
-// //               </li>
-// //               <li>
-// //                 <a href="/dashboard/student/find-tutor" className="block p-2 hover:bg-gray-700">
-// //                   Find Tutor
-// //                 </a>
-// //               </li>
-// //             </>
-// //           )}
-// //           {userRole === 'TUTOR' && (
-// //             <>
-// //               <li>
-// //                 <a href="/dashboard/tutor/profile" className="block p-2 hover:bg-gray-700">
-// //                   Profile
-// //                 </a>
-// //               </li>
-// //               <li>
-// //                 <a href="/dashboard/tutor/view-classes" className="block p-2 hover:bg-gray-700">
-// //                   View Classes
-// //                 </a>
-// //               </li>
-// //             </>
-// //           )}
-// //           {userRole === 'ADMIN' && (
-// //             <>
-// //               <li>
-// //                 <a href="/dashboard/admin/users" className="block p-2 hover:bg-gray-700">
-// //                   User Management
-// //                 </a>
-// //               </li>
-// //               <li>
-// //                 <a href="/dashboard/admin/tutor-applications" className="block p-2 hover:bg-gray-700">
-// //                   Tutor Applications
-// //                 </a>
-// //               </li>
-// //               <li>
-// //                 <a href="/dashboard/admin/analytics" className="block p-2 hover:bg-gray-700">
-// //                   System Analytics
-// //                 </a>
-// //               </li>
-// //             </>
-// //           )}
-// //         </ul>
-// //       </nav>
-// //     </aside>
-// //   );
-// // };
-
-// // export default DashboardSidebar;
-// "use client";
-// import React from 'react';
-// import { useSidebar } from '@/components/ui/sidebar';
-// import { useRouter } from 'next/navigation';
-
-// interface DashboardSidebarProps {
-//   userRole?: string;
-// }
-
-// const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ userRole }) => {
-//   const { toggleSidebar } = useSidebar();
-//   const router = useRouter();
-
-//   // Determine home path based on role
-//   const getHomePath = () => {
-//     switch (userRole) {
-//       case 'STUDENT':
-//         return '/dashboard/student';
-//       case 'TUTOR':
-//         return '/dashboard/tutor';
-//       case 'ADMIN':
-//         return '/dashboard/admin';
-//       default:
-//         return '/dashboard';
-//     }
-//   };
-
-//   return (
-//     <aside className="w-64 bg-gray-800 text-white min-h-screen">
-//       <div className="p-4">
-//         <h2 className="text-lg font-bold">Dashboard</h2>
-//         <button onClick={toggleSidebar} className="mt-2 text-sm">
-//           Toggle Sidebar
-//         </button>
-//       </div>
-//       <nav className="mt-4">
-//         <ul>
-//           <li>
-//             <button
-//               onClick={() => router.push(getHomePath())}
-//               className="block w-full text-left p-2 hover:bg-gray-700"
-//             >
-//               Home
-//             </button>
-//           </li>
-          
-//           {userRole === 'STUDENT' && (
-//             <>
-//               <li>
-//                 <button
-//                   onClick={() => router.push('/dashboard/student/profile')}
-//                   className="block w-full text-left p-2 hover:bg-gray-700"
-//                 >
-//                   Profile
-//                 </button>
-//               </li>
-//               <li>
-//                 <button
-//                   onClick={() => router.push('/dashboard/student/find-tutor')}
-//                   className="block w-full text-left p-2 hover:bg-gray-700"
-//                 >
-//                   Find Tutor
-//                 </button>
-//               </li>
-//             </>
-//           )}
-
-//           {userRole === 'TUTOR' && (
-//             <>
-//               <li>
-//                 <button
-//                   onClick={() => router.push('/dashboard/tutor/profile')}
-//                   className="block w-full text-left p-2 hover:bg-gray-700"
-//                 >
-//                   Profile
-//                 </button>
-//               </li>
-//               <li>
-//                 <button
-//                   onClick={() => router.push('/dashboard/tutor/view-classes')}
-//                   className="block w-full text-left p-2 hover:bg-gray-700"
-//                 >
-//                   View Classes
-//                 </button>
-//               </li>
-//             </>
-//           )}
-
-//           {userRole === 'ADMIN' && (
-//             <>
-//               <li>
-//                 <button
-//                   onClick={() => router.push('/dashboard/admin/users')}
-//                   className="block w-full text-left p-2 hover:bg-gray-700"
-//                 >
-//                   User Management
-//                 </button>
-//               </li>
-//               <li>
-//                 <button
-//                   onClick={() => router.push('/dashboard/admin/tutor-applications')}
-//                   className="block w-full text-left p-2 hover:bg-gray-700"
-//                 >
-//                   Tutor Applications
-//                 </button>
-//               </li>
-//               <li>
-//                 <button
-//                   onClick={() => router.push('/dashboard/admin/analytics')}
-//                   className="block w-full text-left p-2 hover:bg-gray-700"
-//                 >
-//                   System Analytics
-//                 </button>
-//               </li>
-//             </>
-//           )}
-//         </ul>
-//       </nav>
-//     </aside>
-//   );
-// };
-
 "use client";
-import React, { useState } from 'react';
-import { useRouter } from "next/navigation"; // ✅ import this
-import { Home, User, Search, BookOpen, Users, FileText, BarChart3, Menu, X, ChevronRight, LogOut, Settings } from 'lucide-react';
+
+
+
+
 import { NAV_DATA } from '@/components/Layouts/sidebar/data/index';
+
+
+import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from "next/navigation";
+import { 
+  Home, 
+  User, 
+  Search, 
+  BookOpen, 
+  Users, 
+  FileText, 
+  BarChart3, 
+  Menu, 
+  X, 
+  ChevronRight, 
+  LogOut, 
+  Settings,
+  ChevronLeft
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+
 interface DashboardSidebarProps {
   userRole?: string;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ userRole = 'STUDENT' }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState('home');
-  const router = useRouter(); // ✅ use real Next router
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  // Sidebar toggle (you can keep this or integrate with context)
-  const toggleSidebar = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  // Auto-collapse on small screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+
+    handleResize(); // Check on mount
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const getHomePath = () => {
     switch (userRole) {
@@ -228,15 +66,21 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ userRole = 'STUDENT
   };
 
   const getNavItems = () => {
-    const baseItems = [{ id: 'home', label: 'Home', icon: Home, path: getHomePath() }];
+    const baseItems = [{ 
+      id: 'home', 
+      label: 'Home', 
+      icon: Home, 
+      path: getHomePath() 
+    }];
+
     if (userRole === 'STUDENT') {
       return [
         ...baseItems,
         { id: 'profile', label: 'Profile', icon: User, path: '/dashboard/student/profile' },
         { id: 'find-tutor', label: 'Find Tutor', icon: Search, path: '/dashboard/student/find-tutor' },
-        { id: 'my-classes', label: 'My Classes', icon: BookOpen, path: '/dashboard/student/classes' }
       ];
     }
+
     if (userRole === 'TUTOR') {
       return [
         ...baseItems,
@@ -245,6 +89,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ userRole = 'STUDENT
         { id: 'students', label: 'Students', icon: Users, path: '/dashboard/tutor/students' }
       ];
     }
+
     if (userRole === 'ADMIN') {
       return [
         ...baseItems,
@@ -253,48 +98,143 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ userRole = 'STUDENT
         { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/dashboard/admin/analytics' }
       ];
     }
+
     return baseItems;
   };
 
   const navItems = getNavItems();
 
   const NavItem = ({ item }: { item: any }) => {
-    const isActive = activeItem === item.id || activeItem === item.path.split('/').pop();
+    // Fix: Exact match for home, prefix match for others
+    const isActive = item.id === 'home' 
+      ? pathname === item.path 
+      : pathname.startsWith(item.path);
+    
     return (
       <li>
         <button
-          onClick={() => {
-            router.push(item.path); // ✅ real navigation
-            setActiveItem(item.id);
-            setIsMobileMenuOpen(false);
-          }}
-          className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 group ${
+          onClick={() => router.push(item.path)}
+          className={cn(
+            "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-300 group relative overflow-hidden",
             isActive
-              ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-[1.02]'
-              : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:scale-[1.01]'
-          }`}
+              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          )}
         >
-          <div className="flex items-center space-x-3">
-            <item.icon className={`w-5 h-5 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
-            <span className="font-medium">{item.label}</span>
-          </div>
-          <ChevronRight className={`w-4 h-4 ${isActive ? 'rotate-90 opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
+          {/* Active indicator */}
+          {isActive && (
+            <div className="absolute left-0 top-0 bottom-0 w-1 " />
+          )}
+          
+          <item.icon 
+            className={cn(
+              "w-5 h-5 transition-transform duration-300 flex-shrink-0",
+              isActive ? "scale-110" : "group-hover:scale-105"
+            )} 
+          />
+          
+          {!isCollapsed && (
+            <>
+              <span className="font-medium truncate">{item.label}</span>
+              {isActive && (
+                <ChevronRight 
+                  className="w-4 h-4 ml-auto transition-all duration-300 opacity-100 translate-x-1" 
+                />
+              )}
+            </>
+          )}
         </button>
       </li>
     );
   };
 
   return (
-    <aside className="w-80 bg-gray-900 text-white">
-      {/* ... keep rest of your code unchanged ... */}
-      <nav className="p-4 flex-1">
-        <ul className="space-y-2">
-          {navItems.map((item) => (
-            <NavItem key={item.id} item={item} />
-          ))}
-        </ul>
-      </nav>
-    </aside>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white border border-slate-200 text-slate-900 shadow-lg hover:bg-slate-50 transition-all"
+      >
+        {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed lg:sticky top-0 h-screen bg-white border-r border-slate-200 flex flex-col transition-all duration-300 z-40 shadow-lg",
+          isCollapsed ? "w-20" : "w-72",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50">
+          <div className="flex items-center justify-between">
+            {!isCollapsed && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    Edimy
+                  </h2>
+                  <p className="text-xs text-slate-600 font-medium">{userRole}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Desktop Toggle Button */}
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="hidden lg:block p-2 rounded-lg hover:bg-slate-100 transition-all text-slate-600 hover:text-slate-900"
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+
+          {isCollapsed && (
+            <div className="mt-3 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 mx-auto">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+          <ul className="space-y-2">
+            {navItems.map((item) => (
+              <NavItem key={item.id} item={item} />
+            ))}
+          </ul>
+        </nav>
+
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50">
+
+          <button
+            className={cn(
+              "w-full flex items-center gap-3 p-3 rounded-xl text-left text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-300 group",
+              isCollapsed && "justify-center"
+            )}
+          >
+            <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" />
+            {!isCollapsed && <span className="font-medium">Logout</span>}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 

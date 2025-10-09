@@ -1,102 +1,3 @@
-// 'use client';
-// import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-// import { User } from '@/types';
-// import { authAPI } from '@/lib/api';
-
-// interface AuthContextType {
-//   user: User | null;
-//   isAuthenticated: boolean;
-//   isLoading: boolean;
-//   login: (user: User) => void;
-//   logout: () => void;
-//   updateUser: (user: User) => void;
-// }
-
-// const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// interface AuthProviderProps {
-//   children: ReactNode;
-// }
-
-// export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-//   const [user, setUser] = useState<User | null>(null);
-//   const [isLoading, setIsLoading] = useState(true);
-
-//   // useEffect(() => {
-//   //   checkAuthStatus();
-//   // }, []);
-
-//   const checkAuthStatus = async () => {
-//     try {
-//       const response = await authAPI.getCurrentUser();
-//       if (response.success && response.data) {
-//         setUser(response.data.user);
-//       } else {
-//         setUser(null);
-//       }
-//     } catch (error) {
-//       console.error('Auth check failed:', error);
-//       setUser(null);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   const login = (user: User) => {
-//     // TESTING: Skip actual login validation - use mock user for direct dashboard access
-//     const mockUser: User = {
-//       id: 'test-user-123',
-//       fullName: 'Test User',
-//       username: 'testuser',
-//       email: 'test@example.com',
-//       userType: 'student',
-//       isVerified: true,
-//       createdAt: new Date().toISOString(),
-//       profileImage: undefined
-//     };
-//     setUser(mockUser);
-    
-//     /* ORIGINAL CODE - commented for testing
-//     setUser(user);
-//     */
-//   };
-
-//   const logout = async () => {
-//     try {
-//       await authAPI.logout();
-//     } catch (error) {
-//       console.error('Logout API call failed:', error);
-//     } finally {
-//       setUser(null);
-//     }
-//   };
-
-//   const updateUser = (updatedUser: User) => {
-//     setUser(updatedUser);
-//   };
-
-//   const value: AuthContextType = {
-//     user,
-//     isAuthenticated: !!user,
-//     isLoading,
-//     login,
-//     logout,
-//     updateUser,
-//   };
-
-//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-// };
-
-// export const useAuth = (): AuthContextType => {
-//   const context = useContext(AuthContext);
-//   if (context === undefined) {
-//     throw new Error('useAuth must be used within an AuthProvider');
-//   }
-//   return context;
-// };
-
-
-
 'use client';
 import React, {
   createContext,
@@ -104,18 +5,37 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react';
 import { User } from '@/types';
-import { refreshAccessToken, authAPI, setAuthToken, setTokenRefreshCallback, checkApiHealth } from '@/lib/api';
+import {
+  refreshAccessToken,
+  authAPI,
+  setAuthToken,
+  setTokenRefreshCallback,
+  studentAPI,
+    checkApiHealth
+} from '@/lib/api';
+
 
 interface AuthContextType {
   user: User | null;
-  accessToken : string | null; // in-memory token
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /** True if role === 'STUDENT' */
+  isStudent: boolean;
+  /** True if role === 'TUTOR' */
+  isTutor: boolean;
+  /** The role specific primary numeric id: studentId for STUDENT, tutorId for TUTOR (tutorId kept as any in User but surfaced numeric if convertible) */
+  actorId: number | null;
+  /** Student numeric id (only for students) */
+  effectiveStudentId: number | null;
   login: (accessToken: string, user: User) => void;
+  loginWithResponse: (response: { accessToken: string; tokenType: string; user: User }) => void;
   logout: () => void;
-  updateUser: (user: User) => void;
+  updateUser: (userPartial: Partial<User>) => void;
+  loadStudentAcademicInfo: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -128,12 +48,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
   const [authCheckAttempted, setAuthCheckAttempted] = useState(false);
 
-  // Function to update token from API interceptor
+  const [academicLoading, setAcademicLoading] = useState(false);
+
+
   const updateTokenFromInterceptor = (newToken: string) => {
     setToken(newToken);
   };
+
 
   const setFallbackUser = () => {
     console.log('🔄 Setting fallback user for development');
@@ -172,6 +96,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (err) {
       console.error('❌ Auth check failed:', err);
       setFallbackUser();
+
+//   useEffect(() => {
+//     setTokenRefreshCallback(updateTokenFromInterceptor);
+//     checkAuthStatus();
+//   }, []);
+
+//   const toNum = (v: any): number | null => {
+//     if (v === null || v === undefined) return null;
+//     if (typeof v === 'number' && !Number.isNaN(v)) return v;
+//     const n = Number(v);
+//     return Number.isNaN(n) ? null : n;
+//   };
+
+//   const normalizeUser = (raw: any): User => {
+//     const normStudentId = raw.role === 'STUDENT' ? (toNum(raw.studentId) ?? toNum(raw.id)) : toNum(raw.studentId);
+//     const normTutorId = raw.role === 'TUTOR' ? (toNum(raw.tutorId) ?? toNum(raw.id)) : toNum(raw.tutorId);
+//     return { ...raw, studentId: normStudentId, tutorId: normTutorId };
+//   };
+
+//   const checkAuthStatus = async () => {
+//     try {
+//       const newToken = await refreshAccessToken();
+//       setToken(newToken.accessToken);
+//       setAuthToken(newToken.accessToken);
+//       setAuthToken(newToken.accessToken); // attach to axios
+//       //setUser(newUser);
+
+//       // Test the token first
+
+//       const response = await authAPI.getCurrentUser();
+//       if (response?.data?.user) setUser(normalizeUser(response.data.user)); 
+//     } catch {
+//       setUser(null);
+//       setToken(null);
+
     } finally {
       setIsLoading(false);
     }
@@ -179,38 +138,91 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = (newToken: string, newUser: User) => {
     setToken(newToken);
-    setUser(newUser);
-    setAuthToken(newToken); // attach to axios globally
+    setUser(normalizeUser(newUser));
+    setAuthToken(newToken);
+  };
+
+
+  const loginWithResponse = (response: { accessToken: string; tokenType: string; user: User }) => {
+    setToken(response.accessToken);
+    setUser(normalizeUser(response.user));
+    setAuthToken(response.accessToken);
   };
 
   const logout = async () => {
     try {
-      // Only try to call logout API if we have a real token
-      if (token && token !== 'fallback-token') {
-        await authAPI.logout();
-      }
-    } catch (error) {
-      console.error('Logout API call failed:', error);
+      await authAPI.logout();
+    } catch {
+      // ignore
+       console.error('Logout API call failed:', error);
+
     } finally {
       setUser(null);
       setToken(null);
-      setAuthToken(null); // Clear authorization header
+      setAuthToken(null);
     }
   };
 
-  const updateUser = (updatedUser: User) => {
-    setUser(updatedUser);
+  // Merge update (Partial)
+  const updateUser = (userPartial: Partial<User>) => {
+    setUser(prev => (prev ? { ...prev, ...userPartial } : prev));
   };
 
+  // Unified academic info loader returning void (context expects Promise<void>)
+  const loadStudentAcademicInfo = useCallback(async (): Promise<void> => {
+    if (!user || user.role !== 'STUDENT') return;
+    if (academicLoading) return; // avoid duplicate concurrent loads
+
+    // If both fields already set (even null), skip
+    if (user.educationLevel !== undefined && user.stream !== undefined) return;
+
+    try {
+      setAcademicLoading(true);
+      if (user.studentId) {
+        const res = await studentAPI.loadStudentAcademicInfo(user.studentId);
+        if (res?.success && res.data) {
+          const educationLevel = res.data.educationLevel;
+          const stream = res.data.stream;
+          updateUser({ educationLevel, stream });
+          console.log('Loaded academic info:', res.data);
+        } else {
+          console.warn('Academic info fetch returned unexpected shape:', res);
+        }
+      } else {
+        console.warn('Cannot load academic info: studentId is missing or not a string.', user.studentId);
+      }
+    } catch (e) {
+      console.warn('Academic info load failed:', e);
+    } finally {
+      setAcademicLoading(false);
+    }
+  }, [user, academicLoading, updateUser]);
   const accessToken = token;
+  const isStudent = user?.role === 'STUDENT';
+  const isTutor = user?.role === 'TUTOR';
+  const actorId: number | null = isStudent
+    ? (user?.studentId ?? null)
+    : isTutor
+      ? (toNum(user?.tutorId) ?? null)
+      : null;
+  const effectiveStudentId: number | null = isStudent ? (user?.studentId ?? null) : null;
+
   const value: AuthContextType = {
     user,
     accessToken,
+
     isAuthenticated: !!user,
+
     isLoading,
+    isStudent,
+    isTutor,
+    actorId,
+    effectiveStudentId,
     login,
+    loginWithResponse,
     logout,
     updateUser,
+    loadStudentAcademicInfo,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

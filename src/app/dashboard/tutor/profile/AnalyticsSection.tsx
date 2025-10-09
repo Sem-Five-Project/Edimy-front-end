@@ -1,12 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { Award, Star, TrendingUp } from "lucide-react";
-import { Subject } from "@/types";
+import { Subject, TutorSubject } from "@/types";
 
 interface AnalyticsSectionProps {
-  subjects: Subject[];
+  subjects: TutorSubject[];
 }
 
 const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newSubject, setNewSubject] = useState("");
+
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setNewSubject("");
+  };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewSubject(e.target.value);
+  const handleAddSubject = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Add logic to update subjects list
+    handleCloseModal();
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Teaching Subjects */}
@@ -16,6 +31,51 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
             <Award className="mr-3 text-purple-600" size={24} />
             Teaching Subjects
           </h2>
+          {/* add a button to open modal to add subjects */}
+          <button
+            className="mb-2 bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition"
+            onClick={handleOpenModal}
+          >
+            Add Subject
+          </button>
+      {/* Modal for adding subject */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-gray-200 relative">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-purple-700">Add New Subject</h2>
+                <button
+                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                  onClick={handleCloseModal}
+                  aria-label="Close"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x text-gray-400"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <form onSubmit={handleAddSubject}>
+                <input
+                  type="text"
+                  value={newSubject}
+                  onChange={handleInputChange}
+                  placeholder="Enter subject name"
+                  className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  required
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition"
+                  >
+                    Add
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
           {subjects.length > 0 ? (
             <div className="space-y-3">
               {subjects.map((subject, idx) => (

@@ -1,11 +1,11 @@
 import React from "react";
 import ClassCard from "./ClassCard";
-import { Class, Subject, ClassDoc } from "@/types";
+import { Class, Subject, ClassDoc, TutorSubject } from "@/types";
 
 interface ClassesSectionProps {
   classes: Class[];
   classTypes: { id: number; name: string; icon: string; color: string }[];
-  subjects: Subject[];
+  subjects: TutorSubject[];
   classDocs: Record<number, ClassDoc[]>;
   classAPI: any;
   tutorId: number;
@@ -31,12 +31,12 @@ const ClassesSection: React.FC<ClassesSectionProps> = ({
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">My Classes</h2>
-        <button
+        {/* <button
           onClick={() => setShowAddClassModal(true)}
           className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl flex items-center transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
         >
           Create Class
-        </button>
+        </button> */}
       </div>
       {classes.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
