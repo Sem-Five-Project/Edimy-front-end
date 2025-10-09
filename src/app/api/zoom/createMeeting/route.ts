@@ -12,7 +12,6 @@ async function getZoomToken() {
         ).toString("base64"),
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    // No body needed for this request
   });
   const body = await res.text();
   try {
@@ -22,36 +21,60 @@ async function getZoomToken() {
   }
 }
 
-export async function POST() {
-  const { access_token } = await getZoomToken();
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { start_time, duration, topic } = body;
+    
+    // Calculate end time
+    const startTime = new Date(start_time || new Date());
+    const endTime = new Date(startTime.getTime() + (duration || 45) * 60000);
+    const currentTime = new Date();
+    
+    // Check if meeting has already ended
+    if (currentTime > endTime) {
+      return NextResponse.json({ 
+        error: "Cannot start meeting - scheduled end time has passed",
+        endTime: endTime.toISOString(),
+        currentTime: currentTime.toISOString()
+      }, { status: 400 });
+    }
+    
+    const { access_token } = await getZoomToken();
 
+    if (!access_token) {
+      return NextResponse.json({ error: "Failed to get Zoom token" }, { status: 401 });
+    }
 
-  const res = await fetch("https://api.zoom.us/v2/users/me/meetings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      topic: "Classroom Session",
-      type: 2, // Scheduled meeting
-      start_time: new Date().toISOString(),
-      duration: 45,
-      settings: {
-        host_video: true,
-        participant_video: true,
-    local_recording: true,      // Host can record locally
-    cloud_recording: true,      // Host can record to cloud
-    auto_recording: "none",    // No auto recording
-    // No participant recording option
-        allow_multiple_devices: false,
-        waiting_room: true,
-        mute_upon_entry: true,
+    const res = await fetch("https://api.zoom.us/v2/users/me/meetings", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      body: JSON.stringify({
+        topic: topic || "Classroom Session",
+        type: 2,
+        start_time: start_time || new Date().toISOString(),
+        duration: duration || 45,
+        settings: {
+          host_video: true,
+          participant_video: true,
+          local_recording: true,
+          cloud_recording: true,
+          auto_recording: "none",
+          allow_multiple_devices: false,
+          waiting_room: true,
+          mute_upon_entry: true,
+        },
+      }),
+    });
 
-  const meeting = await res.json();
-  console.log("Created Meeting:***************", meeting);
-  return NextResponse.json(meeting);
+    const meeting = await res.json();
+    console.log("Created Meeting:***************", meeting);
+    return NextResponse.json(meeting);
+  } catch (error) {
+    console.error("Error creating meeting:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
