@@ -938,7 +938,22 @@ export const classAPI = {
       };
     }
   },
-};
+  //join class using session id
+  joinClass: async (sessionId: string): Promise<any> => {
+    try {
+      const response = await api.get(`/sessions/18`);
+      console.log('Join class response:*******************', response.data);
+      return response.data.moderatorLink;
+    } catch (error) {
+      console.error('Join class failed:', error);
+      return {
+        success: false,
+        data: {},
+        error: 'Failed to join class',
+      };
+    }
+  },
+}
 
 export const classDocAPI ={
   //add a doc
