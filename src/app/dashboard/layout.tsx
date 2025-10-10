@@ -41,12 +41,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <CurrencyProvider>
       <BookingProvider>
 
-        {!isAdminRoute ? (<SidebarProvider>
-          <div className="flex min-h-screen w-full bg-background">
-
+        {!isAdminRoute ? (
         <SidebarProvider>
-          <div className="flex  w-full bg-background">
-
+          <div className="flex min-h-screen w-full bg-background">
             <DashboardSidebar userRole={user?.role} />
               <main className="flex-1 overflow-auto p-4 sm:p-6">
                 <div className="container mx-auto max-w-7xl">
