@@ -834,13 +834,7 @@ const handleBookTutor = (tutor: NormalizedTutor) => {
             </p>
           </div>
           
-          {!isLoading && tutors.length > 0 && (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                Sorted by {filters.sortBy} ({filters.sortOrder === 'desc' ? 'high to low' : 'low to high'})
-              </span>
-            </div>
-          )}
+         
         </div>
 
         {/* Loading State */}

@@ -62,6 +62,14 @@ interface BookingContextType {
   // Locked slots (single for one-time, many for monthly) to release on back/cancel
   lockedSlotIds: number[];
   setLockedSlotIds: (slotIds: number[]) => void;
+
+  // Mapping for backend confirmation: availability_id -> [slot_ids]
+  availabilitySlotsMap: Record<string, number[]>;
+  setAvailabilitySlotsMap: (map: Record<string, number[]>) => void;
+
+  // Next month recurring slots for monthly bookings (just slot IDs)
+  nextMonthSlots: number[] | null;
+  setNextMonthSlots: (slotIds: number[] | null) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -84,6 +92,8 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [monthlyBookingData, setMonthlyBookingData] = useState<MonthlyBookingData | null>(null);
   const [lockedSlotIds, setLockedSlotIds] = useState<number[]>([]);
+  const [availabilitySlotsMap, setAvailabilitySlotsMap] = useState<Record<string, number[]>>({});
+  const [nextMonthSlots, setNextMonthSlots] = useState<number[] | null>(null);
 
   // Timer effect for reservation
   useEffect(() => {
@@ -200,7 +210,8 @@ useEffect(()=>{
     setBookingId(null);
     setMonthlyBookingData(null);
     setLockedSlotIds([]);
-
+    setAvailabilitySlotsMap({});
+    setNextMonthSlots(null);
   };
 
   const isBookingComplete = currentStep === 'confirmation' && bookingId !== null;
@@ -228,6 +239,10 @@ useEffect(()=>{
     setMonthlyBookingData,
     lockedSlotIds,
     setLockedSlotIds: (slotIds: number[]) => setLockedSlotIds(slotIds),
+    availabilitySlotsMap,
+    setAvailabilitySlotsMap,
+    nextMonthSlots,
+    setNextMonthSlots,
   }), [
     currentStep,
     tutor,
@@ -240,6 +255,8 @@ useEffect(()=>{
     isBookingComplete,
     monthlyBookingData,
     lockedSlotIds,
+    availabilitySlotsMap,
+    nextMonthSlots,
   ]);
 
   return (

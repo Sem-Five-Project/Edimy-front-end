@@ -50,6 +50,8 @@ export default function BookingSlotsPage() {
     bookingPreferences,
     currentStep,
     setMonthlyBookingData,
+    setAvailabilitySlotsMap,
+    setNextMonthSlots,
   } = useBooking();
 
   const { formatPrice, selectedCurrency } = useCurrency();
@@ -907,7 +909,15 @@ const handleContinue = async () => {
         return;
       }
 
-      // Persist reserved IDs to allow release if user goes back
+      // Build availability_id -> [slotIds] map for backend confirmation (no sessionStorage)
+      const groupedAvail: Record<string, number[]> = {};
+      validOccurrences.forEach(v => {
+        const rec = (selectedMonthlyById as any)[v.slotId];
+        const key = rec?.availabilityId != null ? String(rec.availabilityId) : 'default';
+        if (!groupedAvail[key]) groupedAvail[key] = [];
+        groupedAvail[key].push(v.slotId);
+      });
+      setAvailabilitySlotsMap(groupedAvail);
 
 
       const firstDate = validOccurrences[0].date;
@@ -979,7 +989,7 @@ console.log("h5")
       return;
     }
 
-    const singleResp = await bookingAPI.reserveSlots([selectedSlotLocal.slotId]);
+  const singleResp = await bookingAPI.reserveSlots([selectedSlotLocal.slotId]);
     if (!singleResp.success) {
       setError(singleResp.error || "This slot is currently unavailable");
       setIsLoading(false);
@@ -987,11 +997,15 @@ console.log("h5")
     }
 
     try {
-      sessionStorage.setItem(
-        "reservedSlots",
-        JSON.stringify([selectedSlotLocal.slotId])
-      );
+
       sessionStorage.setItem("bookingMode", "single");
+      // Set availability -> [slotIds] mapping in context (no sessionStorage)
+      const availId = (selectedSlotLocal as any).availabilityId;
+      if (availId != null) {
+        setAvailabilitySlotsMap({ [String(availId)]: [selectedSlotLocal.slotId] });
+      } else {
+        setAvailabilitySlotsMap({ default: [selectedSlotLocal.slotId] });
+      }
     } catch {}
 
     const finalPreferences = {
@@ -2105,10 +2119,19 @@ const languageOptions = tutor.languages?.map((language, index) => ({
               onClick={async () => {
                 await handleContinue();
                 if (isMonthlyClassType) {
-                  try {
-                    sessionStorage.setItem('lockNextMonth', JSON.stringify(lockNextMonth));
-                    sessionStorage.setItem('nextMonthPreview', JSON.stringify(nextMonthPreview));
-                  } catch {}
+                  // Set next month slot IDs in context if lockNextMonth is enabled
+                  // Note: The backend should provide slot IDs in the next month API response
+                  // For now, we'll store null and the backend will handle next month booking
+                  // based on the availability patterns
+                  if (lockNextMonth && nextMonthPreview.length > 0) {
+                    // TODO: Extract slot IDs from API response when available
+                    // The API should return slot IDs for next month slots
+                    console.log("Next month lock enabled with preview data:", nextMonthPreview);
+                    // For now, set empty array to indicate next month booking is requested
+                    setNextMonthSlots([]);
+                  } else {
+                    setNextMonthSlots(null);
+                  }
                 }
               }}
               //disabled={!isValid() || isLoading || nextMonthPatternsLoading}
