@@ -42,6 +42,7 @@ export default function BookingPaymentPage() {
     currentStep,
     monthlyBookingData,
     lockedSlotIds,
+    availabilitySlotsMap,
   } = useBooking();
 
   const { formatPrice, selectedCurrency } = useCurrency();
@@ -50,6 +51,7 @@ export default function BookingPaymentPage() {
 
   const isMonthly = bookingPreferences?.selectedClassType?.id === 2;
   const [oneTimeSlotDetail, setOneTimeSlotDetail] = useState<any | null>(null);
+  // Grouped availability -> [slotIds] map is now in context
 
   // Load one-time slot detail from sessionStorage if not monthly
   useEffect(() => {
@@ -60,6 +62,8 @@ export default function BookingPaymentPage() {
       } catch {}
     }
   }, [isMonthly]);
+
+  // No need to load availability map from sessionStorage anymore
 
   // Validation: redirect only if required data is missing for the active mode
   useEffect(() => {
@@ -457,6 +461,7 @@ export default function BookingPaymentPage() {
                 tutor={tutor}
                 selectedDate={selectedDate!}
                 lockedSlotIds={lockedSlotIds}
+                availabilitySlotsMap={availabilitySlotsMap}
                 selectedSlot={isMonthly ? undefined : oneTimeSlotDetail ? {
                   slotId: oneTimeSlotDetail.slotId,
                   startTime: oneTimeSlotDetail.startTime,

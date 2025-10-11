@@ -17,7 +17,6 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-console.log("StudentDashboard render - user:", user);
   // useEffect(() => {
   //   loadUserBookings();
   // }, []);

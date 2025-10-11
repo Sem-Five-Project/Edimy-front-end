@@ -1136,6 +1136,45 @@ export const bookingAPI = {
     }
   },
 
+  getPaymentStatus: async (
+    orderId: string
+  ): Promise<ApiResponse<{ orderId: string; status: string; payherePaymentId?: string }>> => {
+    try {
+      console.log('API: getPaymentStatus called with orderId:', orderId);
+
+      const response = await api.get('/payment/status', {
+        params: { orderId },
+      });
+      console.log('API: getPaymentStatus response:', response);
+      const payload = response?.data ?? {};
+      const order = payload?.data ?? payload;
+
+      if (order?.orderId || order?.order_id) {
+        return {
+          success: true,
+          data: {
+            orderId: order.orderId ?? order.order_id,
+            status: order.status,
+            payherePaymentId: order.payherePaymentId ?? order.paymentId ?? order.payhere_payment_id,
+          },
+        };
+      }
+
+      return {
+        success: false,
+        data: { orderId, status: 'UNKNOWN', payherePaymentId: undefined },
+        error: 'Unexpected payment status response',
+      };
+    } catch (error: any) {
+      console.error('API: getPaymentStatus error:', error?.response?.data || error);
+      return {
+        success: false,
+        data: { orderId, status: 'ERROR', payherePaymentId: undefined },
+        error: error?.response?.data?.message || error.message || 'Failed to fetch payment status',
+      };
+    }
+  },
+
 updateBookingDetails: async (data: BookingUpdateData): Promise<{ success: boolean; bookingId: string }> => {
   try {
     // Using axios; body is passed as data, not nested with JSON.stringify
@@ -1529,9 +1568,10 @@ confirmPayHerePayment: async (payload: {
 }): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
   try {
     console.log('Confirming PayHere payment with payload:', payload);
-    const response = await api.post('/payment/bookings/confirm', payload);
-    const paymentRaw = response.data;
-    console.log('Confirm PayHere payment response (raw):', paymentRaw);
+  const response = await api.post('/payment/bookings/confirm', payload);
+  const paymentRaw = response.data;
+  console.log('Confirm PayHere payment response (raw):', paymentRaw);
+  return paymentRaw;
 
     // const paymentSuccess =
     //   paymentRaw?.success === true ||
@@ -1579,13 +1619,6 @@ confirmPayHerePayment: async (payload: {
     //   };
     // }
 //commented booking response 10-08
-    return {
-      success: false,
-      data: { success: false },
-      error:
-      //  bookingResponse.error ||
-        'Payment confirmed but slot booking failed',
-    };
   } catch (error) {
     console.error('Confirm PayHere payment failed (exception):', error);
     return {
@@ -1676,6 +1709,56 @@ confirmPayHerePayment: async (payload: {
         data: { payment: {} },
         error: 'Failed to initialize PayHere',
       } as unknown as ApiResponse<{ payment: Record<string, unknown> }>;
+    }
+  },
+
+  // Get student booking details with class information
+  getStudentBookingDetails: async (studentId: number): Promise<ApiResponse<any[]>> => {
+    try {
+      const response = await api.get(`/student/bookings/booking-details?studentId=${studentId}`);
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('Get student booking details failed:', error);
+      return {
+        success: false,
+        data: [],
+        error: 'Failed to fetch booking details',
+      };
+    }
+  },
+
+  // Cancel booking and request refund
+  cancelBooking: async (paymentId: string, shouldRefund: boolean = false): Promise<ApiResponse<{ 
+    success: boolean; 
+    refund_reference?: string; 
+    message: string; 
+    status?: number 
+  }>> => {
+    try {
+      console.log('Cancelling booking with paymentId:', paymentId, 'shouldRefund:', shouldRefund);
+      const response = await api.post('/payment/refund', { 
+        paymentId,
+        should_refund: shouldRefund 
+      });
+      console.log('Cancel booking response:', response.data);
+      
+      return {
+        success: response.data.success || false,
+        data: response.data.process_refund,
+      };
+    } catch (error: any) {
+      console.error('Cancel booking failed:', error);
+      return {
+        success: false,
+        data: {
+          success: false,
+          message: error?.response?.data?.message || 'Failed to cancel booking',
+        },
+        error: error?.response?.data?.message || 'Failed to cancel booking',
+      };
     }
   },
 
