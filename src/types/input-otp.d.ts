@@ -1,5 +1,5 @@
-declare module 'input-otp' {
-  import * as React from 'react';
+declare module "input-otp" {
+  import * as React from "react";
 
   export const OTPInput: React.ForwardRefExoticComponent<any>;
 
@@ -8,7 +8,11 @@ declare module 'input-otp' {
     Consumer: React.ComponentType<any>;
     useContext?: () => any;
     // minimal shape used in project
-    slots?: Array<{ char?: React.ReactNode; hasFakeCaret?: boolean; isActive?: boolean }>;
+    slots?: Array<{
+      char?: React.ReactNode;
+      hasFakeCaret?: boolean;
+      isActive?: boolean;
+    }>;
   } & React.Context<any>;
 
   export default OTPInput;

@@ -22,5 +22,6 @@ npm run test:e2e
 ```
 
 Notes:
+
 - The test uses `baseURL` from `E2E_BASE_URL` environment variable or defaults to `http://localhost:3000`.
 - Tests are placed under `e2e/playwright` and the example spec checks the homepage heading 'Welcome to Edimy'.

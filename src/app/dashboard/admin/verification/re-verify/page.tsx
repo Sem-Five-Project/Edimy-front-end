@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { getTutorReverificationRequests } from '@/lib/adminTutor';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { getTutorReverificationRequests } from "@/lib/adminTutor";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -28,7 +28,7 @@ export default function TutorReverificationPage() {
       setReverifications(reverifications);
       setTotalReverifications(reverifications.length);
     } catch (error) {
-      console.error('Error fetching reverification requests:', error);
+      console.error("Error fetching reverification requests:", error);
     } finally {
       setLoading(false);
     }
@@ -41,8 +41,12 @@ export default function TutorReverificationPage() {
       <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Tutor Re-verification Requests</h1>
-            <p className="text-muted-foreground mt-1">Review and approve tutor subject re-verification requests</p>
+            <h1 className="text-3xl font-bold">
+              Tutor Re-verification Requests
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Review and approve tutor subject re-verification requests
+            </p>
           </div>
         </div>
         <Card>
@@ -50,7 +54,9 @@ export default function TutorReverificationPage() {
             {loading ? (
               <div className="p-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-muted-foreground">Loading requests...</p>
+                <p className="mt-2 text-muted-foreground">
+                  Loading requests...
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -64,30 +70,52 @@ export default function TutorReverificationPage() {
                   </thead>
                   <tbody>
                     {reverifications.map((tutor: any) => (
-                      <tr key={tutor.tutorId || tutor.userName} className="border-b hover:bg-muted/50">
+                      <tr
+                        key={tutor.tutorId || tutor.userName}
+                        className="border-b hover:bg-muted/50"
+                      >
                         <td className="p-4 text-center">
                           <div className="flex flex-col items-center gap-2">
-                            <div className="font-medium">{tutor.userName || 'N/A'}</div>
-                            <div className="text-sm text-muted-foreground">ID: {tutor.tutorId || 'N/A'}</div>
+                            <div className="font-medium">
+                              {tutor.userName || "N/A"}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              ID: {tutor.tutorId || "N/A"}
+                            </div>
                           </div>
                         </td>
                         <td className="p-4 text-center">
                           <div className="space-y-1">
-                            {(tutor.subjectInfo || tutor.subjects || []).slice(0, 2).map((subject: any, index: number) => (
-                              <div key={index} className="text-sm">
-                                <span className="font-medium">{subject.name || subject.subject}</span>
-                                <span className="ml-2 text-xs text-muted-foreground">(ID: {subject.id || subject.subjectId || 'N/A'})</span>
-                              </div>
-                            ))}
-                            {(tutor.subjectInfo && tutor.subjectInfo.length > 2) && (
-                              <div className="text-sm text-muted-foreground">
-                                +{tutor.subjectInfo.length - 2} more subjects
-                              </div>
-                            )}
+                            {(tutor.subjectInfo || tutor.subjects || [])
+                              .slice(0, 2)
+                              .map((subject: any, index: number) => (
+                                <div key={index} className="text-sm">
+                                  <span className="font-medium">
+                                    {subject.name || subject.subject}
+                                  </span>
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    (ID:{" "}
+                                    {subject.id || subject.subjectId || "N/A"})
+                                  </span>
+                                </div>
+                              ))}
+                            {tutor.subjectInfo &&
+                              tutor.subjectInfo.length > 2 && (
+                                <div className="text-sm text-muted-foreground">
+                                  +{tutor.subjectInfo.length - 2} more subjects
+                                </div>
+                              )}
                           </div>
                         </td>
                         <td className="p-4 text-center">
-                          <Button variant="outline" size="sm" onClick={() => { setSelectedDocs(tutor.subjectInfo || []); setShowDocsModal(true); }}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedDocs(tutor.subjectInfo || []);
+                              setShowDocsModal(true);
+                            }}
+                          >
                             View Documents
                           </Button>
                         </td>
@@ -100,32 +128,39 @@ export default function TutorReverificationPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between p-4 border-t">
                 <div className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
-                  {Math.min(currentPage * ITEMS_PER_PAGE, totalReverifications)} of {totalReverifications} requests
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
+                  {Math.min(currentPage * ITEMS_PER_PAGE, totalReverifications)}{" "}
+                  of {totalReverifications} requests
                 </div>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                   >
                     Previous
                   </Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    ),
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                   >
                     Next
@@ -137,47 +172,69 @@ export default function TutorReverificationPage() {
         </Card>
       </div>
       {/* Modal for viewing docs - use React Portal for full overlay */}
-      {showDocsModal && typeof window !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-70">
-          <div className="bg-zinc-900 text-white rounded-lg shadow-2xl p-6 w-full max-w-lg relative border border-zinc-700">
-            {/* Close X button */}
-            <button
-              className="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl font-bold focus:outline-none"
-              onClick={() => setShowDocsModal(false)}
-              aria-label="Close"
-            >
-              ×
-            </button>
-            <h2 className="text-2xl font-bold mb-4 text-center">Verification Documents</h2>
-            <ul className="space-y-4">
-              {selectedDocs.map((subject: any, idx: number) => (
-                <li key={idx} className="border-b border-zinc-700 pb-3">
-                  <div className="font-semibold text-lg flex items-center justify-between">
-                    <span>{subject.name || subject.subject} <span className="text-xs text-zinc-400">(ID: {subject.id || subject.subjectId || 'N/A'})</span></span>
-                  </div>
-                  <div className="text-sm mt-2 break-all">
-                    {subject.verificationDocs ? (
-                      /^https?:\/\//.test(subject.verificationDocs) ? (
-                        <a href={subject.verificationDocs} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Document</a>
+      {showDocsModal &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-70">
+            <div className="bg-zinc-900 text-white rounded-lg shadow-2xl p-6 w-full max-w-lg relative border border-zinc-700">
+              {/* Close X button */}
+              <button
+                className="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl font-bold focus:outline-none"
+                onClick={() => setShowDocsModal(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <h2 className="text-2xl font-bold mb-4 text-center">
+                Verification Documents
+              </h2>
+              <ul className="space-y-4">
+                {selectedDocs.map((subject: any, idx: number) => (
+                  <li key={idx} className="border-b border-zinc-700 pb-3">
+                    <div className="font-semibold text-lg flex items-center justify-between">
+                      <span>
+                        {subject.name || subject.subject}{" "}
+                        <span className="text-xs text-zinc-400">
+                          (ID: {subject.id || subject.subjectId || "N/A"})
+                        </span>
+                      </span>
+                    </div>
+                    <div className="text-sm mt-2 break-all">
+                      {subject.verificationDocs ? (
+                        /^https?:\/\//.test(subject.verificationDocs) ? (
+                          <a
+                            href={subject.verificationDocs}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 underline"
+                          >
+                            View Document
+                          </a>
+                        ) : (
+                          <span>{subject.verificationDocs}</span>
+                        )
                       ) : (
-                        <span>{subject.verificationDocs}</span>
-                      )
-                    ) : (
-                      <span className="text-zinc-400">No document available</span>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-6">
-              <Button variant="default" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowDocsModal(false)}>
-                Close
-              </Button>
+                        <span className="text-zinc-400">
+                          No document available
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-6">
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => setShowDocsModal(false)}
+                >
+                  Close
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

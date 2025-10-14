@@ -2,56 +2,56 @@
 
 ```yaml
 - generic [active] [ref=e1]:
-  - generic [ref=e2]:
-    - navigation [ref=e3]:
-      - generic [ref=e4]:
-        - generic [ref=e5]:
-          - img "Edimy Logo" [ref=e6]
-          - generic [ref=e7]: Edimy
-        - generic [ref=e8]:
-          - button "Login" [ref=e9]
-          - button "Get Started" [ref=e10]
-    - main [ref=e11]:
-      - generic [ref=e12]:
-        - generic [ref=e13]:
-          - generic [ref=e14]:
-            - heading "Welcome to Edimy" [level=1] [ref=e15]
-            - paragraph [ref=e16]: Transform your learning experience with our innovative educational platform. Discover, learn, and grow with cutting-edge tools designed for modern education.
-          - generic [ref=e17]:
-            - button "Start Learning Today" [ref=e18]
-            - button "Sign In" [ref=e19]
-        - generic [ref=e20]:
-          - generic [ref=e21]:
-            - heading "Why Choose Edimy?" [level=2] [ref=e22]
-            - paragraph [ref=e23]: Discover the features that make learning engaging, effective, and enjoyable
-          - generic [ref=e24]:
-            - generic [ref=e25]:
-              - img [ref=e27]
-              - heading "Interactive Learning" [level=3] [ref=e29]
-              - paragraph [ref=e30]: Engage with dynamic content, interactive exercises, and real-time feedback to enhance your learning experience.
-            - generic [ref=e31]:
-              - img [ref=e33]
-              - heading "Progress Tracking" [level=3] [ref=e35]
-              - paragraph [ref=e36]: Monitor your learning journey with detailed analytics, progress reports, and personalized insights.
-            - generic [ref=e37]:
-              - img [ref=e39]
-              - heading "Collaborative Learning" [level=3] [ref=e41]
-              - paragraph [ref=e42]: Connect with peers, join study groups, and learn together in a supportive community environment.
-    - contentinfo [ref=e43]:
-      - generic [ref=e44]:
-        - generic [ref=e45]:
-          - generic [ref=e46]:
-            - img "Edimy Logo" [ref=e47]
-            - generic [ref=e48]: Edimy
-          - generic [ref=e49]:
-            - link "About" [ref=e50] [cursor=pointer]:
-              - /url: "#"
-            - link "Features" [ref=e51] [cursor=pointer]:
-              - /url: "#"
-            - link "Support" [ref=e52] [cursor=pointer]:
-              - /url: "#"
-            - link "Contact" [ref=e53] [cursor=pointer]:
-              - /url: "#"
-        - generic [ref=e54]: © 2025 Edimy. All rights reserved.
-  - alert [ref=e55]
+    - generic [ref=e2]:
+        - navigation [ref=e3]:
+            - generic [ref=e4]:
+                - generic [ref=e5]:
+                    - img "Edimy Logo" [ref=e6]
+                    - generic [ref=e7]: Edimy
+                - generic [ref=e8]:
+                    - button "Login" [ref=e9]
+                    - button "Get Started" [ref=e10]
+        - main [ref=e11]:
+            - generic [ref=e12]:
+                - generic [ref=e13]:
+                    - generic [ref=e14]:
+                        - heading "Welcome to Edimy" [level=1] [ref=e15]
+                        - paragraph [ref=e16]: Transform your learning experience with our innovative educational platform. Discover, learn, and grow with cutting-edge tools designed for modern education.
+                    - generic [ref=e17]:
+                        - button "Start Learning Today" [ref=e18]
+                        - button "Sign In" [ref=e19]
+                - generic [ref=e20]:
+                    - generic [ref=e21]:
+                        - heading "Why Choose Edimy?" [level=2] [ref=e22]
+                        - paragraph [ref=e23]: Discover the features that make learning engaging, effective, and enjoyable
+                    - generic [ref=e24]:
+                        - generic [ref=e25]:
+                            - img [ref=e27]
+                            - heading "Interactive Learning" [level=3] [ref=e29]
+                            - paragraph [ref=e30]: Engage with dynamic content, interactive exercises, and real-time feedback to enhance your learning experience.
+                        - generic [ref=e31]:
+                            - img [ref=e33]
+                            - heading "Progress Tracking" [level=3] [ref=e35]
+                            - paragraph [ref=e36]: Monitor your learning journey with detailed analytics, progress reports, and personalized insights.
+                        - generic [ref=e37]:
+                            - img [ref=e39]
+                            - heading "Collaborative Learning" [level=3] [ref=e41]
+                            - paragraph [ref=e42]: Connect with peers, join study groups, and learn together in a supportive community environment.
+        - contentinfo [ref=e43]:
+            - generic [ref=e44]:
+                - generic [ref=e45]:
+                    - generic [ref=e46]:
+                        - img "Edimy Logo" [ref=e47]
+                        - generic [ref=e48]: Edimy
+                    - generic [ref=e49]:
+                        - link "About" [ref=e50] [cursor=pointer]:
+                            - /url: "#"
+                        - link "Features" [ref=e51] [cursor=pointer]:
+                            - /url: "#"
+                        - link "Support" [ref=e52] [cursor=pointer]:
+                            - /url: "#"
+                        - link "Contact" [ref=e53] [cursor=pointer]:
+                            - /url: "#"
+                - generic [ref=e54]: © 2025 Edimy. All rights reserved.
+    - alert [ref=e55]
 ```

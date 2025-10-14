@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ export default function TutorViewClasses() {
           students: 8,
           maxStudents: 12,
           status: "upcoming",
-          isOnline: true
+          isOnline: true,
         },
         {
           id: "cls-002",
@@ -64,7 +64,7 @@ export default function TutorViewClasses() {
           students: 5,
           maxStudents: 10,
           status: "upcoming",
-          isOnline: false
+          isOnline: false,
         },
         {
           id: "cls-003",
@@ -76,7 +76,7 @@ export default function TutorViewClasses() {
           students: 12,
           maxStudents: 12,
           status: "completed",
-          isOnline: true
+          isOnline: true,
         },
         {
           id: "cls-004",
@@ -88,7 +88,7 @@ export default function TutorViewClasses() {
           students: 7,
           maxStudents: 15,
           status: "completed",
-          isOnline: false
+          isOnline: false,
         },
         {
           id: "cls-005",
@@ -100,10 +100,10 @@ export default function TutorViewClasses() {
           students: 0,
           maxStudents: 8,
           status: "cancelled",
-          isOnline: true
-        }
+          isOnline: true,
+        },
       ];
-      
+
       setClasses(mockClasses);
       setIsLoading(false);
     }, 1000);
@@ -112,22 +112,43 @@ export default function TutorViewClasses() {
   }, []);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getStatusBadge = (status: ClassSession["status"]) => {
     switch (status) {
       case "upcoming":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Upcoming</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-blue-50 text-blue-700 border-blue-200"
+          >
+            Upcoming
+          </Badge>
+        );
       case "completed":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Completed</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-50 text-green-700 border-green-200"
+          >
+            Completed
+          </Badge>
+        );
       case "cancelled":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelled</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-50 text-red-700 border-red-200"
+          >
+            Cancelled
+          </Badge>
+        );
       default:
         return null;
     }
@@ -136,7 +157,7 @@ export default function TutorViewClasses() {
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8">My Classes</h1>
-      
+
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
@@ -145,11 +166,11 @@ export default function TutorViewClasses() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">
-              {classes.filter(c => c.status === "upcoming").length}
+              {classes.filter((c) => c.status === "upcoming").length}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Completed Classes</CardTitle>
@@ -157,11 +178,11 @@ export default function TutorViewClasses() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {classes.filter(c => c.status === "completed").length}
+              {classes.filter((c) => c.status === "completed").length}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Total Students</CardTitle>
@@ -174,11 +195,13 @@ export default function TutorViewClasses() {
           </CardContent>
         </Card>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Classes Schedule</CardTitle>
-          <CardDescription>View and manage your scheduled classes</CardDescription>
+          <CardDescription>
+            View and manage your scheduled classes
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -220,7 +243,9 @@ export default function TutorViewClasses() {
                       </div>
                       <div className="flex items-center mt-1 text-sm text-slate-500">
                         <Clock className="h-3.5 w-3.5 mr-1" />
-                        <span>{cls.time} · {cls.duration} mins</span>
+                        <span>
+                          {cls.time} · {cls.duration} mins
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -231,18 +256,20 @@ export default function TutorViewClasses() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {getStatusBadge(cls.status)}
-                    </TableCell>
+                    <TableCell>{getStatusBadge(cls.status)}</TableCell>
                     <TableCell className="text-right">
                       {cls.status === "upcoming" && (
                         <div className="space-x-2">
-                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="outline" size="sm">
+                            Edit
+                          </Button>
                           <Button size="sm">Start</Button>
                         </div>
                       )}
                       {cls.status === "completed" && (
-                        <Button variant="outline" size="sm">View Records</Button>
+                        <Button variant="outline" size="sm">
+                          View Records
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>

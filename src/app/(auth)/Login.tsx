@@ -49,7 +49,7 @@
 
 //   const handleSubmit = async (e: React.FormEvent) => {
 //     e.preventDefault();
-    
+
 //     if (!validateForm()) {
 //       return;
 //     }
@@ -59,10 +59,10 @@
 
 //     try {
 //       const response = await authAPI.login(credentials);
-      
+
 //       if (response.success && response.data) {
 //         const { user } = response.data;
-        
+
 //         // Check if user is verified
 //         if (!user.isVerified) {
 //           router.push('/verify-email');
@@ -70,24 +70,24 @@
 //         }
 
 //         login(user);
-        
+
 //         // Reset attempt count on successful login
 //         setAttemptCount(0);
-        
+
 //         // Navigate to dashboard after successful login
 //         router.push('/dashboard');
 //       } else {
 //         // Increment attempt count on failed login
 //         const newAttemptCount = attemptCount + 1;
 //         setAttemptCount(newAttemptCount);
-        
+
 //         // Generic error message to avoid revealing if email/username exists
 //         setError('Invalid credentials. Please check your email/username and password.');
 //       }
 //     } catch (error: unknown) {
 //       const newAttemptCount = attemptCount + 1;
 //       setAttemptCount(newAttemptCount);
-      
+
 //       setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
 //     } finally {
 //       setIsLoading(false);
@@ -197,7 +197,6 @@
 //     </div>
 //   );
 // };
-
 
 export default function Login() {
   return <div>Login Page</div>;

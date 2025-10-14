@@ -1,19 +1,27 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Calendar, DollarSign, Users } from 'lucide-react';
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { BookOpen, Calendar, DollarSign, Users } from "lucide-react";
 
 export default function TutorDashboard() {
   const { user } = useAuth();
-  
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.firstName} {user?.lastName}!</h1>
+        <h1 className="text-2xl font-bold mb-2">
+          Welcome back, {user?.firstName} {user?.lastName}!
+        </h1>
         <p className="text-purple-100">Ready to start teaching today?</p>
       </div>
 
@@ -29,10 +37,12 @@ export default function TutorDashboard() {
             <p className="text-xs text-muted-foreground">+2 from last month</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Upcoming Sessions
+            </CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -40,7 +50,7 @@ export default function TutorDashboard() {
             <p className="text-xs text-muted-foreground">This week</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Earnings</CardTitle>
@@ -48,13 +58,17 @@ export default function TutorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$1,240</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Student Reviews</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Student Reviews
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -76,18 +90,22 @@ export default function TutorDashboard() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <h4 className="font-medium">Mathematics - Algebra</h4>
-                  <p className="text-sm text-muted-foreground">Completed 2 hours ago</p>
+                  <p className="text-sm text-muted-foreground">
+                    Completed 2 hours ago
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium">$40</p>
                   <p className="text-xs text-muted-foreground">Paid</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <h4 className="font-medium">Physics - Mechanics</h4>
-                  <p className="text-sm text-muted-foreground">Completed yesterday</p>
+                  <p className="text-sm text-muted-foreground">
+                    Completed yesterday
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium">$60</p>

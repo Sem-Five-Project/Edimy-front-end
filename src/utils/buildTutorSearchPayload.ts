@@ -1,9 +1,11 @@
-import { FindTutorFilters, TutorSearchPayload, TimeSlot } from '@/types';
+import { FindTutorFilters, TutorSearchPayload, TimeSlot } from "@/types";
 
 const toTime = (h: number, m: number) =>
-  `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 
-export function buildTutorSearchPayload(filters: FindTutorFilters): TutorSearchPayload {
+export function buildTutorSearchPayload(
+  filters: FindTutorFilters,
+): TutorSearchPayload {
   const base: TutorSearchPayload = {
     educationLevel: filters.educationLevel ?? null,
     stream: filters.stream ?? null,
@@ -13,38 +15,45 @@ export function buildTutorSearchPayload(filters: FindTutorFilters): TutorSearchP
     experience: filters.experience ?? null,
     price: {
       min: filters.minPrice ?? null,
-      max: filters.maxPrice ?? null
+      max: filters.maxPrice ?? null,
     },
     sort: {
-      field: filters.sortField ?? 'PRICE',
-      direction: filters.sortDirection ?? 'ASC'
-    }
+      field: filters.sortField ?? "PRICE",
+      direction: filters.sortDirection ?? "ASC",
+    },
   };
 
-  if (filters.classType === 'ONE_TIME') {
+  if (filters.classType === "ONE_TIME") {
     const slot = (filters.timePeriods[0] as TimeSlot) || null;
     base.session = {
-      date: filters.oneTimeDate ? filters.oneTimeDate.toISOString().split('T')[0] : null,
+      date: filters.oneTimeDate
+        ? filters.oneTimeDate.toISOString().split("T")[0]
+        : null,
       startTime: slot ? toTime(slot.startHour, slot.startMinute) : null,
-      endTime: slot ? toTime(slot.endHour, slot.endMinute) : null
+      endTime: slot ? toTime(slot.endHour, slot.endMinute) : null,
     };
   } else {
     const days = filters.selectedWeekdays
-      .map(weekday => {
-        const slots = (filters.timePeriods[weekday] as TimeSlot[] | undefined) || [];
+      .map((weekday) => {
+        const slots =
+          (filters.timePeriods[weekday] as TimeSlot[] | undefined) || [];
         const cleaned = slots
-          .filter(s =>
-            s.endHour > s.startHour ||
-            (s.endHour === s.startHour && s.endMinute > s.startMinute)
+          .filter(
+            (s) =>
+              s.endHour > s.startHour ||
+              (s.endHour === s.startHour && s.endMinute > s.startMinute),
           )
-          .map(s => ({
+          .map((s) => ({
             startTime: toTime(s.startHour, s.startMinute),
-            endTime: toTime(s.endHour, s.endMinute)
+            endTime: toTime(s.endHour, s.endMinute),
           }));
         if (!cleaned.length) return null;
         return { weekday, slots: cleaned };
       })
-      .filter(Boolean) as { weekday: number; slots: { startTime: string; endTime: string }[] }[];
+      .filter(Boolean) as {
+      weekday: number;
+      slots: { startTime: string; endTime: string }[];
+    }[];
 
     base.recurring = { days };
   }

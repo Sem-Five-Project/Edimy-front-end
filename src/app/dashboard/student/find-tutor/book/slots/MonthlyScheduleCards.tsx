@@ -21,7 +21,9 @@ const ScheduleCard = ({
   schedule: ScheduleItem;
   onRemove: (id: string) => void;
 }) => (
-  <div className="flex-shrink-0 w-48 group"> {/* smaller width */}
+  <div className="flex-shrink-0 w-48 group">
+    {" "}
+    {/* smaller width */}
     <div className="relative bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-950/20 rounded-lg border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
       <button
         onClick={() => onRemove(schedule.id)}
@@ -30,24 +32,20 @@ const ScheduleCard = ({
         <X className="h-3 w-3 stroke-2" />
       </button>
 
-      <div className="p-3 space-y-2"> {/* smaller padding */}
+      <div className="p-3 space-y-2">
+        {" "}
+        {/* smaller padding */}
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
           <span className="text-xs font-semibold text-gray-900 dark:text-white">
             {schedule.date}
           </span>
         </div>
-
         <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
           <Clock className="h-3 w-3 text-blue-500" />
           <span className="font-medium">{schedule.time}</span>
         </div>
-
-        <Badge
-          variant="secondary"
-        >
-          {schedule.duration}
-        </Badge>
+        <Badge variant="secondary">{schedule.duration}</Badge>
       </div>
     </div>
   </div>
@@ -61,7 +59,11 @@ export const MonthlyScheduleCards = ({
     <div className="w-full">
       <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-3 px-1">
         {schedules.map((schedule) => (
-          <ScheduleCard key={schedule.id} schedule={schedule} onRemove={onRemove} />
+          <ScheduleCard
+            key={schedule.id}
+            schedule={schedule}
+            onRemove={onRemove}
+          />
         ))}
       </div>
 

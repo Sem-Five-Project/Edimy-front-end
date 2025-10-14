@@ -1,21 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { 
-  cancelSession, 
-  rescheduleSession, 
-  refundSession
-} from '@/lib/sessionsData';
-import { getSessionById as getAdminSessionById, updateSession, type SessionDto } from '@/lib/adminSession';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  cancelSession,
+  rescheduleSession,
+  refundSession,
+} from "@/lib/sessionsData";
+import {
+  getSessionById as getAdminSessionById,
+  updateSession,
+  type SessionDto,
+} from "@/lib/adminSession";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +29,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +37,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Edit,
@@ -42,32 +46,32 @@ import {
   Calendar,
   VideoIcon,
   ExternalLink,
-} from 'lucide-react';
+} from "lucide-react";
 
 export default function SessionDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = params.id as string;
-  
+
   const [session, setSession] = useState<SessionDto | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Dialog states
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  
+
   // Form states
-  const [cancelReason, setCancelReason] = useState('');
-  const [newDate, setNewDate] = useState('');
-  const [newTime, setNewTime] = useState('');
+  const [cancelReason, setCancelReason] = useState("");
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
 
   // Editable fields state
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editStartTime, setEditStartTime] = useState('');
-  const [editEndTime, setEditEndTime] = useState('');
-  const [editStatus, setEditStatus] = useState('');
+  const [editTitle, setEditTitle] = useState("");
+  const [editStartTime, setEditStartTime] = useState("");
+  const [editEndTime, setEditEndTime] = useState("");
+  const [editStatus, setEditStatus] = useState("");
 
   useEffect(() => {
     fetchSession();
@@ -78,12 +82,12 @@ export default function SessionDetailsPage() {
     try {
       const sessionData = await getAdminSessionById(Number(sessionId));
       setSession(sessionData);
-      setEditTitle(sessionData.title || '');
+      setEditTitle(sessionData.title || "");
       setEditStartTime(toDatetimeLocalString(sessionData.startTime));
       setEditEndTime(toDatetimeLocalString(sessionData.endTime));
-      setEditStatus(sessionData.status || '');
+      setEditStatus(sessionData.status || "");
     } catch (error) {
-      console.error('Error fetching session:', error);
+      console.error("Error fetching session:", error);
     } finally {
       setLoading(false);
     }
@@ -93,14 +97,18 @@ export default function SessionDetailsPage() {
     if (!session) return;
     setIsActionLoading(true);
     try {
-      const success = await cancelSession(session.sessionId.toString(), cancelReason, 'admin-001');
+      const success = await cancelSession(
+        session.sessionId.toString(),
+        cancelReason,
+        "admin-001",
+      );
       if (success) {
         setShowCancelDialog(false);
-        setCancelReason('');
+        setCancelReason("");
         fetchSession(); // Refresh data
       }
     } catch (error) {
-      console.error('Error cancelling session:', error);
+      console.error("Error cancelling session:", error);
     } finally {
       setIsActionLoading(false);
     }
@@ -110,15 +118,20 @@ export default function SessionDetailsPage() {
     if (!session) return;
     setIsActionLoading(true);
     try {
-      const success = await rescheduleSession(session.sessionId.toString(), newDate, newTime, 'admin-001');
+      const success = await rescheduleSession(
+        session.sessionId.toString(),
+        newDate,
+        newTime,
+        "admin-001",
+      );
       if (success) {
         setShowRescheduleDialog(false);
-        setNewDate('');
-        setNewTime('');
+        setNewDate("");
+        setNewTime("");
         fetchSession(); // Refresh data
       }
     } catch (error) {
-      console.error('Error rescheduling session:', error);
+      console.error("Error rescheduling session:", error);
     } finally {
       setIsActionLoading(false);
     }
@@ -131,23 +144,27 @@ export default function SessionDetailsPage() {
     try {
       // Convert datetime-local back to LocalDateTime string (no timezone conversion)
       const toLocalDateTime = (val: string) => {
-        if (!val) return '';
+        if (!val) return "";
         // val is in 'YYYY-MM-DDTHH:mm' or 'YYYY-MM-DDTHH:mm:ss' format
         // Ensure seconds are present
-        return val.length === 16 ? val + ':00' : val;
+        return val.length === 16 ? val + ":00" : val;
       };
       const sessionDto = {
         ...session,
-        title: editTitle !== '' ? editTitle : session.title,
-        startTime: editStartTime !== '' ? toLocalDateTime(editStartTime) : session.startTime,
-        endTime: editEndTime !== '' ? toLocalDateTime(editEndTime) : session.endTime,
-        status: editStatus !== '' ? editStatus : session.status,
+        title: editTitle !== "" ? editTitle : session.title,
+        startTime:
+          editStartTime !== ""
+            ? toLocalDateTime(editStartTime)
+            : session.startTime,
+        endTime:
+          editEndTime !== "" ? toLocalDateTime(editEndTime) : session.endTime,
+        status: editStatus !== "" ? editStatus : session.status,
       };
       await updateSession(session.sessionId, sessionDto);
       setIsEditing(false);
       fetchSession();
     } catch (error) {
-      console.error('Error updating session:', error);
+      console.error("Error updating session:", error);
     } finally {
       setIsActionLoading(false);
     }
@@ -155,11 +172,16 @@ export default function SessionDetailsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Upcoming': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'Ongoing': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'Completed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      case 'Cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case "Upcoming":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      case "Ongoing":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "Completed":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      case "Cancelled":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
@@ -207,18 +229,26 @@ export default function SessionDetailsPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Session Details</h1>
-            <p className="text-muted-foreground">Session ID: {session.sessionId}</p>
+            <p className="text-muted-foreground">
+              Session ID: {session.sessionId}
+            </p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
-          {session.status === 'Upcoming' && (
+          {session.status === "Upcoming" && (
             <>
-              <Button variant="outline" onClick={() => setShowRescheduleDialog(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowRescheduleDialog(true)}
+              >
                 <Calendar className="w-4 h-4 mr-2" />
                 Reschedule
               </Button>
-              <Button variant="destructive" onClick={() => setShowCancelDialog(true)}>
+              <Button
+                variant="destructive"
+                onClick={() => setShowCancelDialog(true)}
+              >
                 <XCircle className="w-4 h-4 mr-2" />
                 Cancel Session
               </Button>
@@ -226,7 +256,7 @@ export default function SessionDetailsPage() {
           )}
           <Button variant="outline" onClick={() => setIsEditing((v) => !v)}>
             <Edit className="w-4 h-4 mr-2" />
-            {isEditing ? 'Cancel Edit' : 'Edit Session'}
+            {isEditing ? "Cancel Edit" : "Edit Session"}
           </Button>
         </div>
       </div>
@@ -257,38 +287,46 @@ export default function SessionDetailsPage() {
               {isEditing ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-foreground">Session Name</Label>
-                    <Input 
-                      value={editTitle} 
-                      onChange={e => setEditTitle(e.target.value)}
+                    <Label className="text-base font-semibold text-foreground">
+                      Session Name
+                    </Label>
+                    <Input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
                       className="h-12 text-base"
                       placeholder="Enter session name"
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-foreground">Start Time</Label>
-                    <Input 
-                      type="datetime-local" 
-                      value={toDatetimeLocalString(editStartTime)} 
-                      onChange={e => setEditStartTime(e.target.value)}
+                    <Label className="text-base font-semibold text-foreground">
+                      Start Time
+                    </Label>
+                    <Input
+                      type="datetime-local"
+                      value={toDatetimeLocalString(editStartTime)}
+                      onChange={(e) => setEditStartTime(e.target.value)}
                       className="h-12 text-base"
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-foreground">End Time</Label>
-                    <Input 
-                      type="datetime-local" 
-                      value={toDatetimeLocalString(editEndTime)} 
-                      onChange={e => setEditEndTime(e.target.value)}
+                    <Label className="text-base font-semibold text-foreground">
+                      End Time
+                    </Label>
+                    <Input
+                      type="datetime-local"
+                      value={toDatetimeLocalString(editEndTime)}
+                      onChange={(e) => setEditEndTime(e.target.value)}
                       className="h-12 text-base"
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-foreground">Status</Label>
-                    <select 
+                    <Label className="text-base font-semibold text-foreground">
+                      Status
+                    </Label>
+                    <select
                       className="w-full border border-input rounded-md px-3 py-3 text-base bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={editStatus} 
-                      onChange={e => setEditStatus(e.target.value)}
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value)}
                     >
                       <option value="Scheduled">Scheduled</option>
                       <option value="Ongoing">Ongoing</option>
@@ -298,102 +336,145 @@ export default function SessionDetailsPage() {
                     </select>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Tutor ID</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Tutor ID
+                    </Label>
                     <div className="h-12 px-3 py-3 border border-input rounded-md bg-muted text-base flex items-center">
                       {session.tutorId}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Subject ID</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Subject ID
+                    </Label>
                     <div className="h-12 px-3 py-3 border border-input rounded-md bg-muted text-base flex items-center">
                       {session.subjectId}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Class ID</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Class ID
+                    </Label>
                     <div className="h-12 px-3 py-3 border border-input rounded-md bg-muted text-base flex items-center">
                       {session.classId}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Student IDs</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Student IDs
+                    </Label>
                     <div className="h-12 px-3 py-3 border border-input rounded-md bg-muted text-base flex items-center">
-                      {Array.isArray(session.studentIds) ? session.studentIds.join(', ') : 'N/A'}
+                      {Array.isArray(session.studentIds)
+                        ? session.studentIds.join(", ")
+                        : "N/A"}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Created At</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Created At
+                    </Label>
                     <div className="h-12 px-3 py-3 border border-input rounded-md bg-muted text-base flex items-center">
-                      {session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A'}
+                      {session.createdAt
+                        ? new Date(session.createdAt).toLocaleString()
+                        : "N/A"}
                     </div>
                   </div>
                   <div className="md:col-span-2 lg:col-span-3 pt-4">
-                    <Button 
-                      onClick={handleSaveEdit} 
+                    <Button
+                      onClick={handleSaveEdit}
                       disabled={isActionLoading}
                       className="h-12 px-8 text-base font-semibold"
                       size="lg"
                     >
-                      {isActionLoading ? 'Saving...' : 'Save Changes'}
+                      {isActionLoading ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Session Name</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Session Name
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
                       {session.title}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Start Time</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Start Time
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
-                      {session.startTime ? new Date(session.startTime).toLocaleString() : 'N/A'}
+                      {session.startTime
+                        ? new Date(session.startTime).toLocaleString()
+                        : "N/A"}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">End Time</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      End Time
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
-                      {session.endTime ? new Date(session.endTime).toLocaleString() : 'N/A'}
+                      {session.endTime
+                        ? new Date(session.endTime).toLocaleString()
+                        : "N/A"}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Status</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Status
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
-                      <Badge className={getStatusColor(session.status)} variant="outline">
+                      <Badge
+                        className={getStatusColor(session.status)}
+                        variant="outline"
+                      >
                         {session.status}
                       </Badge>
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Tutor ID</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Tutor ID
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
                       {session.tutorId}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Subject ID</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Subject ID
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
                       {session.subjectId}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Class ID</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Class ID
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
                       {session.classId}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Student IDs</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Student IDs
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
-                      {Array.isArray(session.studentIds) ? session.studentIds.join(', ') : 'N/A'}
+                      {Array.isArray(session.studentIds)
+                        ? session.studentIds.join(", ")
+                        : "N/A"}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-semibold text-muted-foreground">Created At</Label>
+                    <Label className="text-base font-semibold text-muted-foreground">
+                      Created At
+                    </Label>
                     <div className="h-12 px-4 py-3 bg-muted/50 rounded-lg border text-base font-medium flex items-center">
-                      {session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A'}
+                      {session.createdAt
+                        ? new Date(session.createdAt).toLocaleString()
+                        : "N/A"}
                     </div>
                   </div>
                 </div>
@@ -412,14 +493,20 @@ export default function SessionDetailsPage() {
             <CardContent className="p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold text-muted-foreground">Moderator Link</Label>
+                  <Label className="text-base font-semibold text-muted-foreground">
+                    Moderator Link
+                  </Label>
                   <div className="p-4 bg-muted/50 rounded-lg border">
-                    <p className="text-sm font-mono break-all">{session.moderatorLink || 'Not available'}</p>
+                    <p className="text-sm font-mono break-all">
+                      {session.moderatorLink || "Not available"}
+                    </p>
                     {session.moderatorLink && (
-                      <Button 
-                        className="mt-3" 
-                        variant="outline" 
-                        onClick={() => window.open(session.moderatorLink, '_blank')}
+                      <Button
+                        className="mt-3"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(session.moderatorLink, "_blank")
+                        }
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Join as Host
@@ -428,14 +515,20 @@ export default function SessionDetailsPage() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold text-muted-foreground">Participant Link</Label>
+                  <Label className="text-base font-semibold text-muted-foreground">
+                    Participant Link
+                  </Label>
                   <div className="p-4 bg-muted/50 rounded-lg border">
-                    <p className="text-sm font-mono break-all">{session.participantLink || 'Not available'}</p>
+                    <p className="text-sm font-mono break-all">
+                      {session.participantLink || "Not available"}
+                    </p>
                     {session.participantLink && (
-                      <Button 
-                        className="mt-3" 
-                        variant="outline" 
-                        onClick={() => window.open(session.participantLink, '_blank')}
+                      <Button
+                        className="mt-3"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(session.participantLink, "_blank")
+                        }
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Join as Participant
@@ -455,7 +548,8 @@ export default function SessionDetailsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Session</AlertDialogTitle>
             <AlertDialogDescription>
-              This will cancel the session and automatically process a refund if payment was made.
+              This will cancel the session and automatically process a refund if
+              payment was made.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4">
@@ -475,14 +569,17 @@ export default function SessionDetailsPage() {
               disabled={!cancelReason.trim() || isActionLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isActionLoading ? 'Cancelling...' : 'Cancel Session'}
+              {isActionLoading ? "Cancelling..." : "Cancel Session"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Reschedule Dialog */}
-      <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
+      <Dialog
+        open={showRescheduleDialog}
+        onOpenChange={setShowRescheduleDialog}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reschedule Session</DialogTitle>
@@ -497,20 +594,23 @@ export default function SessionDetailsPage() {
                 id="newDateTime"
                 type="datetime-local"
                 value={newDate}
-                onChange={e => setNewDate(e.target.value)}
+                onChange={(e) => setNewDate(e.target.value)}
                 className="mt-2"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRescheduleDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowRescheduleDialog(false)}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleReschedule}
               disabled={!newDate || isActionLoading}
             >
-              {isActionLoading ? 'Rescheduling...' : 'Reschedule Session'}
+              {isActionLoading ? "Rescheduling..." : "Reschedule Session"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -520,8 +620,8 @@ export default function SessionDetailsPage() {
 }
 
 function toDatetimeLocalString(dateStr: string | undefined) {
-  if (!dateStr) return '';
+  if (!dateStr) return "";
   const d = new Date(dateStr);
-  const pad = (n: number) => n.toString().padStart(2, '0');
+  const pad = (n: number) => n.toString().padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

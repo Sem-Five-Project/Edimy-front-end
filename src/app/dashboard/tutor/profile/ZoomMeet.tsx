@@ -9,7 +9,6 @@ interface Props {
   userEmail: string;
 }
 
-
 export default function ZoomMeeting({ url, userName, userEmail }: Props) {
   const [ZoomMtg, setZoomMtg] = useState<any>(null);
 

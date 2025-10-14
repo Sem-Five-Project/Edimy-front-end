@@ -104,13 +104,13 @@ const ToastClose = (_props: any) => null as any;
 const ToastAction = (_props: any) => null as any;
 
 export {
-	type ToastProps,
-	type ToastActionElement,
-	ToastProvider,
-	ToastViewport,
-	Toast,
-	ToastTitle,
-	ToastDescription,
-	ToastClose,
-	ToastAction,
+  type ToastProps,
+  type ToastActionElement,
+  ToastProvider,
+  ToastViewport,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
 };

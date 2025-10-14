@@ -1,12 +1,12 @@
-declare module '@radix-ui/react-hover-card' {
-  import * as React from 'react';
+declare module "@radix-ui/react-hover-card" {
+  import * as React from "react";
   export const Root: React.ComponentType<any>;
   export const Trigger: React.ComponentType<any>;
   export const Content: React.ComponentType<any>;
 }
 
-declare module '@radix-ui/react-context-menu' {
-  import * as React from 'react';
+declare module "@radix-ui/react-context-menu" {
+  import * as React from "react";
   export const Root: React.ComponentType<any>;
   export const Trigger: React.ComponentType<any>;
   export const Group: React.ComponentType<any>;
@@ -24,8 +24,8 @@ declare module '@radix-ui/react-context-menu' {
   export const Separator: React.ComponentType<any>;
 }
 
-declare module '@radix-ui/react-dialog' {
-  import * as React from 'react';
+declare module "@radix-ui/react-dialog" {
+  import * as React from "react";
   export const Root: React.ComponentType<any>;
   export const Trigger: React.ComponentType<any>;
   export const Portal: React.ComponentType<any>;
@@ -36,18 +36,18 @@ declare module '@radix-ui/react-dialog' {
   export const Description: React.ComponentType<any>;
 }
 
-declare module '@radix-ui/react-label' {
-  import * as React from 'react';
+declare module "@radix-ui/react-label" {
+  import * as React from "react";
   export const Root: React.ComponentType<any>;
 }
 
-declare module '@radix-ui/react-slot' {
-  import * as React from 'react';
+declare module "@radix-ui/react-slot" {
+  import * as React from "react";
   export const Slot: React.ComponentType<any>;
 }
 
-declare module '@radix-ui/react-menubar' {
-  import * as React from 'react';
+declare module "@radix-ui/react-menubar" {
+  import * as React from "react";
   export const Root: React.ComponentType<any>;
   export const Menu: React.ComponentType<any>;
   export const Trigger: React.ComponentType<any>;
@@ -66,8 +66,8 @@ declare module '@radix-ui/react-menubar' {
   export const Separator: React.ComponentType<any>;
 }
 
-declare module '@radix-ui/react-navigation-menu' {
-  import * as React from 'react';
+declare module "@radix-ui/react-navigation-menu" {
+  import * as React from "react";
   export const Root: React.ComponentType<any>;
   export const List: React.ComponentType<any>;
   export const Item: React.ComponentType<any>;

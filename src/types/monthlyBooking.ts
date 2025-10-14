@@ -19,7 +19,7 @@ export interface MonthlyClassBooking {
   weekBreakdown: WeekBreakdown[];
   totalSlots: number;
   totalCost: number;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  status: "PENDING" | "CONFIRMED" | "CANCELLED";
   createdAt: string;
   startDate: string;
   endDate: string;

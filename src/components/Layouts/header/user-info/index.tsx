@@ -39,7 +39,9 @@ export function UserInfo() {
     name: admin ? `${admin.firstName} ${admin.lastName}` : "Admin User",
     email: admin?.email || "admin@edimy.com",
     img: admin?.profileImage || "/images/user/user-03.png",
-    initials: admin ? `${admin.firstName.charAt(0)}${admin.lastName.charAt(0)}` : "AU"
+    initials: admin
+      ? `${admin.firstName.charAt(0)}${admin.lastName.charAt(0)}`
+      : "AU",
   };
 
   return (
@@ -111,8 +113,10 @@ export function UserInfo() {
               {isLoading ? "Loading..." : USER.name}
             </div>
 
-            <div className="leading-none text-gray-6">{isLoading ? "..." : USER.email}</div>
-            
+            <div className="leading-none text-gray-6">
+              {isLoading ? "..." : USER.email}
+            </div>
+
             {admin?.role && (
               <div className="text-xs text-primary font-medium uppercase tracking-wide">
                 {admin.role}

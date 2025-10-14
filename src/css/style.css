@@ -3,31 +3,31 @@
 @tailwind utilities;
 
 @theme {
-  --color-gray-1: #F8F9FA;
-  --color-gray-2: #F1F3F4;
-  --color-gray-3: #E8EAED;
-  --color-gray-4: #DADCE0;
-  --color-gray-5: #BDC1C6;
-  --color-gray-6: #80868B;
-  --color-gray-7: #5F6368;
-  --color-gray-8: #3C4043;
+  --color-gray-1: #f8f9fa;
+  --color-gray-2: #f1f3f4;
+  --color-gray-3: #e8eaed;
+  --color-gray-4: #dadce0;
+  --color-gray-5: #bdc1c6;
+  --color-gray-6: #80868b;
+  --color-gray-7: #5f6368;
+  --color-gray-8: #3c4043;
   --color-gray-9: #202124;
-  
-  --color-dark-1: #181A20;
-  --color-dark-2: #1E222B;
-  --color-dark-3: #252A34;
-  --color-dark-4: #2C3340;
+
+  --color-dark-1: #181a20;
+  --color-dark-2: #1e222b;
+  --color-dark-3: #252a34;
+  --color-dark-4: #2c3340;
   --color-dark-5: #374151;
-  --color-dark-6: #9CA3AF;
-  --color-dark-7: #D1D5DB;
-  --color-dark-8: #E5E7EB;
-  --color-dark-9: #F9FAFB;
-  
-  --color-stroke: #E2E8F0;
-  --color-stroke-dark: #2D3748;
-  
-  --color-primary: #3B82F6;
-  
+  --color-dark-6: #9ca3af;
+  --color-dark-7: #d1d5db;
+  --color-dark-8: #e5e7eb;
+  --color-dark-9: #f9fafb;
+
+  --color-stroke: #e2e8f0;
+  --color-stroke-dark: #2d3748;
+
+  --color-primary: #3b82f6;
+
   --spacing-4_5: 1.125rem;
   --spacing-5_5: 1.375rem;
   --spacing-6_5: 1.625rem;
@@ -56,7 +56,7 @@
     scrollbar-width: none; /* Firefox */
   }
 
-   .custom-scrollbar {
+  .custom-scrollbar {
     @apply overflow-auto;
   }
 
@@ -72,7 +72,6 @@
     @apply relative flex-1 rounded-full bg-neutral-200/40 dark:bg-stroke-dark;
   }
 
-  
   .chat-height {
     @apply h-[calc(100vh_-_8.125rem)] lg:h-[calc(100vh_-_5.625rem)];
   }

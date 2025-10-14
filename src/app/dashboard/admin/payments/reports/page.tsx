@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { 
+import { useState, useEffect } from "react";
+import {
   getFinancialReports,
   getTransactions,
   getPayouts,
   type FinancialReport,
   type TransactionFilters,
-  type PayoutFilters
-} from '@/lib/paymentsData';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  type PayoutFilters,
+} from "@/lib/paymentsData";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart,
   Bar,
@@ -38,8 +38,8 @@ import {
   Legend,
   ResponsiveContainer,
   Area,
-  AreaChart
-} from 'recharts';
+  AreaChart,
+} from "recharts";
 import {
   TrendingUp,
   TrendingDown,
@@ -56,15 +56,26 @@ import {
   FileText,
   Eye,
   ArrowUpRight,
-  ArrowDownRight
-} from 'lucide-react';
+  ArrowDownRight,
+} from "lucide-react";
 
-const CHART_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316'];
+const CHART_COLORS = [
+  "#3b82f6",
+  "#ef4444",
+  "#10b981",
+  "#f59e0b",
+  "#8b5cf6",
+  "#06b6d4",
+  "#f97316",
+];
 
 export default function FinancialReportsPage() {
   const [reports, setReports] = useState<FinancialReport[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
-  const [selectedReport, setSelectedReport] = useState<string>('revenue_overview');
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "7d" | "30d" | "90d" | "1y"
+  >("30d");
+  const [selectedReport, setSelectedReport] =
+    useState<string>("revenue_overview");
   const [loading, setLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
@@ -83,7 +94,7 @@ export default function FinancialReportsPage() {
       const response = await getFinancialReports(selectedPeriod);
       setReports(response);
     } catch (error) {
-      console.error('Error fetching financial reports:', error);
+      console.error("Error fetching financial reports:", error);
     } finally {
       setLoading(false);
     }
@@ -96,26 +107,33 @@ export default function FinancialReportsPage() {
         page: 1,
         limit: 1000,
         dateFrom: getDateFromPeriod(selectedPeriod),
-        dateTo: new Date().toISOString().split('T')[0]
+        dateTo: new Date().toISOString().split("T")[0],
       } as TransactionFilters);
 
       const payoutsData = await getPayouts({
         page: 1,
         limit: 1000,
         dateFrom: getDateFromPeriod(selectedPeriod),
-        dateTo: new Date().toISOString().split('T')[0]
+        dateTo: new Date().toISOString().split("T")[0],
       } as PayoutFilters);
 
       // Generate revenue trend data
-      const revenueByDate = generateRevenueByDate(transactionsData.transactions, selectedPeriod);
+      const revenueByDate = generateRevenueByDate(
+        transactionsData.transactions,
+        selectedPeriod,
+      );
       setRevenueData(revenueByDate);
 
       // Generate payment method breakdown
-      const paymentMethods = generatePaymentMethodData(transactionsData.transactions);
+      const paymentMethods = generatePaymentMethodData(
+        transactionsData.transactions,
+      );
       setPaymentMethodData(paymentMethods);
 
       // Generate tutor performance data
-      const tutorPerformance = generateTutorPerformanceData(payoutsData.payouts);
+      const tutorPerformance = generateTutorPerformanceData(
+        payoutsData.payouts,
+      );
       setTutorPerformanceData(tutorPerformance);
 
       // Generate commission data
@@ -123,91 +141,121 @@ export default function FinancialReportsPage() {
       setCommissionData(commissions);
 
       // Generate growth data
-      const growth = generateGrowthData(transactionsData.transactions, selectedPeriod);
+      const growth = generateGrowthData(
+        transactionsData.transactions,
+        selectedPeriod,
+      );
       setGrowthData(growth);
-
     } catch (error) {
-      console.error('Error fetching chart data:', error);
+      console.error("Error fetching chart data:", error);
     }
   };
 
   const getDateFromPeriod = (period: string): string => {
     const now = new Date();
     switch (period) {
-      case '7d':
-        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case '30d':
-        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case '90d':
-        return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case '1y':
-        return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      case "7d":
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
+      case "30d":
+        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
+      case "90d":
+        return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
+      case "1y":
+        return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
       default:
-        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
     }
   };
 
   const generateRevenueByDate = (transactions: any[], period: string) => {
-    const days = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 365;
+    const days =
+      period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 365;
     const result = [];
-    
+
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      const dayTransactions = transactions.filter(t => 
-        t.transactionDate.startsWith(dateStr) && t.status === 'Paid'
+      const dateStr = date.toISOString().split("T")[0];
+
+      const dayTransactions = transactions.filter(
+        (t) => t.transactionDate.startsWith(dateStr) && t.status === "Paid",
       );
-      
+
       const revenue = dayTransactions.reduce((sum, t) => sum + t.amount, 0);
       const commission = revenue * 0.15; // 15% commission
-      
+
       result.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
         revenue: Math.round(revenue),
         commission: Math.round(commission),
-        transactions: dayTransactions.length
+        transactions: dayTransactions.length,
       });
     }
-    
+
     return result;
   };
 
   const generatePaymentMethodData = (transactions: any[]) => {
-    const methods = transactions.reduce((acc, t) => {
-      if (t.status === 'Paid') {
-        acc[t.paymentMethod] = (acc[t.paymentMethod] || 0) + t.amount;
-      }
-      return acc;
-    }, {} as Record<string, number>);
+    const methods = transactions.reduce(
+      (acc, t) => {
+        if (t.status === "Paid") {
+          acc[t.paymentMethod] = (acc[t.paymentMethod] || 0) + t.amount;
+        }
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-    const totalAmount = Object.values(methods).reduce((sum: number, amount) => sum + (amount as number), 0);
-    
+    const totalAmount = Object.values(methods).reduce(
+      (sum: number, amount) => sum + (amount as number),
+      0,
+    );
+
     return Object.entries(methods).map(([method, amount]) => ({
       name: method,
       value: Math.round(amount as number),
-      percentage: Math.round(((amount as number) / totalAmount) * 100)
+      percentage: Math.round(((amount as number) / totalAmount) * 100),
     }));
   };
 
   const generateTutorPerformanceData = (payouts: any[]) => {
-    const tutorStats = payouts.reduce((acc, p) => {
-      const tutorName = p.tutor.name;
-      if (!acc[tutorName]) {
-        acc[tutorName] = { earnings: 0, sessions: 0 };
-      }
-      acc[tutorName].earnings += p.amount;
-      acc[tutorName].sessions += 1;
-      return acc;
-    }, {} as Record<string, { earnings: number; sessions: number }>);
+    const tutorStats = payouts.reduce(
+      (acc, p) => {
+        const tutorName = p.tutor.name;
+        if (!acc[tutorName]) {
+          acc[tutorName] = { earnings: 0, sessions: 0 };
+        }
+        acc[tutorName].earnings += p.amount;
+        acc[tutorName].sessions += 1;
+        return acc;
+      },
+      {} as Record<string, { earnings: number; sessions: number }>,
+    );
 
     return Object.entries(tutorStats)
       .map(([name, stats]) => ({
         tutor: name,
-        earnings: Math.round((stats as { earnings: number; sessions: number }).earnings),
+        earnings: Math.round(
+          (stats as { earnings: number; sessions: number }).earnings,
+        ),
         sessions: (stats as { earnings: number; sessions: number }).sessions,
-        avgPerSession: Math.round((stats as { earnings: number; sessions: number }).earnings / (stats as { earnings: number; sessions: number }).sessions)
+        avgPerSession: Math.round(
+          (stats as { earnings: number; sessions: number }).earnings /
+            (stats as { earnings: number; sessions: number }).sessions,
+        ),
       }))
       .sort((a, b) => b.earnings - a.earnings)
       .slice(0, 10);
@@ -215,37 +263,45 @@ export default function FinancialReportsPage() {
 
   const generateCommissionData = (transactions: any[]) => {
     const monthlyCommissions = transactions
-      .filter(t => t.status === 'Paid')
-      .reduce((acc, t) => {
-        const month = new Date(t.transactionDate).toLocaleDateString('en-US', { month: 'short' });
-        acc[month] = (acc[month] || 0) + (t.amount * 0.15);
-        return acc;
-      }, {} as Record<string, number>);
+      .filter((t) => t.status === "Paid")
+      .reduce(
+        (acc, t) => {
+          const month = new Date(t.transactionDate).toLocaleDateString(
+            "en-US",
+            { month: "short" },
+          );
+          acc[month] = (acc[month] || 0) + t.amount * 0.15;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
     return Object.entries(monthlyCommissions).map(([month, commission]) => ({
       month,
-      commission: Math.round(commission as number)
+      commission: Math.round(commission as number),
     }));
   };
 
   const generateGrowthData = (transactions: any[], period: string) => {
-    const paidTransactions = transactions.filter(t => t.status === 'Paid');
+    const paidTransactions = transactions.filter((t) => t.status === "Paid");
     const currentTotal = paidTransactions.reduce((sum, t) => sum + t.amount, 0);
-    
+
     // Simulate previous period data for growth calculation
     const previousTotal = currentTotal * (0.8 + Math.random() * 0.4);
     const growth = ((currentTotal - previousTotal) / previousTotal) * 100;
-    
-    return [{
-      period: selectedPeriod,
-      current: Math.round(currentTotal),
-      previous: Math.round(previousTotal),
-      growth: Math.round(growth * 100) / 100
-    }];
+
+    return [
+      {
+        period: selectedPeriod,
+        current: Math.round(currentTotal),
+        previous: Math.round(previousTotal),
+        growth: Math.round(growth * 100) / 100,
+      },
+    ];
   };
 
   const getCurrentReport = () => {
-    return reports.find(r => r.type === selectedReport) || reports[0];
+    return reports.find((r) => r.type === selectedReport) || reports[0];
   };
 
   const handleExportReport = async () => {
@@ -257,13 +313,15 @@ export default function FinancialReportsPage() {
       charts: {
         revenue: revenueData,
         paymentMethods: paymentMethodData,
-        tutorPerformance: tutorPerformanceData
-      }
+        tutorPerformance: tutorPerformanceData,
+      },
     };
-    
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `financial_report_${selectedReport}_${selectedPeriod}.json`;
     document.body.appendChild(a);
@@ -295,7 +353,10 @@ export default function FinancialReportsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Select value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as any)}>
+          <Select
+            value={selectedPeriod}
+            onValueChange={(value) => setSelectedPeriod(value as any)}
+          >
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -325,15 +386,21 @@ export default function FinancialReportsPage() {
               <div className="flex items-center">
                 <DollarSign className="w-8 h-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold">${currentReport.metrics.totalRevenue.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Revenue
+                  </p>
+                  <p className="text-2xl font-bold">
+                    ${currentReport.metrics.totalRevenue.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     {currentReport.metrics.revenueGrowth >= 0 ? (
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                     ) : (
                       <ArrowDownRight className="w-4 h-4 text-red-600" />
                     )}
-                    <span className={`text-sm ${currentReport.metrics.revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span
+                      className={`text-sm ${currentReport.metrics.revenueGrowth >= 0 ? "text-green-600" : "text-red-600"}`}
+                    >
                       {Math.abs(currentReport.metrics.revenueGrowth)}%
                     </span>
                   </div>
@@ -341,21 +408,27 @@ export default function FinancialReportsPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <CreditCard className="w-8 h-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Commission Earned</p>
-                  <p className="text-2xl font-bold">${currentReport.metrics.commissionEarned.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Commission Earned
+                  </p>
+                  <p className="text-2xl font-bold">
+                    ${currentReport.metrics.commissionEarned.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     {currentReport.metrics.commissionGrowth >= 0 ? (
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                     ) : (
                       <ArrowDownRight className="w-4 h-4 text-red-600" />
                     )}
-                    <span className={`text-sm ${currentReport.metrics.commissionGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span
+                      className={`text-sm ${currentReport.metrics.commissionGrowth >= 0 ? "text-green-600" : "text-red-600"}`}
+                    >
                       {Math.abs(currentReport.metrics.commissionGrowth)}%
                     </span>
                   </div>
@@ -369,15 +442,21 @@ export default function FinancialReportsPage() {
               <div className="flex items-center">
                 <Users className="w-8 h-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Total Transactions</p>
-                  <p className="text-2xl font-bold">{currentReport.metrics.totalTransactions.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Transactions
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {currentReport.metrics.totalTransactions.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     {currentReport.metrics.transactionGrowth >= 0 ? (
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                     ) : (
                       <ArrowDownRight className="w-4 h-4 text-red-600" />
                     )}
-                    <span className={`text-sm ${currentReport.metrics.transactionGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span
+                      className={`text-sm ${currentReport.metrics.transactionGrowth >= 0 ? "text-green-600" : "text-red-600"}`}
+                    >
                       {Math.abs(currentReport.metrics.transactionGrowth)}%
                     </span>
                   </div>
@@ -391,15 +470,21 @@ export default function FinancialReportsPage() {
               <div className="flex items-center">
                 <TrendingUp className="w-8 h-8 text-yellow-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Average Order Value</p>
-                  <p className="text-2xl font-bold">${currentReport.metrics.averageOrderValue.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Average Order Value
+                  </p>
+                  <p className="text-2xl font-bold">
+                    ${currentReport.metrics.averageOrderValue.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     {currentReport.metrics.aovGrowth >= 0 ? (
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                     ) : (
                       <ArrowDownRight className="w-4 h-4 text-red-600" />
                     )}
-                    <span className={`text-sm ${currentReport.metrics.aovGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span
+                      className={`text-sm ${currentReport.metrics.aovGrowth >= 0 ? "text-green-600" : "text-red-600"}`}
+                    >
                       {Math.abs(currentReport.metrics.aovGrowth)}%
                     </span>
                   </div>
@@ -414,7 +499,9 @@ export default function FinancialReportsPage() {
       <Tabs value={selectedReport} onValueChange={setSelectedReport}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="revenue_overview">Revenue Overview</TabsTrigger>
-          <TabsTrigger value="commission_analysis">Commission Analysis</TabsTrigger>
+          <TabsTrigger value="commission_analysis">
+            Commission Analysis
+          </TabsTrigger>
           <TabsTrigger value="tutor_performance">Tutor Performance</TabsTrigger>
           <TabsTrigger value="payment_insights">Payment Insights</TabsTrigger>
         </TabsList>
@@ -435,8 +522,22 @@ export default function FinancialReportsPage() {
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip />
-                    <Area type="monotone" dataKey="revenue" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="commission" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stackId="1"
+                      stroke="#3b82f6"
+                      fill="#3b82f6"
+                      fillOpacity={0.6}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="commission"
+                      stackId="1"
+                      stroke="#10b981"
+                      fill="#10b981"
+                      fillOpacity={0.6}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -457,13 +558,18 @@ export default function FinancialReportsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percentage }) => `${name} (${percentage}%)`}
+                      label={({ name, percentage }) =>
+                        `${name} (${percentage}%)`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
                       {paymentMethodData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -480,14 +586,23 @@ export default function FinancialReportsPage() {
             <CardContent>
               <div className="space-y-4">
                 {currentReport?.breakdown.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div>
                       <h3 className="font-medium">{item.category}</h3>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.description}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-lg">${item.amount.toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">{item.percentage}% of total</p>
+                      <p className="font-bold text-lg">
+                        ${item.amount.toLocaleString()}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.percentage}% of total
+                      </p>
                       <Progress value={item.percentage} className="w-24 mt-1" />
                     </div>
                   </div>
@@ -513,7 +628,12 @@ export default function FinancialReportsPage() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="commission" stroke="#3b82f6" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="commission"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -532,7 +652,12 @@ export default function FinancialReportsPage() {
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={tutorPerformanceData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="tutor" angle={-45} textAnchor="end" height={100} />
+                  <XAxis
+                    dataKey="tutor"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                  />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="earnings" fill="#3b82f6" />
@@ -560,9 +685,13 @@ export default function FinancialReportsPage() {
                     {tutorPerformanceData.map((tutor, index) => (
                       <tr key={index} className="border-b hover:bg-muted/50">
                         <td className="p-4 font-medium">{tutor.tutor}</td>
-                        <td className="p-4">${tutor.earnings.toLocaleString()}</td>
+                        <td className="p-4">
+                          ${tutor.earnings.toLocaleString()}
+                        </td>
                         <td className="p-4">{tutor.sessions}</td>
-                        <td className="p-4">${tutor.avgPerSession.toLocaleString()}</td>
+                        <td className="p-4">
+                          ${tutor.avgPerSession.toLocaleString()}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -581,7 +710,10 @@ export default function FinancialReportsPage() {
               <CardContent>
                 <div className="space-y-4">
                   {paymentMethodData.map((method, index) => (
-                    <div key={index} className="flex items-center justify-between">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between"
+                    >
                       <span className="font-medium">{method.name}</span>
                       <div className="flex items-center gap-2">
                         <span>${method.value.toLocaleString()}</span>
@@ -608,13 +740,18 @@ export default function FinancialReportsPage() {
                         ) : (
                           <TrendingDown className="w-4 h-4 text-red-600" />
                         )}
-                        <span className={data.growth >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        <span
+                          className={
+                            data.growth >= 0 ? "text-green-600" : "text-red-600"
+                          }
+                        >
                           {Math.abs(data.growth)}%
                         </span>
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Current: ${data.current.toLocaleString()} | Previous: ${data.previous.toLocaleString()}
+                      Current: ${data.current.toLocaleString()} | Previous: $
+                      {data.previous.toLocaleString()}
                     </div>
                   </div>
                 ))}

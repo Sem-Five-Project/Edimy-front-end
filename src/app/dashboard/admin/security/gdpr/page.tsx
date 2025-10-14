@@ -1,18 +1,64 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, MoreHorizontal, Eye, Shield, Download, Check, X, FileText, Hash, Calendar, User, Clock } from "lucide-react";
+import {
+  Search,
+  MoreHorizontal,
+  Eye,
+  Shield,
+  Download,
+  Check,
+  X,
+  FileText,
+  Hash,
+  Calendar,
+  User,
+  Clock,
+} from "lucide-react";
 
 interface GDPRRequest {
   id: string;
@@ -21,132 +67,153 @@ interface GDPRRequest {
     id: string;
     name: string;
     email: string;
-    role: 'Student' | 'Tutor';
+    role: "Student" | "Tutor";
   };
-  requestType: 'Data Deletion' | 'Data Export' | 'Account Deactivation' | 'Data Access' | 'Data Rectification';
+  requestType:
+    | "Data Deletion"
+    | "Data Export"
+    | "Account Deactivation"
+    | "Data Access"
+    | "Data Rectification";
   description: string;
-  status: 'Pending' | 'In Progress' | 'Completed' | 'Rejected';
+  status: "Pending" | "In Progress" | "Completed" | "Rejected";
   submittedDate: string;
   completedDate?: string;
   adminNotes?: string;
   rejectionReason?: string;
   exportFile?: string;
-  priority: 'Low' | 'Medium' | 'High';
+  priority: "Low" | "Medium" | "High";
 }
 
 const mockGDPRRequests: GDPRRequest[] = [
   {
-    id: '1',
-    requestId: 'GDPR-2024-001',
+    id: "1",
+    requestId: "GDPR-2024-001",
     user: {
-      id: 'user-001',
-      name: 'Alex Chen',
-      email: 'alex.chen@email.com',
-      role: 'Student'
+      id: "user-001",
+      name: "Alex Chen",
+      email: "alex.chen@email.com",
+      role: "Student",
     },
-    requestType: 'Data Export',
-    description: 'I would like to receive a copy of all my personal data stored in your system.',
-    status: 'Completed',
-    submittedDate: '2024-03-10',
-    completedDate: '2024-03-12',
-    adminNotes: 'Data export completed successfully. User data package generated and sent via secure email.',
-    exportFile: 'alex_chen_data_export_20240312.zip',
-    priority: 'Medium'
+    requestType: "Data Export",
+    description:
+      "I would like to receive a copy of all my personal data stored in your system.",
+    status: "Completed",
+    submittedDate: "2024-03-10",
+    completedDate: "2024-03-12",
+    adminNotes:
+      "Data export completed successfully. User data package generated and sent via secure email.",
+    exportFile: "alex_chen_data_export_20240312.zip",
+    priority: "Medium",
   },
   {
-    id: '2',
-    requestId: 'GDPR-2024-002',
+    id: "2",
+    requestId: "GDPR-2024-002",
     user: {
-      id: 'user-002',
-      name: 'Emma Wilson',
-      email: 'emma.wilson@email.com',
-      role: 'Student'
+      id: "user-002",
+      name: "Emma Wilson",
+      email: "emma.wilson@email.com",
+      role: "Student",
     },
-    requestType: 'Data Deletion',
-    description: 'I want to delete my account and all associated personal data permanently.',
-    status: 'In Progress',
-    submittedDate: '2024-03-14',
-    adminNotes: 'Account deletion process initiated. Waiting for final session completion before proceeding.',
-    priority: 'High'
+    requestType: "Data Deletion",
+    description:
+      "I want to delete my account and all associated personal data permanently.",
+    status: "In Progress",
+    submittedDate: "2024-03-14",
+    adminNotes:
+      "Account deletion process initiated. Waiting for final session completion before proceeding.",
+    priority: "High",
   },
   {
-    id: '3',
-    requestId: 'GDPR-2024-003',
+    id: "3",
+    requestId: "GDPR-2024-003",
     user: {
-      id: 'tutor-001',
-      name: 'Dr. Sarah Johnson',
-      email: 'sarah.johnson@email.com',
-      role: 'Tutor'
+      id: "tutor-001",
+      name: "Dr. Sarah Johnson",
+      email: "sarah.johnson@email.com",
+      role: "Tutor",
     },
-    requestType: 'Account Deactivation',
-    description: 'I need to temporarily deactivate my tutor account due to personal reasons.',
-    status: 'Pending',
-    submittedDate: '2024-03-15',
-    priority: 'Medium'
+    requestType: "Account Deactivation",
+    description:
+      "I need to temporarily deactivate my tutor account due to personal reasons.",
+    status: "Pending",
+    submittedDate: "2024-03-15",
+    priority: "Medium",
   },
   {
-    id: '4',
-    requestId: 'GDPR-2024-004',
+    id: "4",
+    requestId: "GDPR-2024-004",
     user: {
-      id: 'user-003',
-      name: 'James Smith',
-      email: 'james.smith@email.com',
-      role: 'Student'
+      id: "user-003",
+      name: "James Smith",
+      email: "james.smith@email.com",
+      role: "Student",
     },
-    requestType: 'Data Rectification',
-    description: 'There are errors in my profile information that need to be corrected.',
-    status: 'Rejected',
-    submittedDate: '2024-03-13',
-    completedDate: '2024-03-14',
-    rejectionReason: 'User can update profile information directly through account settings.',
-    adminNotes: 'Guided user to self-service profile update options.',
-    priority: 'Low'
+    requestType: "Data Rectification",
+    description:
+      "There are errors in my profile information that need to be corrected.",
+    status: "Rejected",
+    submittedDate: "2024-03-13",
+    completedDate: "2024-03-14",
+    rejectionReason:
+      "User can update profile information directly through account settings.",
+    adminNotes: "Guided user to self-service profile update options.",
+    priority: "Low",
   },
   {
-    id: '5',
-    requestId: 'GDPR-2024-005',
+    id: "5",
+    requestId: "GDPR-2024-005",
     user: {
-      id: 'user-004',
-      name: 'Sophie Davis',
-      email: 'sophie.davis@email.com',
-      role: 'Student'
+      id: "user-004",
+      name: "Sophie Davis",
+      email: "sophie.davis@email.com",
+      role: "Student",
     },
-    requestType: 'Data Access',
-    description: 'I want to know what personal data you have about me and how it is being used.',
-    status: 'Pending',
-    submittedDate: '2024-03-16',
-    priority: 'Medium'
-  }
+    requestType: "Data Access",
+    description:
+      "I want to know what personal data you have about me and how it is being used.",
+    status: "Pending",
+    submittedDate: "2024-03-16",
+    priority: "Medium",
+  },
 ];
 
 export default function GDPRCompliancePage() {
   const [requests, setRequests] = useState<GDPRRequest[]>(mockGDPRRequests);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false);
-  const [currentRequest, setCurrentRequest] = useState<GDPRRequest | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [processingAction, setProcessingAction] = useState<'approve' | 'reject' | 'complete'>('approve');
+  const [currentRequest, setCurrentRequest] = useState<GDPRRequest | null>(
+    null,
+  );
+  const [adminNotes, setAdminNotes] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [processingAction, setProcessingAction] = useState<
+    "approve" | "reject" | "complete"
+  >("approve");
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || request.requestType === typeFilter;
-    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || request.priority === priorityFilter;
-    
+  const filteredRequests = requests.filter((request) => {
+    const matchesSearch =
+      request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType =
+      typeFilter === "all" || request.requestType === typeFilter;
+    const matchesStatus =
+      statusFilter === "all" || request.status === statusFilter;
+    const matchesPriority =
+      priorityFilter === "all" || request.priority === priorityFilter;
+
     return matchesSearch && matchesType && matchesStatus && matchesPriority;
   });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRequests(filteredRequests.map(request => request.id));
+      setSelectedRequests(filteredRequests.map((request) => request.id));
     } else {
       setSelectedRequests([]);
     }
@@ -156,22 +223,31 @@ export default function GDPRCompliancePage() {
     if (checked) {
       setSelectedRequests([...selectedRequests, requestId]);
     } else {
-      setSelectedRequests(selectedRequests.filter(id => id !== requestId));
+      setSelectedRequests(selectedRequests.filter((id) => id !== requestId));
     }
   };
 
-  const handleUpdateRequestStatus = (requestId: string, newStatus: 'Pending' | 'In Progress' | 'Completed' | 'Rejected', notes?: string, rejectionReason?: string) => {
-    setRequests(requests.map(request => 
-      request.id === requestId 
-        ? { 
-            ...request, 
-            status: newStatus,
-            ...(notes && { adminNotes: notes }),
-            ...(rejectionReason && { rejectionReason }),
-            ...(newStatus === 'Completed' || newStatus === 'Rejected' ? { completedDate: new Date().toISOString().split('T')[0] } : {})
-          }
-        : request
-    ));
+  const handleUpdateRequestStatus = (
+    requestId: string,
+    newStatus: "Pending" | "In Progress" | "Completed" | "Rejected",
+    notes?: string,
+    rejectionReason?: string,
+  ) => {
+    setRequests(
+      requests.map((request) =>
+        request.id === requestId
+          ? {
+              ...request,
+              status: newStatus,
+              ...(notes && { adminNotes: notes }),
+              ...(rejectionReason && { rejectionReason }),
+              ...(newStatus === "Completed" || newStatus === "Rejected"
+                ? { completedDate: new Date().toISOString().split("T")[0] }
+                : {}),
+            }
+          : request,
+      ),
+    );
   };
 
   const openViewDialog = (request: GDPRRequest) => {
@@ -179,43 +255,46 @@ export default function GDPRCompliancePage() {
     setIsViewDialogOpen(true);
   };
 
-  const openProcessDialog = (request: GDPRRequest, action: 'approve' | 'reject' | 'complete') => {
+  const openProcessDialog = (
+    request: GDPRRequest,
+    action: "approve" | "reject" | "complete",
+  ) => {
     setCurrentRequest(request);
     setProcessingAction(action);
-    setAdminNotes(request.adminNotes || '');
-    setRejectionReason(request.rejectionReason || '');
+    setAdminNotes(request.adminNotes || "");
+    setRejectionReason(request.rejectionReason || "");
     setIsProcessDialogOpen(true);
   };
 
   const handleProcessRequest = () => {
     if (!currentRequest) return;
 
-    let newStatus: 'Pending' | 'In Progress' | 'Completed' | 'Rejected';
+    let newStatus: "Pending" | "In Progress" | "Completed" | "Rejected";
     switch (processingAction) {
-      case 'approve':
-        newStatus = 'In Progress';
+      case "approve":
+        newStatus = "In Progress";
         break;
-      case 'complete':
-        newStatus = 'Completed';
+      case "complete":
+        newStatus = "Completed";
         break;
-      case 'reject':
-        newStatus = 'Rejected';
+      case "reject":
+        newStatus = "Rejected";
         break;
       default:
-        newStatus = 'Pending';
+        newStatus = "Pending";
     }
 
     handleUpdateRequestStatus(
-      currentRequest.id, 
-      newStatus, 
-      adminNotes, 
-      processingAction === 'reject' ? rejectionReason : undefined
+      currentRequest.id,
+      newStatus,
+      adminNotes,
+      processingAction === "reject" ? rejectionReason : undefined,
     );
 
     setIsProcessDialogOpen(false);
     setCurrentRequest(null);
-    setAdminNotes('');
-    setRejectionReason('');
+    setAdminNotes("");
+    setRejectionReason("");
   };
 
   const handleExportData = (userId: string) => {
@@ -225,38 +304,38 @@ export default function GDPRCompliancePage() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'Pending':
-        return 'secondary';
-      case 'In Progress':
-        return 'default';
-      case 'Completed':
-        return 'default';
-      case 'Rejected':
-        return 'destructive';
+      case "Pending":
+        return "secondary";
+      case "In Progress":
+        return "default";
+      case "Completed":
+        return "default";
+      case "Rejected":
+        return "destructive";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
   const getPriorityBadgeVariant = (priority: string) => {
     switch (priority) {
-      case 'High':
-        return 'destructive';
-      case 'Medium':
-        return 'secondary';
-      case 'Low':
-        return 'outline';
+      case "High":
+        return "destructive";
+      case "Medium":
+        return "secondary";
+      case "Low":
+        return "outline";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
   // Mock statistics
   const complianceStats = {
     totalRequests: requests.length,
-    pendingRequests: requests.filter(r => r.status === 'Pending').length,
-    completedRequests: requests.filter(r => r.status === 'Completed').length,
-    avgProcessingTime: '2.3 days'
+    pendingRequests: requests.filter((r) => r.status === "Pending").length,
+    completedRequests: requests.filter((r) => r.status === "Completed").length,
+    avgProcessingTime: "2.3 days",
   };
 
   return (
@@ -269,11 +348,15 @@ export default function GDPRCompliancePage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Requests
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{complianceStats.totalRequests}</div>
+            <div className="text-2xl font-bold">
+              {complianceStats.totalRequests}
+            </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
@@ -283,7 +366,9 @@ export default function GDPRCompliancePage() {
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{complianceStats.pendingRequests}</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {complianceStats.pendingRequests}
+            </div>
             <p className="text-xs text-muted-foreground">Requires action</p>
           </CardContent>
         </Card>
@@ -293,17 +378,25 @@ export default function GDPRCompliancePage() {
             <Check className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{complianceStats.completedRequests}</div>
-            <p className="text-xs text-muted-foreground">Successfully processed</p>
+            <div className="text-2xl font-bold text-green-600">
+              {complianceStats.completedRequests}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Successfully processed
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Processing</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Avg Processing
+            </CardTitle>
             <Shield className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{complianceStats.avgProcessingTime}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {complianceStats.avgProcessingTime}
+            </div>
             <p className="text-xs text-muted-foreground">Response time</p>
           </CardContent>
         </Card>
@@ -313,7 +406,8 @@ export default function GDPRCompliancePage() {
         <CardHeader>
           <CardTitle>GDPR Requests</CardTitle>
           <CardDescription>
-            Manage privacy and data protection requests under GDPR and similar regulations.
+            Manage privacy and data protection requests under GDPR and similar
+            regulations.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -338,9 +432,13 @@ export default function GDPRCompliancePage() {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Data Deletion">Data Deletion</SelectItem>
                 <SelectItem value="Data Export">Data Export</SelectItem>
-                <SelectItem value="Account Deactivation">Account Deactivation</SelectItem>
+                <SelectItem value="Account Deactivation">
+                  Account Deactivation
+                </SelectItem>
                 <SelectItem value="Data Access">Data Access</SelectItem>
-                <SelectItem value="Data Rectification">Data Rectification</SelectItem>
+                <SelectItem value="Data Rectification">
+                  Data Rectification
+                </SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -391,7 +489,10 @@ export default function GDPRCompliancePage() {
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
-                      checked={selectedRequests.length === filteredRequests.length && filteredRequests.length > 0}
+                      checked={
+                        selectedRequests.length === filteredRequests.length &&
+                        filteredRequests.length > 0
+                      }
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
@@ -410,7 +511,9 @@ export default function GDPRCompliancePage() {
                     <TableCell>
                       <Checkbox
                         checked={selectedRequests.includes(request.id)}
-                        onCheckedChange={(checked) => handleSelectRequest(request.id, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleSelectRequest(request.id, checked as boolean)
+                        }
                       />
                     </TableCell>
                     <TableCell>
@@ -424,7 +527,9 @@ export default function GDPRCompliancePage() {
                         <User className="mr-2 h-4 w-4 text-muted-foreground" />
                         <div>
                           <div className="font-medium">{request.user.name}</div>
-                          <div className="text-xs text-muted-foreground">{request.user.email}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {request.user.email}
+                          </div>
                           <Badge variant="outline" className="text-xs mt-1">
                             {request.user.role}
                           </Badge>
@@ -435,7 +540,9 @@ export default function GDPRCompliancePage() {
                       <Badge variant="outline">{request.requestType}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getPriorityBadgeVariant(request.priority)}>
+                      <Badge
+                        variant={getPriorityBadgeVariant(request.priority)}
+                      >
                         {request.priority}
                       </Badge>
                     </TableCell>
@@ -457,32 +564,51 @@ export default function GDPRCompliancePage() {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border shadow-lg">
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-white dark:bg-gray-800 border shadow-lg"
+                        >
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openViewDialog(request)}>
+                          <DropdownMenuItem
+                            onClick={() => openViewDialog(request)}
+                          >
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          {request.status === 'Pending' && (
+                          {request.status === "Pending" && (
                             <>
-                              <DropdownMenuItem onClick={() => openProcessDialog(request, 'approve')}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  openProcessDialog(request, "approve")
+                                }
+                              >
                                 <Check className="mr-2 h-4 w-4" />
                                 Approve
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openProcessDialog(request, 'reject')}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  openProcessDialog(request, "reject")
+                                }
+                              >
                                 <X className="mr-2 h-4 w-4" />
                                 Reject
                               </DropdownMenuItem>
                             </>
                           )}
-                          {request.status === 'In Progress' && (
-                            <DropdownMenuItem onClick={() => openProcessDialog(request, 'complete')}>
+                          {request.status === "In Progress" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                openProcessDialog(request, "complete")
+                              }
+                            >
                               <Check className="mr-2 h-4 w-4" />
                               Mark Complete
                             </DropdownMenuItem>
                           )}
-                          {request.requestType === 'Data Export' && (
-                            <DropdownMenuItem onClick={() => handleExportData(request.user.id)}>
+                          {request.requestType === "Data Export" && (
+                            <DropdownMenuItem
+                              onClick={() => handleExportData(request.user.id)}
+                            >
                               <Download className="mr-2 h-4 w-4" />
                               Export Data
                             </DropdownMenuItem>
@@ -524,7 +650,10 @@ export default function GDPRCompliancePage() {
                 </div>
                 <div>
                   <Label className="font-semibold">Status</Label>
-                  <Badge variant={getStatusBadgeVariant(currentRequest.status)} className="w-fit mt-1">
+                  <Badge
+                    variant={getStatusBadgeVariant(currentRequest.status)}
+                    className="w-fit mt-1"
+                  >
                     {currentRequest.status}
                   </Badge>
                 </div>
@@ -536,12 +665,16 @@ export default function GDPRCompliancePage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{currentRequest.user.name}</p>
-                      <p className="text-sm text-muted-foreground">{currentRequest.user.email}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {currentRequest.user.email}
+                      </p>
                       <Badge variant="outline" className="text-xs mt-1">
                         {currentRequest.user.role}
                       </Badge>
                     </div>
-                    <Button variant="link" size="sm">View Profile</Button>
+                    <Button variant="link" size="sm">
+                      View Profile
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -555,7 +688,10 @@ export default function GDPRCompliancePage() {
                 </div>
                 <div>
                   <Label className="font-semibold">Priority</Label>
-                  <Badge variant={getPriorityBadgeVariant(currentRequest.priority)} className="w-fit mt-1">
+                  <Badge
+                    variant={getPriorityBadgeVariant(currentRequest.priority)}
+                    className="w-fit mt-1"
+                  >
                     {currentRequest.priority}
                   </Badge>
                 </div>
@@ -626,14 +762,17 @@ export default function GDPRCompliancePage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {processingAction === 'approve' && 'Approve Request'}
-              {processingAction === 'reject' && 'Reject Request'}
-              {processingAction === 'complete' && 'Complete Request'}
+              {processingAction === "approve" && "Approve Request"}
+              {processingAction === "reject" && "Reject Request"}
+              {processingAction === "complete" && "Complete Request"}
             </DialogTitle>
             <DialogDescription>
-              {processingAction === 'approve' && 'Mark this request as approved and in progress.'}
-              {processingAction === 'reject' && 'Reject this request with a reason.'}
-              {processingAction === 'complete' && 'Mark this request as completed.'}
+              {processingAction === "approve" &&
+                "Mark this request as approved and in progress."}
+              {processingAction === "reject" &&
+                "Reject this request with a reason."}
+              {processingAction === "complete" &&
+                "Mark this request as completed."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -647,7 +786,7 @@ export default function GDPRCompliancePage() {
                 rows={3}
               />
             </div>
-            {processingAction === 'reject' && (
+            {processingAction === "reject" && (
               <div className="grid gap-2">
                 <Label htmlFor="rejection-reason">Rejection Reason</Label>
                 <Textarea
@@ -661,13 +800,17 @@ export default function GDPRCompliancePage() {
             )}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsProcessDialogOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsProcessDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="button" onClick={handleProcessRequest}>
-              {processingAction === 'approve' && 'Approve'}
-              {processingAction === 'reject' && 'Reject'}
-              {processingAction === 'complete' && 'Complete'}
+              {processingAction === "approve" && "Approve"}
+              {processingAction === "reject" && "Reject"}
+              {processingAction === "complete" && "Complete"}
             </Button>
           </DialogFooter>
         </DialogContent>

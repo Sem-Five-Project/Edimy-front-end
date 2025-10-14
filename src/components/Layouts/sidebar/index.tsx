@@ -12,31 +12,37 @@ import { useSidebarContext } from "./sidebar-context";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { setIsOpen, isOpen, isMobile, toggleSidebar, searchTerm } = useSidebarContext();
+  const { setIsOpen, isOpen, isMobile, toggleSidebar, searchTerm } =
+    useSidebarContext();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   // Filter navigation data based on search term
   const filteredNavData = searchTerm
     ? NAV_DATA.map((section) => ({
         ...section,
-        items: section.items.filter((item) => {
-          // Check if main item title matches
-          const mainTitleMatch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-          
-          // Check if any sub-item matches
-          const subItemMatch = item.items.some((subItem) =>
-            subItem.title.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-          
-          return mainTitleMatch || subItemMatch;
-        }).map((item) => ({
-          ...item,
-          // If searching, also filter sub-items that match
-          items: item.items.filter((subItem) =>
-            item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            subItem.title.toLowerCase().includes(searchTerm.toLowerCase())
-          ),
-        })),
+        items: section.items
+          .filter((item) => {
+            // Check if main item title matches
+            const mainTitleMatch = item.title
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase());
+
+            // Check if any sub-item matches
+            const subItemMatch = item.items.some((subItem) =>
+              subItem.title.toLowerCase().includes(searchTerm.toLowerCase()),
+            );
+
+            return mainTitleMatch || subItemMatch;
+          })
+          .map((item) => ({
+            ...item,
+            // If searching, also filter sub-items that match
+            items: item.items.filter(
+              (subItem) =>
+                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                subItem.title.toLowerCase().includes(searchTerm.toLowerCase()),
+            ),
+          })),
       })).filter((section) => section.items.length > 0)
     : NAV_DATA;
 
@@ -73,7 +79,7 @@ export function Sidebar() {
       const itemsToExpand = filteredNavData.flatMap((section) =>
         section.items
           .filter((item) => item.items.length > 0)
-          .map((item) => item.title)
+          .map((item) => item.title),
       );
       setExpandedItems(itemsToExpand);
     } else {
@@ -138,7 +144,8 @@ export function Sidebar() {
 
           {/* Navigation */}
           <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto pr-3 min-[850px]:mt-10">
-            {searchTerm && filteredNavData.every(section => section.items.length === 0) ? (
+            {searchTerm &&
+            filteredNavData.every((section) => section.items.length === 0) ? (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 No settings found for "{searchTerm}"
               </div>
@@ -205,7 +212,10 @@ export function Sidebar() {
                                 "url" in item
                                   ? item.url + ""
                                   : "/" +
-                                    item.title.toLowerCase().split(" ").join("-");
+                                    item.title
+                                      .toLowerCase()
+                                      .split(" ")
+                                      .join("-");
 
                               return (
                                 <MenuItem

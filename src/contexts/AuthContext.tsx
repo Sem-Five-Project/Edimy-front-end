@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, {
   createContext,
   useContext,
@@ -6,17 +6,16 @@ import React, {
   useEffect,
   ReactNode,
   useCallback,
-} from 'react';
-import { User } from '@/types';
+} from "react";
+import { User } from "@/types";
 import {
   refreshAccessToken,
   authAPI,
   setAuthToken,
   setTokenRefreshCallback,
   studentAPI,
-    checkApiHealth
-} from '@/lib/api';
-
+  checkApiHealth,
+} from "@/lib/api";
 
 interface AuthContextType {
   user: User | null;
@@ -32,7 +31,11 @@ interface AuthContextType {
   /** Student numeric id (only for students) */
   effectiveStudentId: number | null;
   login: (accessToken: string, user: User) => void;
-  loginWithResponse: (response: { accessToken: string; tokenType: string; user: User }) => void;
+  loginWithResponse: (response: {
+    accessToken: string;
+    tokenType: string;
+    user: User;
+  }) => void;
   logout: () => void;
   updateUser: (userPartial: Partial<User>) => void;
   loadStudentAcademicInfo: () => Promise<void>;
@@ -55,14 +58,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const toNum = (v: any): number | null => {
     if (v === null || v === undefined) return null;
-    if (typeof v === 'number' && !Number.isNaN(v)) return v;
+    if (typeof v === "number" && !Number.isNaN(v)) return v;
     const n = Number(v);
     return Number.isNaN(n) ? null : n;
   };
 
   const normalizeUser = (raw: any): User => {
-    const normStudentId = raw.role === 'STUDENT' ? (toNum(raw.studentId) ?? toNum(raw.id)) : toNum(raw.studentId);
-    const normTutorId = raw.role === 'TUTOR' ? (toNum(raw.tutorId) ?? toNum(raw.id)) : toNum(raw.tutorId);
+    const normStudentId =
+      raw.role === "STUDENT"
+        ? (toNum(raw.studentId) ?? toNum(raw.id))
+        : toNum(raw.studentId);
+    const normTutorId =
+      raw.role === "TUTOR"
+        ? (toNum(raw.tutorId) ?? toNum(raw.id))
+        : toNum(raw.tutorId);
     return { ...raw, studentId: normStudentId, tutorId: normTutorId };
   };
 
@@ -70,22 +79,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(newToken);
   };
 
-
   const setFallbackUser = () => {
-    console.log('🔄 Setting fallback user for development');
+    console.log("🔄 Setting fallback user for development");
     const fallbackUser: User = {
-      id: 'fallback-user',
-      firstName: 'Test',
-      lastName: 'User',
-      username: 'testuser',
-      email: 'test@example.com',
-      role: 'ADMIN', // Change this to test different roles
+      id: "fallback-user",
+      firstName: "Test",
+      lastName: "User",
+      username: "testuser",
+      email: "test@example.com",
+      role: "ADMIN", // Change this to test different roles
       isVerified: true,
       createdAt: new Date().toISOString(),
     };
     setUser(fallbackUser);
     // Don't set a real token for fallback
-    setToken('fallback-token');
+    setToken("fallback-token");
   };
 
   useEffect(() => {
@@ -99,37 +107,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      console.log('🔍 Starting authentication check...');
-      
+      console.log("🔍 Starting authentication check...");
+
       // Skip health check for now and use fallback
-      console.log('🔍 Skipping API health check for testing...');
+      console.log("🔍 Skipping API health check for testing...");
       setFallbackUser();
-      
     } catch (err) {
-      console.error('❌ Auth check failed:', err);
+      console.error("❌ Auth check failed:", err);
       setFallbackUser();
 
-//   useEffect(() => {
-//     setTokenRefreshCallback(updateTokenFromInterceptor);
-//     checkAuthStatus();
-//   }, []);
+      //   useEffect(() => {
+      //     setTokenRefreshCallback(updateTokenFromInterceptor);
+      //     checkAuthStatus();
+      //   }, []);
 
-//   const checkAuthStatus = async () => {
-//     try {
-//       const newToken = await refreshAccessToken();
-//       setToken(newToken.accessToken);
-//       setAuthToken(newToken.accessToken);
-//       setAuthToken(newToken.accessToken); // attach to axios
-//       //setUser(newUser);
+      //   const checkAuthStatus = async () => {
+      //     try {
+      //       const newToken = await refreshAccessToken();
+      //       setToken(newToken.accessToken);
+      //       setAuthToken(newToken.accessToken);
+      //       setAuthToken(newToken.accessToken); // attach to axios
+      //       //setUser(newUser);
 
-//       // Test the token first
+      //       // Test the token first
 
-//       const response = await authAPI.getCurrentUser();
-//       if (response?.data?.user) setUser(normalizeUser(response.data.user)); 
-//     } catch {
-//       setUser(null);
-//       setToken(null);
-
+      //       const response = await authAPI.getCurrentUser();
+      //       if (response?.data?.user) setUser(normalizeUser(response.data.user));
+      //     } catch {
+      //       setUser(null);
+      //       setToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -141,8 +147,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthToken(newToken);
   };
 
-
-  const loginWithResponse = (response: { accessToken: string; tokenType: string; user: User }) => {
+  const loginWithResponse = (response: {
+    accessToken: string;
+    tokenType: string;
+    user: User;
+  }) => {
     setToken(response.accessToken);
     setUser(normalizeUser(response.user));
     setAuthToken(response.accessToken);
@@ -153,8 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authAPI.logout();
     } catch (error) {
       // ignore
-       console.error('Logout API call failed:', error);
-
+      console.error("Logout API call failed:", error);
     } finally {
       setUser(null);
       setToken(null);
@@ -164,12 +172,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Merge update (Partial)
   const updateUser = (userPartial: Partial<User>) => {
-    setUser(prev => (prev ? { ...prev, ...userPartial } : prev));
+    setUser((prev) => (prev ? { ...prev, ...userPartial } : prev));
   };
 
   // Unified academic info loader returning void (context expects Promise<void>)
   const loadStudentAcademicInfo = useCallback(async (): Promise<void> => {
-    if (!user || user.role !== 'STUDENT') return;
+    if (!user || user.role !== "STUDENT") return;
     if (academicLoading) return; // avoid duplicate concurrent loads
 
     // If both fields already set (even null), skip
@@ -183,28 +191,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const educationLevel = res.data.educationLevel ?? undefined;
           const stream = res.data.stream ?? undefined;
           updateUser({ educationLevel, stream });
-          console.log('Loaded academic info:', res.data);
+          console.log("Loaded academic info:", res.data);
         } else {
-          console.warn('Academic info fetch returned unexpected shape:', res);
+          console.warn("Academic info fetch returned unexpected shape:", res);
         }
       } else {
-        console.warn('Cannot load academic info: studentId is missing or not a string.', user.studentId);
+        console.warn(
+          "Cannot load academic info: studentId is missing or not a string.",
+          user.studentId,
+        );
       }
     } catch (e) {
-      console.warn('Academic info load failed:', e);
+      console.warn("Academic info load failed:", e);
     } finally {
       setAcademicLoading(false);
     }
   }, [user, academicLoading, updateUser]);
   const accessToken = token;
-  const isStudent = user?.role === 'STUDENT';
-  const isTutor = user?.role === 'TUTOR';
+  const isStudent = user?.role === "STUDENT";
+  const isTutor = user?.role === "TUTOR";
   const actorId: number | null = isStudent
     ? (user?.studentId ?? null)
     : isTutor
       ? (toNum(user?.tutorId) ?? null)
       : null;
-  const effectiveStudentId: number | null = isStudent ? (user?.studentId ?? null) : null;
+  const effectiveStudentId: number | null = isStudent
+    ? (user?.studentId ?? null)
+    : null;
 
   const value: AuthContextType = {
     user,
@@ -230,7 +243,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

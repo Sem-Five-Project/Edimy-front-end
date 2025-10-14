@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { 
-  getStudentByIdForAdmin, 
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  getStudentByIdForAdmin,
   updateStudentByIdForAdmin,
   deleteStudent,
   type StudentDtoForAdmin,
-  StudentProfileStatus
-} from '@/lib/adminStudent';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  ArrowLeft, 
-  Edit, 
-  UserCheck, 
-  UserX, 
-  Trash2, 
+  StudentProfileStatus,
+} from "@/lib/adminStudent";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import {
+  ArrowLeft,
+  Edit,
+  UserCheck,
+  UserX,
+  Trash2,
   Mail,
   Calendar,
   Clock,
@@ -31,8 +31,8 @@ import {
   Save,
   CheckCircle,
   XCircle,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +42,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 export default function StudentProfilePage() {
   const params = useParams();
@@ -56,10 +56,15 @@ export default function StudentProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [newStatus, setNewStatus] = useState<StudentProfileStatus>(StudentProfileStatus.ACTIVE);
+  const [newStatus, setNewStatus] = useState<StudentProfileStatus>(
+    StudentProfileStatus.ACTIVE,
+  );
   const [isEditing, setIsEditing] = useState(false);
-  const [adminNotes, setAdminNotes] = useState('');
-  const [actionResult, setActionResult] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [adminNotes, setAdminNotes] = useState("");
+  const [actionResult, setActionResult] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     if (studentId && !isNaN(parseInt(studentId))) {
@@ -72,9 +77,9 @@ export default function StudentProfilePage() {
     try {
       const studentData = await getStudentByIdForAdmin(parseInt(studentId));
       setStudent(studentData);
-      setAdminNotes(studentData.adminNotes || '');
+      setAdminNotes(studentData.adminNotes || "");
     } catch (error) {
-      console.error('Error loading student data:', error);
+      console.error("Error loading student data:", error);
     } finally {
       setLoading(false);
     }
@@ -83,30 +88,34 @@ export default function StudentProfilePage() {
   const handleStatusUpdate = async () => {
     if (!student) return;
 
-    console.log('🔍 Starting status update...');
-    console.log('Student ID:', student.studentId);
-    console.log('Current Status:', student.status);
-    console.log('New Status:', newStatus);
+    console.log("🔍 Starting status update...");
+    console.log("Student ID:", student.studentId);
+    console.log("Current Status:", student.status);
+    console.log("New Status:", newStatus);
 
     setUpdating(true);
     setActionResult(null);
-    
+
     try {
-      console.log('📤 Sending update request to backend...');
+      console.log("📤 Sending update request to backend...");
       const updateData = { status: newStatus };
-      console.log('Update payload:', updateData);
-      
-      const updatedStudent = await updateStudentByIdForAdmin(student.studentId, updateData);
-      console.log('✅ Backend response received:', updatedStudent);
-      
+      console.log("Update payload:", updateData);
+
+      const updatedStudent = await updateStudentByIdForAdmin(
+        student.studentId,
+        updateData,
+      );
+      console.log("✅ Backend response received:", updatedStudent);
+
       setStudent(updatedStudent);
       setShowStatusDialog(false);
-      
+
       // Show success message
-      const statusText = newStatus === StudentProfileStatus.ACTIVE ? 'reactivated' : 'suspended';
+      const statusText =
+        newStatus === StudentProfileStatus.ACTIVE ? "reactivated" : "suspended";
       setActionResult({
-        type: 'success',
-        message: `Student ${student.firstName} ${student.lastName} has been successfully ${statusText}.`
+        type: "success",
+        message: `Student ${student.firstName} ${student.lastName} has been successfully ${statusText}.`,
       });
 
       toast({
@@ -118,16 +127,17 @@ export default function StudentProfilePage() {
       // Clear success message after 5 seconds
       setTimeout(() => setActionResult(null), 5000);
     } catch (error) {
-      console.error('❌ Error updating status:', error);
-      console.error('Error details:', {
+      console.error("❌ Error updating status:", error);
+      console.error("Error details:", {
         message: (error as any)?.message,
         status: (error as any)?.response?.status,
-        data: (error as any)?.response?.data
+        data: (error as any)?.response?.data,
       });
-      
+
       setActionResult({
-        type: 'error',
-        message: 'Failed to update student status. Please try again or contact support if the problem persists.'
+        type: "error",
+        message:
+          "Failed to update student status. Please try again or contact support if the problem persists.",
       });
 
       toast({
@@ -148,7 +158,7 @@ export default function StudentProfilePage() {
     setActionResult(null);
     try {
       await deleteStudent(student.studentId);
-      
+
       toast({
         title: "Student Deleted",
         description: `${student.firstName} ${student.lastName} has been successfully deleted.`,
@@ -157,13 +167,14 @@ export default function StudentProfilePage() {
 
       // Navigate back with a delay to show the toast
       setTimeout(() => {
-        router.push('/dashboard/admin/users/students');
+        router.push("/dashboard/admin/users/students");
       }, 1000);
     } catch (error) {
-      console.error('Error deleting student:', error);
+      console.error("Error deleting student:", error);
       setActionResult({
-        type: 'error',
-        message: 'Failed to delete student. Please try again or contact support if the problem persists.'
+        type: "error",
+        message:
+          "Failed to delete student. Please try again or contact support if the problem persists.",
       });
 
       toast({
@@ -184,15 +195,18 @@ export default function StudentProfilePage() {
     setUpdating(true);
     setActionResult(null);
     try {
-      const updatedStudent = await updateStudentByIdForAdmin(student.studentId, {
-        adminNotes: adminNotes
-      });
+      const updatedStudent = await updateStudentByIdForAdmin(
+        student.studentId,
+        {
+          adminNotes: adminNotes,
+        },
+      );
       setStudent(updatedStudent);
       setIsEditing(false);
-      
+
       setActionResult({
-        type: 'success',
-        message: 'Admin notes have been successfully updated.'
+        type: "success",
+        message: "Admin notes have been successfully updated.",
       });
 
       toast({
@@ -204,10 +218,10 @@ export default function StudentProfilePage() {
       // Clear success message after 3 seconds
       setTimeout(() => setActionResult(null), 3000);
     } catch (error) {
-      console.error('Error updating admin notes:', error);
+      console.error("Error updating admin notes:", error);
       setActionResult({
-        type: 'error',
-        message: 'Failed to update admin notes. Please try again.'
+        type: "error",
+        message: "Failed to update admin notes. Please try again.",
       });
 
       toast({
@@ -223,19 +237,22 @@ export default function StudentProfilePage() {
 
   const getStatusColor = (status: StudentProfileStatus) => {
     switch (status) {
-      case StudentProfileStatus.ACTIVE: return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case StudentProfileStatus.SUSPENDED: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case StudentProfileStatus.ACTIVE:
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case StudentProfileStatus.SUSPENDED:
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -263,7 +280,9 @@ export default function StudentProfilePage() {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <h2 className="text-xl font-semibold">Student Not Found</h2>
-              <p className="text-muted-foreground">The requested student could not be found.</p>
+              <p className="text-muted-foreground">
+                The requested student could not be found.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -275,21 +294,27 @@ export default function StudentProfilePage() {
     <div className="space-y-6">
       {/* Action Result Banner */}
       {actionResult && (
-        <Card className={`border-l-4 ${actionResult.type === 'success' 
-          ? 'border-l-green-500 bg-green-50 dark:bg-green-950' 
-          : 'border-l-red-500 bg-red-50 dark:bg-red-950'
-        }`}>
+        <Card
+          className={`border-l-4 ${
+            actionResult.type === "success"
+              ? "border-l-green-500 bg-green-50 dark:bg-green-950"
+              : "border-l-red-500 bg-red-50 dark:bg-red-950"
+          }`}
+        >
           <CardContent className="pt-4">
             <div className="flex items-center space-x-2">
-              {actionResult.type === 'success' ? (
+              {actionResult.type === "success" ? (
                 <CheckCircle className="h-5 w-5 text-green-600" />
               ) : (
                 <XCircle className="h-5 w-5 text-red-600" />
               )}
-              <p className={`text-sm font-medium ${actionResult.type === 'success' 
-                ? 'text-green-800 dark:text-green-200' 
-                : 'text-red-800 dark:text-red-200'
-              }`}>
+              <p
+                className={`text-sm font-medium ${
+                  actionResult.type === "success"
+                    ? "text-green-800 dark:text-green-200"
+                    : "text-red-800 dark:text-red-200"
+                }`}
+              >
                 {actionResult.message}
               </p>
             </div>
@@ -305,15 +330,22 @@ export default function StudentProfilePage() {
             Back to Students
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Student Profile</h1>
-            <p className="text-muted-foreground">Detailed view and management</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Student Profile
+            </h1>
+            <p className="text-muted-foreground">
+              Detailed view and management
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
           {student.status === StudentProfileStatus.ACTIVE ? (
-            <Button 
+            <Button
               variant="outline"
-              onClick={() => { setNewStatus(StudentProfileStatus.SUSPENDED); setShowStatusDialog(true); }}
+              onClick={() => {
+                setNewStatus(StudentProfileStatus.SUSPENDED);
+                setShowStatusDialog(true);
+              }}
               disabled={updating || deleting}
             >
               {updating ? (
@@ -329,9 +361,12 @@ export default function StudentProfilePage() {
               )}
             </Button>
           ) : student.status === StudentProfileStatus.SUSPENDED ? (
-            <Button 
+            <Button
               variant="outline"
-              onClick={() => { setNewStatus(StudentProfileStatus.ACTIVE); setShowStatusDialog(true); }}
+              onClick={() => {
+                setNewStatus(StudentProfileStatus.ACTIVE);
+                setShowStatusDialog(true);
+              }}
               disabled={updating || deleting}
             >
               {updating ? (
@@ -347,7 +382,7 @@ export default function StudentProfilePage() {
               )}
             </Button>
           ) : null}
-          <Button 
+          <Button
             variant="destructive"
             onClick={() => setShowDeleteDialog(true)}
             disabled={updating || deleting}
@@ -374,13 +409,16 @@ export default function StudentProfilePage() {
             <Avatar className="h-24 w-24">
               <AvatarImage src={student.profilePictureUrl} />
               <AvatarFallback className="text-lg">
-                {student.firstName[0]}{student.lastName[0]}
+                {student.firstName[0]}
+                {student.lastName[0]}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-4">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-2xl font-bold">{student.firstName} {student.lastName}</h2>
+                  <h2 className="text-2xl font-bold">
+                    {student.firstName} {student.lastName}
+                  </h2>
                   <Badge className={getStatusColor(student.status)}>
                     {student.status}
                   </Badge>
@@ -395,7 +433,7 @@ export default function StudentProfilePage() {
                   Student ID: {student.studentId} | User ID: {student.userId}
                 </div>
               </div>
-              
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="flex items-center space-x-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
@@ -407,19 +445,26 @@ export default function StudentProfilePage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Registered: {formatDate(student.createdAt)}</span>
+                  <span className="text-sm">
+                    Registered: {formatDate(student.createdAt)}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    Last login: {student.lastLogin ? formatDate(student.lastLogin) : 'Never'}
+                    Last login:{" "}
+                    {student.lastLogin
+                      ? formatDate(student.lastLogin)
+                      : "Never"}
                   </span>
                 </div>
               </div>
 
               {student.educationLevel && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Education Level:</label>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Education Level:
+                  </label>
                   <p className="text-sm mt-1">{student.educationLevel}</p>
                 </div>
               )}
@@ -469,8 +514,12 @@ export default function StudentProfilePage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Account Locked:</span>
-                  <span className={student.accountLocked ? 'text-red-600' : 'text-green-600'}>
-                    {student.accountLocked ? 'Yes' : 'No'}
+                  <span
+                    className={
+                      student.accountLocked ? "text-red-600" : "text-green-600"
+                    }
+                  >
+                    {student.accountLocked ? "Yes" : "No"}
                   </span>
                 </div>
               </CardContent>
@@ -494,11 +543,17 @@ export default function StudentProfilePage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Last Login:</span>
-                  <span>{student.lastLogin ? formatDate(student.lastLogin) : 'Never'}</span>
+                  <span>
+                    {student.lastLogin
+                      ? formatDate(student.lastLogin)
+                      : "Never"}
+                  </span>
                 </div>
                 {student.educationLevel && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Education Level:</span>
+                    <span className="text-muted-foreground">
+                      Education Level:
+                    </span>
                     <span>{student.educationLevel}</span>
                   </div>
                 )}
@@ -521,7 +576,7 @@ export default function StudentProfilePage() {
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        setAdminNotes(student.adminNotes || '');
+                        setAdminNotes(student.adminNotes || "");
                         setIsEditing(false);
                       }}
                     >
@@ -569,10 +624,13 @@ export default function StudentProfilePage() {
               ) : (
                 <div className="min-h-[120px] p-4 bg-muted rounded-md">
                   {student.adminNotes ? (
-                    <p className="text-sm whitespace-pre-wrap">{student.adminNotes}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {student.adminNotes}
+                    </p>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
-                      No admin notes available. Click "Edit Notes" to add notes about this student.
+                      No admin notes available. Click "Edit Notes" to add notes
+                      about this student.
                     </p>
                   )}
                 </div>
@@ -592,31 +650,44 @@ export default function StudentProfilePage() {
               ) : (
                 <UserX className="h-5 w-5 text-yellow-600" />
               )}
-              {newStatus === StudentProfileStatus.ACTIVE ? 'Reactivate Student Account' : 'Suspend Student Account'}
+              {newStatus === StudentProfileStatus.ACTIVE
+                ? "Reactivate Student Account"
+                : "Suspend Student Account"}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 <span>
-                  Are you sure you want to {newStatus === StudentProfileStatus.ACTIVE ? 'reactivate' : 'suspend'}{' '}
-                  <span className="font-semibold">{student.firstName} {student.lastName}</span>'s account?
+                  Are you sure you want to{" "}
+                  {newStatus === StudentProfileStatus.ACTIVE
+                    ? "reactivate"
+                    : "suspend"}{" "}
+                  <span className="font-semibold">
+                    {student.firstName} {student.lastName}
+                  </span>
+                  's account?
                 </span>
                 {newStatus === StudentProfileStatus.SUSPENDED ? (
                   <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded p-3 mt-3">
                     <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                      <strong>Suspension Effects:</strong><br />
-                      • Student will be unable to log in<br />
-                      • Access to all features will be restricted<br />
-                      • Existing sessions will be terminated<br />
-                      • Account can be reactivated later
+                      <strong>Suspension Effects:</strong>
+                      <br />
+                      • Student will be unable to log in
+                      <br />
+                      • Access to all features will be restricted
+                      <br />
+                      • Existing sessions will be terminated
+                      <br />• Account can be reactivated later
                     </div>
                   </div>
                 ) : (
                   <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded p-3 mt-3">
                     <div className="text-sm text-green-800 dark:text-green-200">
-                      <strong>Reactivation Effects:</strong><br />
-                      • Student will regain full access to their account<br />
-                      • All features will be restored<br />
-                      • Student can log in immediately
+                      <strong>Reactivation Effects:</strong>
+                      <br />
+                      • Student will regain full access to their account
+                      <br />
+                      • All features will be restored
+                      <br />• Student can log in immediately
                     </div>
                   </div>
                 )}
@@ -625,19 +696,27 @@ export default function StudentProfilePage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={updating}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleStatusUpdate}
               disabled={updating}
-              className={newStatus === StudentProfileStatus.ACTIVE ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'}
+              className={
+                newStatus === StudentProfileStatus.ACTIVE
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-yellow-600 hover:bg-yellow-700"
+              }
             >
               {updating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {newStatus === StudentProfileStatus.ACTIVE ? 'Reactivating...' : 'Suspending...'}
+                  {newStatus === StudentProfileStatus.ACTIVE
+                    ? "Reactivating..."
+                    : "Suspending..."}
                 </>
               ) : (
                 <>
-                  {newStatus === StudentProfileStatus.ACTIVE ? 'Reactivate Account' : 'Suspend Account'}
+                  {newStatus === StudentProfileStatus.ACTIVE
+                    ? "Reactivate Account"
+                    : "Suspend Account"}
                 </>
               )}
             </AlertDialogAction>
@@ -656,14 +735,19 @@ export default function StudentProfilePage() {
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <span>
-                  You are about to permanently delete{' '}
-                  <span className="font-semibold">{student.firstName} {student.lastName}</span>'s account.
+                  You are about to permanently delete{" "}
+                  <span className="font-semibold">
+                    {student.firstName} {student.lastName}
+                  </span>
+                  's account.
                 </span>
                 <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded p-4">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-red-800 dark:text-red-200">
-                      <strong>Warning: This action is permanent and cannot be undone!</strong>
+                      <strong>
+                        Warning: This action is permanent and cannot be undone!
+                      </strong>
                       <ul className="mt-2 space-y-1 list-disc list-inside">
                         <li>All student data will be permanently deleted</li>
                         <li>Course enrollments and progress will be lost</li>
@@ -674,15 +758,14 @@ export default function StudentProfilePage() {
                   </div>
                 </div>
                 <span className="text-sm">
-                  If you're unsure, consider suspending the account instead, which can be reversed later.
+                  If you're unsure, consider suspending the account instead,
+                  which can be reversed later.
                 </span>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <Button
               variant="outline"
               onClick={() => {
@@ -694,7 +777,7 @@ export default function StudentProfilePage() {
             >
               Suspend Instead
             </Button>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteStudent}
               disabled={deleting}
               className="bg-red-600 hover:bg-red-700"

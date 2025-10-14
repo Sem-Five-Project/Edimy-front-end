@@ -1,46 +1,52 @@
 "use client";
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Loader2, Shield, ArrowRight } from 'lucide-react';
-import { authAPI } from '@/lib/api';
-import { sendFCMTokenAfterLogin } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { LoginCredentials } from '@/types';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Loader2, Shield, ArrowRight } from "lucide-react";
+import { authAPI } from "@/lib/api";
+import { sendFCMTokenAfterLogin } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { LoginCredentials } from "@/types";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    usernameOrEmail: '',
-    password: '',
+    usernameOrEmail: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCredentials(prev => ({
+    setCredentials((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setError('');
+    setError("");
   };
 
   const validateForm = (): boolean => {
     if (!credentials.usernameOrEmail.trim()) {
-      setError('Please enter your email or username');
+      setError("Please enter your email or username");
       return false;
     }
 
     if (!credentials.password.trim()) {
-      setError('Please enter your password');
+      setError("Please enter your password");
       return false;
     }
 
@@ -49,23 +55,23 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const response = await authAPI.login(credentials);
-      console.log('Login response:', response);
-      
+      console.log("Login response:", response);
+
       if (response.success) {
         const user = response.data.user;
         const token = response.data.accessToken;
-        console.log('Login response token:', token);
-        
+        console.log("Login response token:", token);
+
         // Login user
         login(token, user);
 
@@ -73,7 +79,10 @@ export default function LoginPage() {
         setAttemptCount(0);
 
         // Send FCM token after successful login
-        console.log("🔥 About to send FCM token for user:", user.email || user.username);
+        console.log(
+          "🔥 About to send FCM token for user:",
+          user.email || user.username,
+        );
         try {
           await sendFCMTokenAfterLogin(user.email || user.username);
           console.log("🔥 FCM token sending completed");
@@ -84,24 +93,30 @@ export default function LoginPage() {
 
         // Navigate to dashboard based on user role
         const userRole = user.role;
-        if (userRole === 'TUTOR') {
-          router.push('/dashboard/tutor/profile');
-        } else if (userRole === 'STUDENT') {
-          router.push('/dashboard/student');
-        } else if (userRole === 'ADMIN') {
-          router.push('/dashboard/admin');
+        if (userRole === "TUTOR") {
+          router.push("/dashboard/tutor/profile");
+        } else if (userRole === "STUDENT") {
+          router.push("/dashboard/student");
+        } else if (userRole === "ADMIN") {
+          router.push("/dashboard/admin");
         } else {
-          router.push('/not-found');
+          router.push("/not-found");
         }
       } else {
         const newAttemptCount = attemptCount + 1;
         setAttemptCount(newAttemptCount);
-        setError('Invalid credentials. Please check your email/username and password.');
+        setError(
+          "Invalid credentials. Please check your email/username and password.",
+        );
       }
     } catch (error: unknown) {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
-      setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -111,9 +126,8 @@ export default function LoginPage() {
     // Light-only theme version (dark: classes removed)
     <div className="h-screen bg-white text-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-        
         {/* Left Side - Image and Content */}
-  <div className="hidden lg:block">
+        <div className="hidden lg:block">
           <div className="space-y-6">
             <div className="space-y-4">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-900 rounded-lg">
@@ -123,32 +137,39 @@ export default function LoginPage() {
                 Secure Learning Platform
               </h1>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Access your educational resources with enterprise-grade security and seamless user experience.
+                Access your educational resources with enterprise-grade security
+                and seamless user experience.
               </p>
             </div>
-            
+
             {/* Professional Image */}
             <div className="relative rounded-xl overflow-hidden shadow-lg">
-              <img 
+              <img
                 src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
                 alt="Professional team collaboration"
                 className="w-full h-64 object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </div>
-            
+
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-gray-900 rounded-full"></div>
-                <span className="text-sm text-gray-700">Advanced authentication system</span>
+                <span className="text-sm text-gray-700">
+                  Advanced authentication system
+                </span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-gray-900 rounded-full"></div>
-                <span className="text-sm text-gray-700">Role-based access control</span>
+                <span className="text-sm text-gray-700">
+                  Role-based access control
+                </span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-gray-900 rounded-full"></div>
-                <span className="text-sm text-gray-700">24/7 secure cloud infrastructure</span>
+                <span className="text-sm text-gray-700">
+                  24/7 secure cloud infrastructure
+                </span>
               </div>
             </div>
           </div>
@@ -173,19 +194,21 @@ export default function LoginPage() {
                 Enter your credentials to access your account
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
                   <Alert variant="destructive" className="mb-4">
-                    <AlertDescription className="text-sm">{error}</AlertDescription>
+                    <AlertDescription className="text-sm">
+                      {error}
+                    </AlertDescription>
                   </Alert>
                 )}
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label 
-                      htmlFor="usernameOrEmail" 
+                    <Label
+                      htmlFor="usernameOrEmail"
                       className="text-sm font-medium text-gray-700"
                     >
                       Email or Username
@@ -203,8 +226,8 @@ export default function LoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label 
-                      htmlFor="password" 
+                    <Label
+                      htmlFor="password"
                       className="text-sm font-medium text-gray-700"
                     >
                       Password
@@ -213,7 +236,7 @@ export default function LoginPage() {
                       <Input
                         id="password"
                         name="password"
-                        type={showPassword ? 'text' : 'password'}
+                        type={showPassword ? "text" : "password"}
                         value={credentials.password}
                         onChange={handleInputChange}
                         placeholder="Enter your password"
@@ -227,7 +250,11 @@ export default function LoginPage() {
                         className="absolute right-0 top-0 h-11 px-3 text-gray-500 hover:text-gray-700"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -238,14 +265,14 @@ export default function LoginPage() {
                     type="button"
                     variant="link"
                     className="p-0 h-auto text-sm text-gray-600 hover:text-gray-900"
-                    onClick={() => router.push('/forgot-password')}
+                    onClick={() => router.push("/forgot-password")}
                   >
                     Forgot password?
                   </Button>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white font-medium transition-colors"
                   disabled={isLoading}
                 >
@@ -264,12 +291,12 @@ export default function LoginPage() {
 
                 <div className="text-center pt-4 border-t border-gray-200">
                   <p className="text-sm text-gray-600">
-                    Don't have an account?{' '}
+                    Don't have an account?{" "}
                     <Button
                       type="button"
                       variant="link"
                       className="p-0 h-auto font-medium text-gray-900 hover:text-gray-700"
-                      onClick={() => router.push('/register')}
+                      onClick={() => router.push("/register")}
                     >
                       Create account
                     </Button>

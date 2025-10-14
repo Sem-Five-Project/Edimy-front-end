@@ -1,5 +1,12 @@
 import React from "react";
-import { Calendar, ChevronLeft, ChevronRight, Clock, Edit, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import { TutorAvailability } from "@/types";
 
 interface InteractiveCalendarProps {
@@ -38,8 +45,16 @@ const InteractiveCalendar: React.FC<InteractiveCalendarProps> = ({
             Weekly Schedule
           </h3>
           <p className="text-gray-600">
-            {weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - {" "}
-            {weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            {weekDates[0].toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+            })}{" "}
+            -{" "}
+            {weekDates[6].toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -60,7 +75,9 @@ const InteractiveCalendar: React.FC<InteractiveCalendarProps> = ({
       <div className="grid grid-cols-7 gap-4">
         {weekDates.map((date, index) => {
           const dayName = daysOfWeek[index];
-          const daySlots = availableTimeSlots.filter((slot) => slot.dayOfWeek === dayName);
+          const daySlots = availableTimeSlots.filter(
+            (slot) => slot.dayOfWeek === dayName,
+          );
           const isToday = date.toDateString() === new Date().toDateString();
           return (
             <div
@@ -69,16 +86,28 @@ const InteractiveCalendar: React.FC<InteractiveCalendarProps> = ({
                 isToday
                   ? "border-blue-500 bg-blue-50 shadow-md"
                   : selectedDay === dayName
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-200 bg-white hover:border-blue-300"
+                    ? "border-purple-500 bg-purple-50"
+                    : "border-gray-200 bg-white hover:border-blue-300"
               }`}
-              onClick={() => setSelectedDay(selectedDay === dayName ? null : dayName)}
+              onClick={() =>
+                setSelectedDay(selectedDay === dayName ? null : dayName)
+              }
             >
               <div className="text-center mb-4">
-                <div className={`font-bold text-lg ${isToday ? "text-blue-700" : "text-gray-700"}`}>{dayName}</div>
-                <div className={`text-sm ${isToday ? "text-blue-600" : "text-gray-500"}`}>{formatDate(date)}</div>
+                <div
+                  className={`font-bold text-lg ${isToday ? "text-blue-700" : "text-gray-700"}`}
+                >
+                  {dayName}
+                </div>
+                <div
+                  className={`text-sm ${isToday ? "text-blue-600" : "text-gray-500"}`}
+                >
+                  {formatDate(date)}
+                </div>
                 {isToday && (
-                  <div className="inline-block px-2 py-1 bg-blue-500 text-white text-xs rounded-full mt-1">Today</div>
+                  <div className="inline-block px-2 py-1 bg-blue-500 text-white text-xs rounded-full mt-1">
+                    Today
+                  </div>
                 )}
               </div>
               <div className="space-y-2">
@@ -112,7 +141,9 @@ const InteractiveCalendar: React.FC<InteractiveCalendarProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            tutorAvailabilityAPI.deleteAvailability(slot.availabilityId!);
+                            tutorAvailabilityAPI.deleteAvailability(
+                              slot.availabilityId!,
+                            );
                           }}
                           className="p-1 rounded hover:bg-red-500 transition-colors"
                         >

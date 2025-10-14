@@ -1,11 +1,14 @@
-declare module 'react-hook-form' {
-  import * as React from 'react';
+declare module "react-hook-form" {
+  import * as React from "react";
 
   export type FieldValues = Record<string, any>;
 
   export type FieldPath<T> = keyof T & string;
 
-  export type ControllerProps<TFieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>> = {
+  export type ControllerProps<
+    TFieldValues = FieldValues,
+    TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  > = {
     name: TName;
     control?: any;
     rules?: any;

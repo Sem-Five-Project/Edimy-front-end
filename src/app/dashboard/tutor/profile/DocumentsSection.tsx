@@ -1,5 +1,16 @@
 import React, { useState } from "react";
-import { FileText, Plus, Eye, Download, Trash2, Loader2, File, FileImage, FileVideo, FileAudio } from "lucide-react";
+import {
+  FileText,
+  Plus,
+  Eye,
+  Download,
+  Trash2,
+  Loader2,
+  File,
+  FileImage,
+  FileVideo,
+  FileAudio,
+} from "lucide-react";
 import { ClassDoc } from "@/types";
 
 interface DocumentsSectionProps {
@@ -10,37 +21,67 @@ interface DocumentsSectionProps {
   onDocumentAdded?: (success: boolean) => void; // Optional callback for when document is actually added
 }
 
-const DocumentsSection: React.FC<DocumentsSectionProps> = ({ classDocs, onAdd, classDocAPI, classId, onDocumentAdded }) => {
+const DocumentsSection: React.FC<DocumentsSectionProps> = ({
+  classDocs,
+  onAdd,
+  classDocAPI,
+  classId,
+  onDocumentAdded,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const getFileIcon = (docType: string, link: string) => {
-    const fileExtension = link?.split('.').pop()?.toLowerCase() || docType?.toLowerCase() || '';
-    
+    const fileExtension =
+      link?.split(".").pop()?.toLowerCase() || docType?.toLowerCase() || "";
+
     // PDF files
-    if (fileExtension.includes('pdf') || docType?.toLowerCase().includes('pdf')) {
-      return { icon: FileText, color: 'text-red-600', bgColor: 'bg-red-100' };
+    if (
+      fileExtension.includes("pdf") ||
+      docType?.toLowerCase().includes("pdf")
+    ) {
+      return { icon: FileText, color: "text-red-600", bgColor: "bg-red-100" };
     }
-    
+
     // Image files
-    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(fileExtension) || 
-        docType?.toLowerCase().includes('image')) {
-      return { icon: FileImage, color: 'text-green-600', bgColor: 'bg-green-100' };
+    if (
+      ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"].includes(
+        fileExtension,
+      ) ||
+      docType?.toLowerCase().includes("image")
+    ) {
+      return {
+        icon: FileImage,
+        color: "text-green-600",
+        bgColor: "bg-green-100",
+      };
     }
-    
+
     // Video files
-    if (['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv'].includes(fileExtension) || 
-        docType?.toLowerCase().includes('video')) {
-      return { icon: FileVideo, color: 'text-purple-600', bgColor: 'bg-purple-100' };
+    if (
+      ["mp4", "avi", "mov", "mkv", "webm", "flv"].includes(fileExtension) ||
+      docType?.toLowerCase().includes("video")
+    ) {
+      return {
+        icon: FileVideo,
+        color: "text-purple-600",
+        bgColor: "bg-purple-100",
+      };
     }
-    
+
     // Audio files
-    if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(fileExtension) || 
-        docType?.toLowerCase().includes('audio')) {
-      return { icon: FileAudio, color: 'text-blue-600', bgColor: 'bg-blue-100' };
+    if (
+      ["mp3", "wav", "flac", "aac", "ogg"].includes(fileExtension) ||
+      docType?.toLowerCase().includes("audio")
+    ) {
+      return {
+        icon: FileAudio,
+        color: "text-blue-600",
+        bgColor: "bg-blue-100",
+      };
     }
-    
+
     // Default for other document types
-    return { icon: File, color: 'text-orange-600', bgColor: 'bg-orange-100' };
+    return { icon: File, color: "text-orange-600", bgColor: "bg-orange-100" };
   };
 
   const handleAddDocument = () => {
@@ -60,7 +101,9 @@ const DocumentsSection: React.FC<DocumentsSectionProps> = ({ classDocs, onAdd, c
         }
       } catch (error) {
         console.error("Error deleting document:", error);
-        alert("An error occurred while deleting the document. Please try again.");
+        alert(
+          "An error occurred while deleting the document. Please try again.",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -99,9 +142,15 @@ const DocumentsSection: React.FC<DocumentsSectionProps> = ({ classDocs, onAdd, c
             >
               <div className="flex items-center space-x-3">
                 {(() => {
-                  const { icon: IconComponent, color, bgColor } = getFileIcon(doc.docType, doc.link);
+                  const {
+                    icon: IconComponent,
+                    color,
+                    bgColor,
+                  } = getFileIcon(doc.docType, doc.link);
                   return (
-                    <div className={`w-8 h-8 ${bgColor} rounded-lg flex items-center justify-center`}>
+                    <div
+                      className={`w-8 h-8 ${bgColor} rounded-lg flex items-center justify-center`}
+                    >
                       <IconComponent size={14} className={color} />
                     </div>
                   );
@@ -112,24 +161,29 @@ const DocumentsSection: React.FC<DocumentsSectionProps> = ({ classDocs, onAdd, c
                   </div>
                   {doc.link && (
                     <div className="text-xs text-gray-500 mt-1">
-                      {doc.link.split('/').pop()?.split('.').pop()?.toUpperCase() || 'FILE'}
+                      {doc.link
+                        .split("/")
+                        .pop()
+                        ?.split(".")
+                        .pop()
+                        ?.toUpperCase() || "FILE"}
                     </div>
                   )}
                 </div>
               </div>
               <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={() => window.open(doc.link, '_blank')}
+                <button
+                  onClick={() => window.open(doc.link, "_blank")}
                   className="p-1 hover:bg-blue-50 rounded text-blue-600"
                   title="View document"
                 >
                   <Eye size={12} />
                 </button>
-                <button 
+                <button
                   onClick={() => {
-                    const link = document.createElement('a');
+                    const link = document.createElement("a");
                     link.href = doc.link;
-                    link.download = doc.docType || 'document';
+                    link.download = doc.docType || "document";
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);

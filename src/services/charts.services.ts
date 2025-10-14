@@ -42,28 +42,31 @@ export async function getPaymentsOverviewData(
 ) {
   try {
     // Replace with your actual API endpoint
-    const response = await fetch(`/api/admin/payments/overview?timeFrame=${timeFrame || 'monthly'}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        // Add authentication headers if needed
-        // 'Authorization': `Bearer ${token}`,
+    const response = await fetch(
+      `/api/admin/payments/overview?timeFrame=${timeFrame || "monthly"}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          // Add authentication headers if needed
+          // 'Authorization': `Bearer ${token}`,
+        },
       },
-    });
+    );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch payments overview data');
+      throw new Error("Failed to fetch payments overview data");
     }
 
     const data = await response.json();
-    
+
     // Ensure the data matches the expected format
     return {
       received: data.received || [],
       due: data.due || [],
     };
   } catch (error) {
-    console.error('Error fetching payments overview data:', error);
-    
+    console.error("Error fetching payments overview data:", error);
+
     // Fallback to mock data in case of error (optional)
     if (timeFrame === "yearly") {
       return {

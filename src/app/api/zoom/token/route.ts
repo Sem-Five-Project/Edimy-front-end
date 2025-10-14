@@ -7,7 +7,7 @@ async function getZoomToken() {
       Authorization:
         "Basic " +
         Buffer.from(
-          process.env.ZOOM_CLIENT_ID + ":" + process.env.ZOOM_CLIENT_SECRET
+          process.env.ZOOM_CLIENT_ID + ":" + process.env.ZOOM_CLIENT_SECRET,
         ).toString("base64"),
       "Content-Type": "application/x-www-form-urlencoded",
     },

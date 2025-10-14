@@ -1,4 +1,3 @@
-
 // "use client";
 // import { useAuth } from '@/contexts/AuthContext';
 // import React, { useState, useEffect, useRef } from "react";
@@ -15,9 +14,9 @@
 // import { FaCheckCircle } from "react-icons/fa";
 
 // // Monthly booking UI is integrated inline on this page; removing old demo imports
-// import { 
-//   ArrowLeft, 
-//   AlertCircle, 
+// import {
+//   ArrowLeft,
+//   AlertCircle,
 //   CheckCircle,
 //   CalendarDays,
 //   Clock,
@@ -471,7 +470,6 @@
 
 //   // ADD: Sync selected IDs when monthly mode
 
-
 //   // ADD: Derive ONLY user-selected occurrences from persistent map
 //   const selectedMonthlyOccurrences = React.useMemo(() => {
 //     if (!isMonthlyClassType) return [];
@@ -560,7 +558,6 @@
 //     end.setHours(23,59,59,999);
 //     return { start, end };
 //   };
-
 
 //   const weekDayNameToIndex = (w: string) => {
 //   const map: Record<string, number> = {
@@ -695,7 +692,6 @@
 //   }
 // };
 
-
 //   // Trigger fetch when user toggles lock next month ON
 //   useEffect(() => {
 //     if (lockNextMonth && isMonthlyClassType && selectedMonthlyOccurrences.length > 0) {
@@ -709,19 +705,18 @@
 //   // UPDATE: Validation for monthly
 //   const isValid = () => {
 //     if (!tutor) return false;
-    
+
 //     if (preferences.selectedClassType?.id === 2) {
-//       return selectedMonthlyOccurrences.length > 0 && 
-//              preferences.selectedSubject && 
+//       return selectedMonthlyOccurrences.length > 0 &&
+//              preferences.selectedSubject &&
 //              (tutor.languages.length <= 1 || preferences.selectedLanguage);
 //     }
-    
-//     return selectedSlotLocal && 
-//            preferences.selectedSubject && 
+
+//     return selectedSlotLocal &&
+//            preferences.selectedSubject &&
 //            preferences.selectedClassType &&
 //            (tutor.languages.length <= 1 || preferences.selectedLanguage);
 //   };
-
 
 //   const toggleRangeSelectAll = (rangeKey: string, group: any, checked: boolean) => {
 //     const shortRange = `${group.start_time.slice(0,5)}-${group.end_time.slice(0,5)}`;
@@ -840,9 +835,6 @@
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [JSON.stringify(selectedPatterns), preferences.selectedSubject, preferences.selectedClassType, tutor, JSON.stringify(excludedOccurrenceIds)]);
 
-
-
-
 // const handleContinue = async () => {
 //   if (!isValid()) {
 //     setError("Please complete all selections to continue");
@@ -909,7 +901,6 @@
 
 //       // Persist reserved IDs to allow release if user goes back
 
-
 //       const firstDate = validOccurrences[0].date;
 //       const lastDate = validOccurrences[validOccurrences.length - 1].date;
 // console.log("h1")
@@ -930,7 +921,7 @@
 //         endDate: lastDate
 //       };
 // console.log("h2")
-      
+
 //           setMonthlyBookingData(booking);
 //           const finalPreferences = {
 //             ...preferences,
@@ -1072,7 +1063,7 @@
 
 //   //       const firstDate = validOccurrences[0].date;
 //   //       const lastDate = validOccurrences[validOccurrences.length - 1].date;
-        
+
 //   //       const booking: MonthlyBookingType = {
 //   //         id: response.data?.reservationId || `monthly-${Date.now()}`,
 //   //         tutorId: String(tutor!.id),
@@ -1180,7 +1171,7 @@
 //     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 //       {/* Progress Bar */}
 //       <BookingProgress currentStep={currentStep} />
-      
+
 //       <div className="max-w-7xl mx-auto p-4 space-y-6">
 //           {error && (
 //         <Alert variant="destructive" className="animate-in slide-in-from-top-2 duration-300">
@@ -1344,7 +1335,6 @@
 //           </CardContent>
 //         </Card>
 
-
 //         {/* Monthly selection bar and summary */
 //         // Controls included: per-locked occurrence removal and continue-from-week
 //         }
@@ -1372,19 +1362,19 @@
 //                       (m[o.weekKey] = m[o.weekKey] || []).push(o);
 //                       return m;
 //                     }, {} as Record<string, typeof selectedMonthlyOccurrences>);
-                    
+
 //                     const ordered = Object.entries(groups)
 //                       .sort((a, b) => a[0].localeCompare(b[0]));
-                    
+
 //                     return ordered.map(([weekKey, slots], idx) => {
 //                       const start = new Date(weekKey);
 //                       const end = new Date(start);
 //                       end.setDate(start.getDate() + 6);
 //                       const label = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
-                      
+
 //                       return (
-//                         <div 
-//                           key={weekKey} 
+//                         <div
+//                           key={weekKey}
 //                           className="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-white/60 dark:bg-blue-950/10"
 //                         >
 //                           <div className="flex items-center justify-between mb-3">
@@ -1422,7 +1412,7 @@
 //                                 const d = new Date(s.date);
 //                                 const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
 //                                 const timeLabel = `${new Date(`2000-01-01T${s.start}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} - ${new Date(`2000-01-01T${s.end}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
-                                
+
 //                                 return (
 //                                   <div
 //                                     key={s.slotId}
@@ -1697,7 +1687,7 @@
 //                                   : ""}
 //                               </span>
 //                             )}
-                           
+
 //                           </div>
 
 //                           <div className="p-3 flex flex-wrap gap-2">
@@ -1830,7 +1820,7 @@
 //                       {availableSlots.map((slot: any) => {
 //                         const isSelected = selectedSlotLocal?.slotId === slot.slotId;
 //                         const status = slot.status || "AVAILABLE";
-                        
+
 //                         // One-time: hide if within 3 hours before start
 //                         if(isMonthlyClassType){
 //                           return null;
@@ -1921,7 +1911,6 @@
 //           </CardContent>
 //           </Card>
 //           </div>
-        
 
 //         {/* Price Summary & Continue Button */}
 //         {(preferences.selectedSubject && preferences.selectedClassType && (selectedSlotLocal || (isMonthlyClassType && selectedMonthlyOccurrences.length > 0))) && (
@@ -2018,13 +2007,13 @@
 //                       </span>
 //                     )}
 //                   </div>
-                  
+
 //                   {nextMonthError && (
 //                     <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
 //                       {nextMonthError}
 //                     </div>
 //                   )}
-                  
+
 //                   {!nextMonthPatternsLoading && nextMonthPreview.length === 0 && !nextMonthError && (
 //                     <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
 //                       No patterns available for next month
@@ -2086,22 +2075,22 @@
 //           <div className="text-center">
 //             <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">Total Amount</div>
 //             <div className="text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-//               {isMonthlyClassType 
+//               {isMonthlyClassType
 //                 ? formatPrice(monthlyTotal)
 //                 : formatPrice(calculatePrice())
 //               }
 //             </div>
-            
+
 //             {selectedCurrency.code !== 'LKR' && (
 //               <div className="text-xs text-gray-400 dark:text-gray-500 mb-4 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full inline-block">
-//                 ≈ Rs. {isMonthlyClassType 
+//                 ≈ Rs. {isMonthlyClassType
 //                   ? monthlyTotal.toFixed(2)
 //                   : calculatePrice().toFixed(2)
 //                 } LKR
 //               </div>
 //             )}
-            
-//             <Button 
+
+//             <Button
 //               onClick={async () => {
 //                 await handleContinue();
 //                 if (isMonthlyClassType) {
@@ -2130,7 +2119,7 @@
 //                 "Complete Selection"
 //               )}
 //             </Button>
-            
+
 //             {isMonthlyClassType && (
 //               <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">
 //                 {selectedMonthlyOccurrences.length} slots • {selectedMonthlyOccurrences.reduce((sum, o) => sum + hoursFromStartEnd(o.start, o.end), 0).toFixed(1)} hours

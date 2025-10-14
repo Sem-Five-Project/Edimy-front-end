@@ -1,5 +1,5 @@
-declare module '@radix-ui/react-context-menu' {
-  import * as React from 'react';
+declare module "@radix-ui/react-context-menu" {
+  import * as React from "react";
 
   export const Root: any;
   export const Trigger: any;

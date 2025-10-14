@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   LineChart,
   Line,
@@ -23,7 +23,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 import {
   Users,
   GraduationCap,
@@ -37,8 +37,8 @@ import {
   Download,
   Clock,
   CheckCircle,
-  Eye
-} from 'lucide-react';
+  Eye,
+} from "lucide-react";
 
 interface KPIData {
   totalStudents: number;
@@ -67,7 +67,7 @@ export default function KPIDashboardPage() {
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
   const [trendData, setTrendData] = useState<TrendData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timePeriod, setTimePeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [timePeriod, setTimePeriod] = useState<"7d" | "30d" | "90d">("30d");
 
   useEffect(() => {
     fetchKPIData();
@@ -77,8 +77,8 @@ export default function KPIDashboardPage() {
     setLoading(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Mock KPI data
       const mockKPIData: KPIData = {
         totalStudents: 1247,
@@ -93,7 +93,7 @@ export default function KPIDashboardPage() {
           sessionsChange: 15.2,
           revenueChange: 18.7,
           ratingChange: 0.2,
-        }
+        },
       };
 
       // Mock trend data for the last 30 days
@@ -101,7 +101,10 @@ export default function KPIDashboardPage() {
         const date = new Date();
         date.setDate(date.getDate() - (29 - i));
         return {
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          date: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
           sessions: Math.floor(Math.random() * 150) + 80,
           revenue: Math.floor(Math.random() * 5000) + 3000,
           newUsers: Math.floor(Math.random() * 20) + 5,
@@ -111,16 +114,16 @@ export default function KPIDashboardPage() {
       setKpiData(mockKPIData);
       setTrendData(mockTrendData);
     } catch (error) {
-      console.error('Error fetching KPI data:', error);
+      console.error("Error fetching KPI data:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -135,9 +138,9 @@ export default function KPIDashboardPage() {
   };
 
   const getTrendColor = (change: number) => {
-    if (change > 0) return 'text-green-600';
-    if (change < 0) return 'text-red-600';
-    return 'text-gray-600';
+    if (change > 0) return "text-green-600";
+    if (change < 0) return "text-red-600";
+    return "text-gray-600";
   };
 
   if (loading) {
@@ -161,7 +164,12 @@ export default function KPIDashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Select value={timePeriod} onValueChange={(value: '7d' | '30d' | '90d') => setTimePeriod(value)}>
+          <Select
+            value={timePeriod}
+            onValueChange={(value: "7d" | "30d" | "90d") =>
+              setTimePeriod(value)
+            }
+          >
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -190,11 +198,17 @@ export default function KPIDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Students</p>
-                  <p className="text-2xl font-bold">{kpiData.totalStudents.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Active Students
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {kpiData.totalStudents.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     {getTrendIcon(kpiData.trends.studentsChange)}
-                    <span className={`text-sm ml-1 ${getTrendColor(kpiData.trends.studentsChange)}`}>
+                    <span
+                      className={`text-sm ml-1 ${getTrendColor(kpiData.trends.studentsChange)}`}
+                    >
                       {Math.abs(kpiData.trends.studentsChange)}%
                     </span>
                   </div>
@@ -209,11 +223,17 @@ export default function KPIDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Tutors</p>
-                  <p className="text-2xl font-bold">{kpiData.totalTutors.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Active Tutors
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {kpiData.totalTutors.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     {getTrendIcon(kpiData.trends.tutorsChange)}
-                    <span className={`text-sm ml-1 ${getTrendColor(kpiData.trends.tutorsChange)}`}>
+                    <span
+                      className={`text-sm ml-1 ${getTrendColor(kpiData.trends.tutorsChange)}`}
+                    >
                       {Math.abs(kpiData.trends.tutorsChange)}%
                     </span>
                   </div>
@@ -228,11 +248,17 @@ export default function KPIDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
-                  <p className="text-2xl font-bold">{kpiData.totalSessions.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Sessions
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {kpiData.totalSessions.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     {getTrendIcon(kpiData.trends.sessionsChange)}
-                    <span className={`text-sm ml-1 ${getTrendColor(kpiData.trends.sessionsChange)}`}>
+                    <span
+                      className={`text-sm ml-1 ${getTrendColor(kpiData.trends.sessionsChange)}`}
+                    >
                       {Math.abs(kpiData.trends.sessionsChange)}%
                     </span>
                   </div>
@@ -247,11 +273,17 @@ export default function KPIDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold">{formatCurrency(kpiData.totalRevenue)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Revenue
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(kpiData.totalRevenue)}
+                  </p>
                   <div className="flex items-center mt-1">
                     {getTrendIcon(kpiData.trends.revenueChange)}
-                    <span className={`text-sm ml-1 ${getTrendColor(kpiData.trends.revenueChange)}`}>
+                    <span
+                      className={`text-sm ml-1 ${getTrendColor(kpiData.trends.revenueChange)}`}
+                    >
                       {Math.abs(kpiData.trends.revenueChange)}%
                     </span>
                   </div>
@@ -266,11 +298,15 @@ export default function KPIDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Avg Rating</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Avg Rating
+                  </p>
                   <p className="text-2xl font-bold">{kpiData.averageRating}</p>
                   <div className="flex items-center mt-1">
                     {getTrendIcon(kpiData.trends.ratingChange)}
-                    <span className={`text-sm ml-1 ${getTrendColor(kpiData.trends.ratingChange)}`}>
+                    <span
+                      className={`text-sm ml-1 ${getTrendColor(kpiData.trends.ratingChange)}`}
+                    >
                       {Math.abs(kpiData.trends.ratingChange)}
                     </span>
                   </div>
@@ -285,11 +321,15 @@ export default function KPIDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending Tasks</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Pending Tasks
+                  </p>
                   <p className="text-2xl font-bold">{kpiData.pendingTasks}</p>
                   <div className="flex items-center mt-1">
                     <Clock className="w-4 h-4 text-red-600" />
-                    <span className="text-sm ml-1 text-red-600">Needs attention</span>
+                    <span className="text-sm ml-1 text-red-600">
+                      Needs attention
+                    </span>
                   </div>
                 </div>
                 <AlertTriangle className="w-8 h-8 text-red-600" />
@@ -316,12 +356,12 @@ export default function KPIDashboardPage() {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="sessions" 
-                  stroke="#8884d8" 
+                <Line
+                  type="monotone"
+                  dataKey="sessions"
+                  stroke="#8884d8"
                   strokeWidth={2}
-                  dot={{ fill: '#8884d8' }}
+                  dot={{ fill: "#8884d8" }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -342,12 +382,17 @@ export default function KPIDashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value) => [formatCurrency(value as number), 'Revenue']} />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#82ca9d" 
-                  fill="#82ca9d" 
+                <Tooltip
+                  formatter={(value) => [
+                    formatCurrency(value as number),
+                    "Revenue",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#82ca9d"
+                  fill="#82ca9d"
                   fillOpacity={0.6}
                 />
               </AreaChart>
@@ -394,28 +439,40 @@ export default function KPIDashboardPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span>Payment System</span>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
                   <CheckCircle className="w-4 h-4 mr-1" />
                   Operational
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span>Session Management</span>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
                   <CheckCircle className="w-4 h-4 mr-1" />
                   Operational
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span>Notification Service</span>
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                <Badge
+                  variant="secondary"
+                  className="bg-yellow-100 text-yellow-800"
+                >
                   <AlertTriangle className="w-4 h-4 mr-1" />
                   Degraded
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span>User Authentication</span>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
                   <CheckCircle className="w-4 h-4 mr-1" />
                   Operational
                 </Badge>

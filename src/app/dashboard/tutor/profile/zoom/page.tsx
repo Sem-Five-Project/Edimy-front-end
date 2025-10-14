@@ -9,17 +9,12 @@ export default function ZoomPage() {
   const userName = params.get("userName") || "Guest";
   const userEmail = params.get("userEmail") || "";
 
-
   if (!zoomUrl) {
     return <p>❌ No Zoom link provided</p>;
   }
 
   return (
-    <ZoomMeeting
-      url={zoomUrl}
-      userName={userName}
-      userEmail={userEmail}
-    />
+    <ZoomMeeting url={zoomUrl} userName={userName} userEmail={userEmail} />
     // <div>
     //     HI
     // </div>

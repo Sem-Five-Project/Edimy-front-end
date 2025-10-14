@@ -1,24 +1,30 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/contexts/AuthContext" // Import your useAuth hook
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { 
-  Edit3, 
-  Save, 
-  X, 
-  BookOpen, 
-  CreditCard, 
-  User, 
-  GraduationCap, 
-  Calendar, 
+import React from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext"; // Import your useAuth hook
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Edit3,
+  Save,
+  X,
+  BookOpen,
+  CreditCard,
+  User,
+  GraduationCap,
+  Calendar,
   FileText,
   Award,
   Target,
@@ -34,61 +40,61 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  AlertCircle
-} from "lucide-react"
+  AlertCircle,
+} from "lucide-react";
 
 interface StudentData {
-  username: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  age: string
-  grade: string
-  educationLevel: string
-  stream: string
-  preferredSubjects: string[]
-  bio: string
-  profilePicture: string
-  address: string
-  gpa: string
-  totalLessons: number
-  completedAssignments: number
-  achievements: string[]
-  joinedDate: string
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  age: string;
+  grade: string;
+  educationLevel: string;
+  stream: string;
+  preferredSubjects: string[];
+  bio: string;
+  profilePicture: string;
+  address: string;
+  gpa: string;
+  totalLessons: number;
+  completedAssignments: number;
+  achievements: string[];
+  joinedDate: string;
 }
 
 interface EducationLevel {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface Stream {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface OngoingClass {
-  id: string
-  subject: string
-  tutor: string
-  classType: 'monthly' | 'one-time'
-  nextSession: string
-  time: string
-  isPaid: boolean
-  monthlyFee?: number
+  id: string;
+  subject: string;
+  tutor: string;
+  classType: "monthly" | "one-time";
+  nextSession: string;
+  time: string;
+  isPaid: boolean;
+  monthlyFee?: number;
 }
 
 interface BookedClass {
-  id: string
-  subject: string
-  tutor: string
-  classType: 'monthly' | 'one-time'
-  scheduledDate: string
-  time: string
-  fee: number
-  isPaid: boolean
-  canCancel: boolean
+  id: string;
+  subject: string;
+  tutor: string;
+  classType: "monthly" | "one-time";
+  scheduledDate: string;
+  time: string;
+  fee: number;
+  isPaid: boolean;
+  canCancel: boolean;
 }
 
 // API Mock Functions
@@ -98,31 +104,31 @@ const fetchEducationLevels = async () => {
     // Replace with actual API call
     // const response = await fetch('/api/education-levels')
     // return response.json()
-    
+
     // Return dummy data if API fails
     return [
       { value: "grade-1-5", label: "Grade 1-5" },
       { value: "grade-6-11", label: "Grade 6-11" },
       { value: "ordinary-level", label: "Ordinary Level" },
-      { value: "advanced-level", label: "Advanced Level" }
-    ]
+      { value: "advanced-level", label: "Advanced Level" },
+    ];
   } catch (error) {
-    console.error('Failed to fetch education levels:', error)
+    console.error("Failed to fetch education levels:", error);
     return [
       { value: "grade-1-5", label: "Grade 1-5" },
       { value: "grade-6-11", label: "Grade 6-11" },
       { value: "ordinary-level", label: "Ordinary Level" },
-      { value: "advanced-level", label: "Advanced Level" }
-    ]
+      { value: "advanced-level", label: "Advanced Level" },
+    ];
   }
-}
+};
 
 const fetchStreams = async (educationLevel: string) => {
   try {
     // Replace with actual API call
     // const response = await fetch(`/api/streams?educationLevel=${educationLevel}`)
     // return response.json()
-    
+
     // Return dummy data if API fails
     if (educationLevel === "advanced-level") {
       return [
@@ -130,69 +136,114 @@ const fetchStreams = async (educationLevel: string) => {
         { value: "biology", label: "Biology" },
         { value: "arts", label: "Arts" },
         { value: "commerce", label: "Commerce" },
-        { value: "technology", label: "Technology" }
-      ]
+        { value: "technology", label: "Technology" },
+      ];
     }
-    return []
+    return [];
   } catch (error) {
-    console.error('Failed to fetch streams:', error)
+    console.error("Failed to fetch streams:", error);
     if (educationLevel === "advanced-level") {
       return [
         { value: "mathematics", label: "Mathematics" },
         { value: "biology", label: "Biology" },
         { value: "arts", label: "Arts" },
         { value: "commerce", label: "Commerce" },
-        { value: "technology", label: "Technology" }
-      ]
+        { value: "technology", label: "Technology" },
+      ];
     }
-    return []
+    return [];
   }
-}
+};
 
 const fetchSubjects = async (educationLevel: string, stream?: string) => {
   try {
     // Replace with actual API call
     // const response = await fetch(`/api/subjects?educationLevel=${educationLevel}&stream=${stream}`)
     // return response.json()
-    
+
     // Return dummy data based on education level and stream
     if (educationLevel === "advanced-level" && stream === "mathematics") {
-      return ["Combined Mathematics", "Physics", "Chemistry", "ICT"]
+      return ["Combined Mathematics", "Physics", "Chemistry", "ICT"];
     } else if (educationLevel === "advanced-level" && stream === "biology") {
-      return ["Biology", "Chemistry", "Physics", "Agricultural Science"]
+      return ["Biology", "Chemistry", "Physics", "Agricultural Science"];
     } else if (educationLevel === "ordinary-level") {
-      return ["Mathematics", "Science", "English", "Sinhala", "History", "Geography", "Health & Physical Education", "Art", "ICT"]
+      return [
+        "Mathematics",
+        "Science",
+        "English",
+        "Sinhala",
+        "History",
+        "Geography",
+        "Health & Physical Education",
+        "Art",
+        "ICT",
+      ];
     } else if (educationLevel === "grade-6-11") {
-      return ["Mathematics", "Science", "English", "Sinhala", "Social Studies", "Health & Physical Education", "Art", "ICT"]
+      return [
+        "Mathematics",
+        "Science",
+        "English",
+        "Sinhala",
+        "Social Studies",
+        "Health & Physical Education",
+        "Art",
+        "ICT",
+      ];
     } else {
-      return ["Mathematics", "English", "Sinhala", "Environmental Studies", "Health & Physical Education", "Art"]
+      return [
+        "Mathematics",
+        "English",
+        "Sinhala",
+        "Environmental Studies",
+        "Health & Physical Education",
+        "Art",
+      ];
     }
   } catch (error) {
-    console.error('Failed to fetch subjects:', error)
-    return ["Mathematics", "Science", "English", "Sinhala"]
+    console.error("Failed to fetch subjects:", error);
+    return ["Mathematics", "Science", "English", "Sinhala"];
   }
-}
+};
 
 // OngoingClassCard Component
-const OngoingClassCard = ({ classData, onClick }: { classData: OngoingClass, onClick: () => void }) => (
-  <Card className="relative overflow-hidden shadow-lg border-0 bg-gradient-to-br from-white/95 to-blue-50/90 hover:shadow-xl transition-all duration-300 cursor-pointer group" onClick={onClick}>
+const OngoingClassCard = ({
+  classData,
+  onClick,
+}: {
+  classData: OngoingClass;
+  onClick: () => void;
+}) => (
+  <Card
+    className="relative overflow-hidden shadow-lg border-0 bg-gradient-to-br from-white/95 to-blue-50/90 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+    onClick={onClick}
+  >
     <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-purple-400/10 group-hover:from-blue-400/10 group-hover:to-purple-400/15 transition-all duration-300"></div>
     <CardContent className="p-4 relative z-10">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-semibold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">{classData.subject}</h3>
+          <h3 className="font-semibold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
+            {classData.subject}
+          </h3>
           <p className="text-sm text-slate-600">with {classData.tutor}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <Badge variant={classData.isPaid ? "default" : "destructive"} className="text-xs">
+          <Badge
+            variant={classData.isPaid ? "default" : "destructive"}
+            className="text-xs"
+          >
             {classData.isPaid ? "Paid" : "Unpaid"}
           </Badge>
-          <Badge variant={classData.classType === "monthly" ? "secondary" : "outline"} className="text-xs">
+          <Badge
+            variant={
+              classData.classType === "monthly" ? "secondary" : "outline"
+            }
+            className="text-xs"
+          >
             {classData.classType === "monthly" ? "Monthly" : "One-time"}
           </Badge>
         </div>
       </div>
-      
+
       <div className="space-y-2 text-sm">
         <div className="flex items-center gap-2 text-slate-600">
           <Calendar className="h-4 w-4 text-blue-500" />
@@ -216,27 +267,44 @@ const OngoingClassCard = ({ classData, onClick }: { classData: OngoingClass, onC
           View Details
         </Button>
         {!classData.isPaid && classData.classType === "monthly" && (
-          <Button size="sm" className="text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+          <Button
+            size="sm"
+            className="text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+          >
             Pay Now
           </Button>
         )}
       </div>
     </CardContent>
   </Card>
-)
+);
 
 // BookedClassCard Component
-const BookedClassCard = ({ bookingData, onClick }: { bookingData: BookedClass, onClick: () => void }) => (
-  <Card className="relative overflow-hidden shadow-lg border-0 bg-gradient-to-br from-white/95 to-purple-50/90 hover:shadow-xl transition-all duration-300 cursor-pointer group" onClick={onClick}>
+const BookedClassCard = ({
+  bookingData,
+  onClick,
+}: {
+  bookingData: BookedClass;
+  onClick: () => void;
+}) => (
+  <Card
+    className="relative overflow-hidden shadow-lg border-0 bg-gradient-to-br from-white/95 to-purple-50/90 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+    onClick={onClick}
+  >
     <div className="absolute inset-0 bg-gradient-to-br from-purple-400/5 to-pink-400/10 group-hover:from-purple-400/10 group-hover:to-pink-400/15 transition-all duration-300"></div>
     <CardContent className="p-4 relative z-10">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-semibold text-lg text-slate-800 group-hover:text-purple-700 transition-colors">{bookingData.subject}</h3>
+          <h3 className="font-semibold text-lg text-slate-800 group-hover:text-purple-700 transition-colors">
+            {bookingData.subject}
+          </h3>
           <p className="text-sm text-slate-600">with {bookingData.tutor}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <Badge variant={bookingData.isPaid ? "default" : "destructive"} className="text-xs">
+          <Badge
+            variant={bookingData.isPaid ? "default" : "destructive"}
+            className="text-xs"
+          >
             {bookingData.isPaid ? "Paid" : "Unpaid"}
           </Badge>
           <Badge variant="outline" className="text-xs">
@@ -244,7 +312,7 @@ const BookedClassCard = ({ bookingData, onClick }: { bookingData: BookedClass, o
           </Badge>
         </div>
       </div>
-      
+
       <div className="space-y-2 text-sm">
         <div className="flex items-center gap-2 text-slate-600">
           <Calendar className="h-4 w-4 text-purple-500" />
@@ -274,16 +342,16 @@ const BookedClassCard = ({ bookingData, onClick }: { bookingData: BookedClass, o
       </div>
     </CardContent>
   </Card>
-)
+);
 
 export default function StudentProfileEnhanced() {
-  const { user, isLoading: isAuthLoading, updateUser } = useAuth() // Add this line to use AuthContext
+  const { user, isLoading: isAuthLoading, updateUser } = useAuth(); // Add this line to use AuthContext
 
-  const [isEditing, setIsEditing] = useState(false)
-  const [educationLevels, setEducationLevels] = useState<EducationLevel[]>([])
-  const [streams, setStreams] = useState<Stream[]>([])
-  const [subjects, setSubjects] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
+  const [educationLevels, setEducationLevels] = useState<EducationLevel[]>([]);
+  const [streams, setStreams] = useState<Stream[]>([]);
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [studentData, setStudentData] = useState<StudentData>({
     username: "",
@@ -302,11 +370,15 @@ export default function StudentProfileEnhanced() {
     gpa: "3.95",
     totalLessons: 142,
     completedAssignments: 89,
-    achievements: ["Honor Roll Student", "Mathematics Excellence", "Science Fair Winner"],
-    joinedDate: "September 2023"
-  })
+    achievements: [
+      "Honor Roll Student",
+      "Mathematics Excellence",
+      "Science Fair Winner",
+    ],
+    joinedDate: "September 2023",
+  });
 
-  const [editData, setEditData] = useState<StudentData>(studentData)
+  const [editData, setEditData] = useState<StudentData>(studentData);
 
   // Effect to sync user data from AuthContext to local state
   useEffect(() => {
@@ -317,14 +389,16 @@ export default function StudentProfileEnhanced() {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         email: user.email || "",
-        profilePicture: user.profileImage || "https://images.unsplash.com/photo-1494790108755-2616c667bdf4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
-      }
-      setStudentData(profileData)
+        profilePicture:
+          user.profileImage ||
+          "https://images.unsplash.com/photo-1494790108755-2616c667bdf4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+      };
+      setStudentData(profileData);
       if (!isEditing) {
-        setEditData(profileData)
+        setEditData(profileData);
       }
     }
-  }, [user, isEditing])
+  }, [user, isEditing]);
 
   // Dummy data for ongoing and booked classes
   const [ongoingClasses] = useState<OngoingClass[]>([
@@ -336,7 +410,7 @@ export default function StudentProfileEnhanced() {
       nextSession: "2025-09-25",
       time: "2:00 PM - 4:00 PM",
       isPaid: true,
-      monthlyFee: 5000
+      monthlyFee: 5000,
     },
     {
       id: "2",
@@ -346,9 +420,9 @@ export default function StudentProfileEnhanced() {
       nextSession: "2025-09-26",
       time: "10:00 AM - 12:00 PM",
       isPaid: false,
-      monthlyFee: 4500
-    }
-  ])
+      monthlyFee: 4500,
+    },
+  ]);
 
   const [bookedClasses] = useState<BookedClass[]>([
     {
@@ -360,7 +434,7 @@ export default function StudentProfileEnhanced() {
       time: "3:00 PM - 5:00 PM",
       fee: 2000,
       isPaid: true,
-      canCancel: true
+      canCancel: true,
     },
     {
       id: "2",
@@ -371,71 +445,79 @@ export default function StudentProfileEnhanced() {
       time: "1:00 PM - 3:00 PM",
       fee: 1500,
       isPaid: false,
-      canCancel: true
-    }
-  ])
+      canCancel: true,
+    },
+  ]);
 
   useEffect(() => {
-    loadEducationLevels()
-  }, [])
+    loadEducationLevels();
+  }, []);
 
   const loadEducationLevels = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const levels = await fetchEducationLevels()
-      setEducationLevels(levels)
+      const levels = await fetchEducationLevels();
+      setEducationLevels(levels);
     } catch (error) {
-      console.error('Error loading education levels:', error)
+      console.error("Error loading education levels:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleEducationLevelChange = async (value: string) => {
-    setEditData(prev => ({ ...prev, educationLevel: value, stream: "", preferredSubjects: [] }))
-    
+    setEditData((prev) => ({
+      ...prev,
+      educationLevel: value,
+      stream: "",
+      preferredSubjects: [],
+    }));
+
     if (value === "advanced-level") {
-      const streamsData = await fetchStreams(value)
-      setStreams(streamsData)
+      const streamsData = await fetchStreams(value);
+      setStreams(streamsData);
     } else {
-      setStreams([])
+      setStreams([]);
     }
-    
-    const subjectsData = await fetchSubjects(value)
-    setSubjects(subjectsData)
-  }
+
+    const subjectsData = await fetchSubjects(value);
+    setSubjects(subjectsData);
+  };
 
   const handleStreamChange = async (value: string) => {
-    setEditData(prev => ({ ...prev, stream: value, preferredSubjects: [] }))
-    
-    const subjectsData = await fetchSubjects(editData.educationLevel, value)
-    setSubjects(subjectsData)
-  }
+    setEditData((prev) => ({ ...prev, stream: value, preferredSubjects: [] }));
+
+    const subjectsData = await fetchSubjects(editData.educationLevel, value);
+    setSubjects(subjectsData);
+  };
 
   const handleEdit = async () => {
-    setEditData(studentData)
-    setIsEditing(true)
-    
+    setEditData(studentData);
+    setIsEditing(true);
+
     // Load initial data for editing
-    const levels = await fetchEducationLevels()
-    setEducationLevels(levels)
-    
+    const levels = await fetchEducationLevels();
+    setEducationLevels(levels);
+
     if (studentData.educationLevel === "advanced-level") {
-      const streamsData = await fetchStreams(studentData.educationLevel)
-      setStreams(streamsData)
+      const streamsData = await fetchStreams(studentData.educationLevel);
+      setStreams(streamsData);
     }
-    
-    const subjectsData = await fetchSubjects(studentData.educationLevel, studentData.stream)
-    setSubjects(subjectsData)
-  }
+
+    const subjectsData = await fetchSubjects(
+      studentData.educationLevel,
+      studentData.stream,
+    );
+    setSubjects(subjectsData);
+  };
 
   const handleSave = () => {
     // Here you would call an API to save the profile data in `editData`
     // e.g., await userAPI.updateProfile(editData);
-    
+
     // On success, update the local state and AuthContext
-    setStudentData(editData)
-    
+    setStudentData(editData);
+
     // Update the AuthContext with the new user data
     if (user) {
       updateUser({
@@ -445,16 +527,16 @@ export default function StudentProfileEnhanced() {
         email: editData.email,
         username: editData.username,
         profileImage: editData.profilePicture || null,
-      })
+      });
     }
-    
-    setIsEditing(false)
-  }
+
+    setIsEditing(false);
+  };
 
   const handleCancel = () => {
-    setEditData(studentData)
-    setIsEditing(false)
-  }
+    setEditData(studentData);
+    setIsEditing(false);
+  };
 
   const handleSubjectToggle = (subject: string) => {
     setEditData((prev) => ({
@@ -462,34 +544,34 @@ export default function StudentProfileEnhanced() {
       preferredSubjects: prev.preferredSubjects.includes(subject)
         ? prev.preferredSubjects.filter((s) => s !== subject)
         : [...prev.preferredSubjects, subject],
-    }))
-  }
+    }));
+  };
 
   const handleClassClick = (classId: string) => {
     // Navigate to class detail page
-    console.log('Navigate to ongoing class detail:', classId)
+    console.log("Navigate to ongoing class detail:", classId);
     // Here you would typically use router.push('/class-detail/' + classId)
-  }
+  };
 
   const handleBookingClick = (bookingId: string) => {
     // Navigate to booking detail page
-    console.log('Navigate to booking detail:', bookingId)
+    console.log("Navigate to booking detail:", bookingId);
     // Here you would typically use router.push('/booking-detail/' + bookingId)
-  }
+  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string
-        setEditData((prev) => ({ ...prev, profilePicture: result }))
-      }
-      reader.readAsDataURL(file)
+        const result = e.target?.result as string;
+        setEditData((prev) => ({ ...prev, profilePicture: result }));
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
-  const currentData = isEditing ? editData : studentData
+  const currentData = isEditing ? editData : studentData;
 
   // Show loading state while authentication is being checked
   if (isAuthLoading) {
@@ -500,7 +582,7 @@ export default function StudentProfileEnhanced() {
           <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -515,10 +597,10 @@ export default function StudentProfileEnhanced() {
           </div>
 
           {!isEditing ? (
-            <Button 
-              onClick={handleEdit} 
-              variant="outline" 
-              size="lg" 
+            <Button
+              onClick={handleEdit}
+              variant="outline"
+              size="lg"
               className="bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-blue-200 hover:border-purple-300 shadow-lg hover:shadow-xl transition-all duration-300 text-blue-700 hover:text-purple-700"
             >
               <Edit3 className="mr-2 h-4 w-4" />
@@ -526,18 +608,18 @@ export default function StudentProfileEnhanced() {
             </Button>
           ) : (
             <div className="flex gap-2">
-              <Button 
-                onClick={handleSave} 
-                size="lg" 
+              <Button
+                onClick={handleSave}
+                size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <Save className="mr-2 h-4 w-4" />
                 Save Changes
               </Button>
-              <Button 
-                onClick={handleCancel} 
-                variant="outline" 
-                size="lg" 
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                size="lg"
                 className="bg-gradient-to-r from-slate-50 to-gray-50 hover:from-slate-100 hover:to-gray-100 border-2 border-slate-300 hover:border-slate-400 shadow-md hover:shadow-lg transition-all duration-300"
               >
                 <X className="mr-2 h-4 w-4" />
@@ -558,14 +640,22 @@ export default function StudentProfileEnhanced() {
                   <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
                     <Avatar className="relative w-32 h-32 border-4 border-white shadow-2xl">
-                      <AvatarImage src={currentData.profilePicture} alt="Profile" />
+                      <AvatarImage
+                        src={currentData.profilePicture}
+                        alt="Profile"
+                      />
                       <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {currentData.firstName[0]}{currentData.lastName[0]}
+                        {currentData.firstName[0]}
+                        {currentData.lastName[0]}
                       </AvatarFallback>
                     </Avatar>
                     {isEditing && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                           onClick={() => document.getElementById("profile-upload")?.click()}>
+                      <div
+                        className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        onClick={() =>
+                          document.getElementById("profile-upload")?.click()
+                        }
+                      >
                         <Camera className="h-8 w-8 text-white" />
                       </div>
                     )}
@@ -592,17 +682,17 @@ export default function StudentProfileEnhanced() {
 
                   {/* Action Buttons */}
                   <div className="w-full space-y-3">
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
+                    <Button
+                      variant="outline"
+                      size="lg"
                       className="w-full bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 border-2 border-blue-200 hover:border-purple-300 text-blue-700 hover:text-purple-700 shadow-md hover:shadow-lg transition-all duration-300"
                     >
                       <BookOpen className="mr-2 h-4 w-4" />
                       Previous Sessions
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
+                    <Button
+                      variant="outline"
+                      size="lg"
                       className="w-full bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 hover:from-emerald-100 hover:via-green-100 hover:to-teal-100 border-2 border-emerald-200 hover:border-teal-300 text-emerald-700 hover:text-teal-700 shadow-md hover:shadow-lg transition-all duration-300"
                     >
                       <CreditCard className="mr-2 h-4 w-4" />
@@ -635,26 +725,42 @@ export default function StudentProfileEnhanced() {
                     {isEditing ? (
                       <Input
                         value={editData.firstName}
-                        onChange={(e) => setEditData((prev) => ({ ...prev, firstName: e.target.value }))}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            firstName: e.target.value,
+                          }))
+                        }
                         placeholder="Enter first name"
                         className="border-2 border-blue-200 focus:border-purple-400 bg-white/80 backdrop-blur-sm rounded-xl shadow-md focus:shadow-lg transition-all duration-300"
                       />
                     ) : (
-                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">{currentData.firstName}</p>
+                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">
+                        {currentData.firstName}
+                      </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Last Name
+                    </label>
                     {isEditing ? (
                       <Input
                         value={editData.lastName}
-                        onChange={(e) => setEditData((prev) => ({ ...prev, lastName: e.target.value }))}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            lastName: e.target.value,
+                          }))
+                        }
                         placeholder="Enter last name"
                         className="border-2 border-blue-200 focus:border-purple-400 bg-white/80 backdrop-blur-sm rounded-xl shadow-md focus:shadow-lg transition-all duration-300"
                       />
                     ) : (
-                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">{currentData.lastName}</p>
+                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">
+                        {currentData.lastName}
+                      </p>
                     )}
                   </div>
 
@@ -666,27 +772,43 @@ export default function StudentProfileEnhanced() {
                     {isEditing ? (
                       <Input
                         value={editData.email}
-                        onChange={(e) => setEditData((prev) => ({ ...prev, email: e.target.value }))}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
                         placeholder="Enter email"
                         type="email"
                         className="border-2 border-blue-200 focus:border-purple-400 bg-white/80 backdrop-blur-sm rounded-xl shadow-md focus:shadow-lg transition-all duration-300"
                       />
                     ) : (
-                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">{currentData.email}</p>
+                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">
+                        {currentData.email}
+                      </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Username</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Username
+                    </label>
                     {isEditing ? (
                       <Input
                         value={editData.username}
-                        onChange={(e) => setEditData((prev) => ({ ...prev, username: e.target.value }))}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            username: e.target.value,
+                          }))
+                        }
                         placeholder="Enter username"
                         className="border-2 border-blue-200 focus:border-purple-400 bg-white/80 backdrop-blur-sm rounded-xl shadow-md focus:shadow-lg transition-all duration-300"
                       />
                     ) : (
-                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">{currentData.username}</p>
+                      <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-blue-800 rounded-xl px-4 py-3 shadow-md border border-slate-200 dark:border-slate-600">
+                        {currentData.username}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -705,7 +827,9 @@ export default function StudentProfileEnhanced() {
               <CardContent className="space-y-6 relative z-10">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Education Level</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Education Level
+                    </label>
                     {isEditing ? (
                       <Select
                         value={editData.educationLevel}
@@ -717,7 +841,11 @@ export default function StudentProfileEnhanced() {
                         </SelectTrigger>
                         <SelectContent className="bg-white/95 backdrop-blur-lg border-purple-200 shadow-xl rounded-xl">
                           {educationLevels.map((level: any) => (
-                            <SelectItem key={level.value} value={level.value} className="hover:bg-purple-50 rounded-lg">
+                            <SelectItem
+                              key={level.value}
+                              value={level.value}
+                              className="hover:bg-purple-50 rounded-lg"
+                            >
                               {level.label}
                             </SelectItem>
                           ))}
@@ -725,14 +853,19 @@ export default function StudentProfileEnhanced() {
                       </Select>
                     ) : (
                       <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl px-4 py-3 shadow-md border border-purple-200 dark:border-purple-700">
-                        {educationLevels.find((l: any) => l.value === currentData.educationLevel)?.label || currentData.educationLevel}
+                        {educationLevels.find(
+                          (l: any) => l.value === currentData.educationLevel,
+                        )?.label || currentData.educationLevel}
                       </p>
                     )}
                   </div>
 
-                  {(editData.educationLevel === "advanced-level" || currentData.educationLevel === "advanced-level") && (
+                  {(editData.educationLevel === "advanced-level" ||
+                    currentData.educationLevel === "advanced-level") && (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Stream</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Stream
+                      </label>
                       {isEditing ? (
                         <Select
                           value={editData.stream}
@@ -744,7 +877,11 @@ export default function StudentProfileEnhanced() {
                           </SelectTrigger>
                           <SelectContent className="bg-white/95 backdrop-blur-lg border-purple-200 shadow-xl rounded-xl">
                             {streams.map((stream: any) => (
-                              <SelectItem key={stream.value} value={stream.value} className="hover:bg-purple-50 rounded-lg">
+                              <SelectItem
+                                key={stream.value}
+                                value={stream.value}
+                                className="hover:bg-purple-50 rounded-lg"
+                              >
                                 {stream.label}
                               </SelectItem>
                             ))}
@@ -752,7 +889,9 @@ export default function StudentProfileEnhanced() {
                         </Select>
                       ) : (
                         <p className="text-slate-700 dark:text-slate-300 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl px-4 py-3 shadow-md border border-purple-200 dark:border-purple-700">
-                          {streams.find((s: any) => s.value === currentData.stream)?.label || currentData.stream}
+                          {streams.find(
+                            (s: any) => s.value === currentData.stream,
+                          )?.label || currentData.stream}
                         </p>
                       )}
                     </div>
@@ -799,9 +938,13 @@ export default function StudentProfileEnhanced() {
                     <div className="relative z-10">
                       <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 mb-2">
                         <TrendingUp className="h-5 w-5" />
-                        <span className="text-sm font-semibold">Total Classes</span>
+                        <span className="text-sm font-semibold">
+                          Total Classes
+                        </span>
                       </div>
-                      <div className="text-3xl font-bold text-blue-800 dark:text-blue-200">{currentData.totalLessons}</div>
+                      <div className="text-3xl font-bold text-blue-800 dark:text-blue-200">
+                        {currentData.totalLessons}
+                      </div>
                     </div>
                   </div>
 
@@ -810,9 +953,13 @@ export default function StudentProfileEnhanced() {
                     <div className="relative z-10">
                       <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 mb-2">
                         <Target className="h-5 w-5" />
-                        <span className="text-sm font-semibold">Attended Sessions</span>
+                        <span className="text-sm font-semibold">
+                          Attended Sessions
+                        </span>
                       </div>
-                      <div className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">{currentData.completedAssignments}</div>
+                      <div className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">
+                        {currentData.completedAssignments}
+                      </div>
                     </div>
                   </div>
 
@@ -821,9 +968,13 @@ export default function StudentProfileEnhanced() {
                     <div className="relative z-10">
                       <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-2">
                         <Star className="h-5 w-5" />
-                        <span className="text-sm font-semibold">Achievements</span>
+                        <span className="text-sm font-semibold">
+                          Achievements
+                        </span>
                       </div>
-                      <div className="text-3xl font-bold text-yellow-800 dark:text-yellow-200">{currentData.achievements.length}</div>
+                      <div className="text-3xl font-bold text-yellow-800 dark:text-yellow-200">
+                        {currentData.achievements.length}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -843,10 +994,10 @@ export default function StudentProfileEnhanced() {
                 {ongoingClasses.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2">
                     {ongoingClasses.map((classData) => (
-                      <OngoingClassCard 
-                        key={classData.id} 
-                        classData={classData} 
-                        onClick={() => handleClassClick(classData.id)} 
+                      <OngoingClassCard
+                        key={classData.id}
+                        classData={classData}
+                        onClick={() => handleClassClick(classData.id)}
                       />
                     ))}
                   </div>
@@ -872,10 +1023,10 @@ export default function StudentProfileEnhanced() {
                 {bookedClasses.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2">
                     {bookedClasses.map((bookingData) => (
-                      <BookedClassCard 
-                        key={bookingData.id} 
-                        bookingData={bookingData} 
-                        onClick={() => handleBookingClick(bookingData.id)} 
+                      <BookedClassCard
+                        key={bookingData.id}
+                        bookingData={bookingData}
+                        onClick={() => handleBookingClick(bookingData.id)}
                       />
                     ))}
                   </div>
@@ -901,7 +1052,9 @@ export default function StudentProfileEnhanced() {
                 {isEditing ? (
                   <Textarea
                     value={editData.bio}
-                    onChange={(e) => setEditData((prev) => ({ ...prev, bio: e.target.value }))}
+                    onChange={(e) =>
+                      setEditData((prev) => ({ ...prev, bio: e.target.value }))
+                    }
                     placeholder="Tell us about yourself..."
                     rows={4}
                     className="border-2 border-blue-200 focus:border-purple-400 bg-white/80 backdrop-blur-sm rounded-xl shadow-md focus:shadow-lg transition-all duration-300 resize-none"
@@ -939,5 +1092,5 @@ export default function StudentProfileEnhanced() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,42 +1,48 @@
-"use client"; 
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Mail, CheckCircle, Loader2 } from 'lucide-react';
-import { authAPI } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, CheckCircle, Loader2 } from "lucide-react";
+import { authAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function VerifyEmail() {
-//  const navigate = useNavigate();
+  //  const navigate = useNavigate();
   const router = useRouter();
-  
+
   const { login } = useAuth();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
-  const [resendMessage, setResendMessage] = useState('');
+  const [resendMessage, setResendMessage] = useState("");
   const [countdown, setCountdown] = useState(5);
 
   // Avoid accessing localStorage at module init / during server render.
   const [pendingUser, setPendingUser] = useState<any | null>(null);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     // Run only on client
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
-    const stored = JSON.parse(localStorage.getItem('pendingUser') || '{}');
+    const stored = JSON.parse(localStorage.getItem("pendingUser") || "{}");
     setPendingUser(stored);
-    setEmail(stored.email || '');
+    setEmail(stored.email || "");
 
     if (!stored || !stored.id) {
       // No pending user -> go back to register
-      router.push('/register');
+      router.push("/register");
       return;
     }
 
@@ -48,7 +54,7 @@ export default function VerifyEmail() {
 
     // Countdown timer
     const countdownTimer = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownTimer);
           return 0;
@@ -65,51 +71,50 @@ export default function VerifyEmail() {
 
   const handleAutoVerification = async () => {
     setIsVerifying(true);
-    setError('');
+    setError("");
 
     try {
       // Simulate verification process
       // In production: const response = await authAPI.verifyEmail(verificationToken);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       setIsVerified(true);
       setIsVerifying(false);
-      
+
       // Update user verification status
       const updatedUser = { ...pendingUser, isVerified: true };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      localStorage.removeItem('pendingUser');
-      
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      localStorage.removeItem("pendingUser");
+
       // Auto redirect to dashboard after verification
       setTimeout(() => {
         // Since this is a simulated verification, we'll use a mock token
         // In production, you would get the actual token from the verification response
-        const mockToken = 'mock-verification-token';
+        const mockToken = "mock-verification-token";
         login(mockToken, updatedUser);
-        router.push('/dashboard');
+        router.push("/dashboard");
       }, 2000);
-      
     } catch (error) {
-      setError('Verification failed. Please try again.');
+      setError("Verification failed. Please try again.");
       setIsVerifying(false);
     }
   };
 
   const handleResendVerification = async () => {
     setResendLoading(true);
-    setResendMessage('');
-    setError('');
+    setResendMessage("");
+    setError("");
 
     try {
       const response = await authAPI.resendVerification(email);
-      
+
       if (response.success) {
-        setResendMessage('Verification email sent! Please check your inbox.');
+        setResendMessage("Verification email sent! Please check your inbox.");
       } else {
-        setError('Failed to resend verification email. Please try again.');
+        setError("Failed to resend verification email. Please try again.");
       }
     } catch (error) {
-      setError('Failed to resend verification email. Please try again.');
+      setError("Failed to resend verification email. Please try again.");
     } finally {
       setResendLoading(false);
     }
@@ -117,13 +122,16 @@ export default function VerifyEmail() {
 
   const handleGoToDashboard = () => {
     if (!isVerified) {
-      setError('Please verify your email before accessing the dashboard.');
+      setError("Please verify your email before accessing the dashboard.");
       return;
     }
-    
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') || 'mock-verification-token' : 'mock-verification-token';
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("authToken") || "mock-verification-token"
+        : "mock-verification-token";
     login(token, pendingUser ?? {});
-    router.push('/dashboard');
+    router.push("/dashboard");
   };
 
   if (isVerified) {
@@ -138,12 +146,13 @@ export default function VerifyEmail() {
               Email Verified!
             </CardTitle>
             <CardDescription>
-              Your email has been successfully verified. You can now access your dashboard.
+              Your email has been successfully verified. You can now access your
+              dashboard.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={handleGoToDashboard} 
+            <Button
+              onClick={handleGoToDashboard}
               className="w-full bg-green-600 hover:bg-green-700"
             >
               Go to Dashboard
@@ -166,13 +175,12 @@ export default function VerifyEmail() {
             )}
           </div>
           <CardTitle className="text-2xl font-bold">
-            {isVerifying ? 'Verifying...' : 'Verify Your Email'}
+            {isVerifying ? "Verifying..." : "Verify Your Email"}
           </CardTitle>
           <CardDescription>
-            {isVerifying 
-              ? 'Please wait while we verify your email address.'
-              : `We've sent a verification email to ${email}. Please check your inbox and verify your email address.`
-            }
+            {isVerifying
+              ? "Please wait while we verify your email address."
+              : `We've sent a verification email to ${email}. Please check your inbox and verify your email address.`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -184,14 +192,17 @@ export default function VerifyEmail() {
 
           {resendMessage && (
             <Alert>
-              <AlertDescription className="text-green-600">{resendMessage}</AlertDescription>
+              <AlertDescription className="text-green-600">
+                {resendMessage}
+              </AlertDescription>
             </Alert>
           )}
 
           {countdown > 0 && !isVerifying && (
             <Alert>
               <AlertDescription>
-                Auto-verification will occur in {countdown} seconds (for demo purposes)
+                Auto-verification will occur in {countdown} seconds (for demo
+                purposes)
               </AlertDescription>
             </Alert>
           )}
@@ -209,7 +220,7 @@ export default function VerifyEmail() {
                   Resending...
                 </>
               ) : (
-                'Resend Verification Email'
+                "Resend Verification Email"
               )}
             </Button>
 
@@ -222,7 +233,7 @@ export default function VerifyEmail() {
             </Button>
 
             <Button
-              onClick={() => router.push('/login')}
+              onClick={() => router.push("/login")}
               variant="ghost"
               className="w-full"
             >
@@ -231,10 +242,12 @@ export default function VerifyEmail() {
           </div>
 
           <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>Didn't receive the email? Check your spam folder or try resending.</p>
+            <p>
+              Didn't receive the email? Check your spam folder or try resending.
+            </p>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-};
+}

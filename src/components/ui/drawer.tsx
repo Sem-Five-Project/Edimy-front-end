@@ -1,13 +1,20 @@
-import * as React from 'react';
-import * as DialogPrimitive from '@radix-ui/react-dialog';
+import * as React from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
-const Drawer = ({ shouldScaleBackground = true, ...props }: React.ComponentProps<typeof DialogPrimitive.Root> & { shouldScaleBackground?: boolean }) => (
+const Drawer = ({
+  shouldScaleBackground = true,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root> & {
+  shouldScaleBackground?: boolean;
+}) => (
   // `shouldScaleBackground` is accepted for API compatibility but not passed to Radix Dialog
-  <DialogPrimitive.Root {...(props as React.ComponentProps<typeof DialogPrimitive.Root>)} />
+  <DialogPrimitive.Root
+    {...(props as React.ComponentProps<typeof DialogPrimitive.Root>)}
+  />
 );
-Drawer.displayName = 'Drawer';
+Drawer.displayName = "Drawer";
 
 const DrawerTrigger = DialogPrimitive.Trigger;
 
@@ -19,9 +26,13 @@ const DrawerOverlay = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay ref={ref} className={cn('fixed inset-0 z-50 bg-black/80', className)} {...props} />
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn("fixed inset-0 z-50 bg-black/80", className)}
+    {...props}
+  />
 ));
-DrawerOverlay.displayName = 'DrawerOverlay';
+DrawerOverlay.displayName = "DrawerOverlay";
 
 const DrawerContent = React.forwardRef<
   HTMLDivElement,
@@ -31,7 +42,10 @@ const DrawerContent = React.forwardRef<
     <DrawerOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={cn('fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background', className)}
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+        className,
+      )}
       {...props}
     >
       <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
@@ -39,33 +53,56 @@ const DrawerContent = React.forwardRef<
     </DialogPrimitive.Content>
   </DrawerPortal>
 ));
-DrawerContent.displayName = 'DrawerContent';
+DrawerContent.displayName = "DrawerContent";
 
-const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('grid gap-1.5 p-4 text-center sm:text-left', className)} {...props} />
+const DrawerHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn("grid gap-1.5 p-4 text-center sm:text-left", className)}
+    {...props}
+  />
 );
-DrawerHeader.displayName = 'DrawerHeader';
+DrawerHeader.displayName = "DrawerHeader";
 
-const DrawerFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('mt-auto flex flex-col gap-2 p-4', className)} {...props} />
+const DrawerFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+    {...props}
+  />
 );
-DrawerFooter.displayName = 'DrawerFooter';
+DrawerFooter.displayName = "DrawerFooter";
 
 const DrawerTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title ref={ref} className={cn('text-lg font-semibold leading-none tracking-tight', className)} {...props} />
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      "text-lg font-semibold leading-none tracking-tight",
+      className,
+    )}
+    {...props}
+  />
 ));
-DrawerTitle.displayName = 'DrawerTitle';
+DrawerTitle.displayName = "DrawerTitle";
 
 const DrawerDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
 ));
-DrawerDescription.displayName = 'DrawerDescription';
+DrawerDescription.displayName = "DrawerDescription";
 
 export {
   Drawer,

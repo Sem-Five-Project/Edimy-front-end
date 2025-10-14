@@ -19,11 +19,11 @@
 //   SelectTrigger,
 //   SelectValue,
 // } from "@/components/ui/select"
-// import { 
-//   CreditCard, 
-//   Download, 
-//   CheckCircle2, 
-//   XCircle, 
+// import {
+//   CreditCard,
+//   Download,
+//   CheckCircle2,
+//   XCircle,
 //   Clock,
 //   ArrowLeft,
 //   Calendar
@@ -234,7 +234,6 @@
 //                         </TableCell>
 //                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
 
-
 //                       </TableRow>
 //                     ))
 //                   ) : (
@@ -258,21 +257,27 @@
 //   )
 // }
 
-"use client"
+"use client";
 
-import React, { useState, useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   CreditCard,
   Filter,
@@ -285,10 +290,10 @@ import {
   User,
   BookOpen,
   DollarSign,
-} from "lucide-react"
-import Link from "next/link"
-import { studentAPI } from "@/lib/api"
-import { useAuth } from "@/contexts/AuthContext"
+} from "lucide-react";
+import Link from "next/link";
+import { studentAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface APIPayment {
   amount: number;
@@ -309,13 +314,13 @@ interface Payment {
   orderId?: string;
 }
 
-type TimeFilter = "last_month" | "last_6_months" | "last_year" | "all_time"
+type TimeFilter = "last_month" | "last_6_months" | "last_year" | "all_time";
 
 export default function PaymentHistoryPage() {
-  const { user } = useAuth()
-  const userId = user?.id ?? ""
-  
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time")
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
+
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time");
 
   // Fetch payment data with React Query
   const {
@@ -328,26 +333,35 @@ export default function PaymentHistoryPage() {
     queryKey: ["studentPayments", userId, timeFilter],
     enabled: Boolean(userId),
     queryFn: async () => {
-      const res = await studentAPI.loadStudentProfilePayment(userId, timeFilter)
+      const res = await studentAPI.loadStudentProfilePayment(
+        userId,
+        timeFilter,
+      );
       const apiPayment = res.data as APIPayment;
       // Transform the API payment into our Payment type
       return {
         id: String(Math.random()), // Generate a random ID since API doesn't provide one
         amount: apiPayment.amount,
-        tutorName: apiPayment.tutorName || 'Unknown Tutor',
-        subject: apiPayment.subject || 'Unknown Subject',
-        status: (apiPayment.status?.toLowerCase() as 'completed' | 'pending' | 'failed') || 'pending',
-        paymentTime: apiPayment.paymentTime ? new Date(apiPayment.paymentTime).toISOString() : new Date().toISOString()
-      }
+        tutorName: apiPayment.tutorName || "Unknown Tutor",
+        subject: apiPayment.subject || "Unknown Subject",
+        status:
+          (apiPayment.status?.toLowerCase() as
+            | "completed"
+            | "pending"
+            | "failed") || "pending",
+        paymentTime: apiPayment.paymentTime
+          ? new Date(apiPayment.paymentTime).toISOString()
+          : new Date().toISOString(),
+      };
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
-  })
+  });
 
-  const isLoading = isPending || isFetching
+  const isLoading = isPending || isFetching;
 
   const getStatusBadge = (status: Payment["status"]) => {
     switch (status) {
@@ -357,36 +371,36 @@ export default function PaymentHistoryPage() {
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Completed
           </Badge>
-        )
+        );
       case "pending":
         return (
           <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-300">
             <Clock className="h-3 w-3 mr-1" />
             Pending
           </Badge>
-        )
+        );
       case "failed":
         return (
           <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-300">
             <XCircle className="h-3 w-3 mr-1" />
             Failed
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   const getTimeFilterLabel = (filter: TimeFilter) => {
     switch (filter) {
       case "last_month":
-        return "Last Month"
+        return "Last Month";
       case "last_6_months":
-        return "Last 6 Months"
+        return "Last 6 Months";
       case "last_year":
-        return "Last Year"
+        return "Last Year";
       case "all_time":
-        return "All Time"
+        return "All Time";
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
@@ -394,21 +408,31 @@ export default function PaymentHistoryPage() {
         {/* Header */}
         <div className="mb-8">
           <Link href="/dashboard/student/profile">
-            <Button variant="ghost" className="mb-4 text-gray-700 hover:text-gray-900 hover:bg-gray-200">
+            <Button
+              variant="ghost"
+              className="mb-4 text-gray-700 hover:text-gray-900 hover:bg-gray-200"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Profile
             </Button>
           </Link>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Payment History</h1>
-              <p className="text-gray-600">Track all your payment transactions</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Payment History
+              </h1>
+              <p className="text-gray-600">
+                Track all your payment transactions
+              </p>
             </div>
-            
+
             {/* Time Filter */}
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5 text-gray-600" />
-              <Select value={timeFilter} onValueChange={(value) => setTimeFilter(value as TimeFilter)}>
+              <Select
+                value={timeFilter}
+                onValueChange={(value) => setTimeFilter(value as TimeFilter)}
+              >
                 <SelectTrigger className="w-[180px] bg-white border-gray-300">
                   <SelectValue />
                 </SelectTrigger>
@@ -426,29 +450,39 @@ export default function PaymentHistoryPage() {
         {/* Payment History List */}
         <Card className="border-blue-200 bg-white shadow-xl">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
-            <CardTitle className="text-gray-900 text-2xl">Transaction History</CardTitle>
+            <CardTitle className="text-gray-900 text-2xl">
+              Transaction History
+            </CardTitle>
             <CardDescription className="text-gray-600">
-              All your payment transactions for {getTimeFilterLabel(timeFilter).toLowerCase()}
+              All your payment transactions for{" "}
+              {getTimeFilterLabel(timeFilter).toLowerCase()}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-                <p className="text-gray-600 text-lg">Loading payment history...</p>
+                <p className="text-gray-600 text-lg">
+                  Loading payment history...
+                </p>
               </div>
             ) : isError ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <XCircle className="h-12 w-12 text-red-600 mb-4" />
                 <p className="text-gray-600 text-lg">Failed to load payments</p>
-                <p className="text-gray-500 text-sm mt-2">{error?.message || "Please try again"}</p>
+                <p className="text-gray-500 text-sm mt-2">
+                  {error?.message || "Please try again"}
+                </p>
               </div>
             ) : !payments ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <CreditCard className="h-16 w-16 text-gray-400 mb-4" />
-                <p className="text-gray-600 text-lg font-medium">No payments found</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  No payments found
+                </p>
                 <p className="text-gray-500 text-sm mt-2">
-                  No transactions for {getTimeFilterLabel(timeFilter).toLowerCase()}
+                  No transactions for{" "}
+                  {getTimeFilterLabel(timeFilter).toLowerCase()}
                 </p>
               </div>
             ) : (
@@ -463,18 +497,22 @@ export default function PaymentHistoryPage() {
                           <div className="flex items-center gap-2">
                             <BookOpen className="h-4 w-4 text-blue-600 flex-shrink-0" />
                             <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide">Subject</p>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">
+                                Subject
+                              </p>
                               <h3 className="font-bold text-gray-900 text-base">
                                 {payments.subject}
                               </h3>
                             </div>
                           </div>
-                          
+
                           {/* Tutor Name */}
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-blue-600 flex-shrink-0" />
                             <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide">Tutor</p>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">
+                                Tutor
+                              </p>
                               <p className="text-gray-900 font-semibold text-sm">
                                 {payments.tutorName}
                               </p>
@@ -487,19 +525,27 @@ export default function PaymentHistoryPage() {
                       <div className="flex items-center gap-2 lg:min-w-[180px] p-3 rounded-lg bg-gray-50 border border-gray-200">
                         <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
                         <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Date & Time</p>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">
+                            Date & Time
+                          </p>
                           <p className="text-gray-900 font-semibold text-sm">
-                            {new Date(payments.paymentTime).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
+                            {new Date(payments.paymentTime).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )}
                           </p>
                           <p className="text-gray-600 text-xs mt-0.5">
-                            {new Date(payments.paymentTime).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+                            {new Date(payments.paymentTime).toLocaleTimeString(
+                              "en-US",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
                           </p>
                         </div>
                       </div>
@@ -507,12 +553,14 @@ export default function PaymentHistoryPage() {
                       {/* Right Section: Amount & Status */}
                       <div className="flex flex-col items-end gap-2 lg:min-w-[160px]">
                         <div className="text-right p-3 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-md w-full">
-                          <p className="text-xs text-gray-600 uppercase tracking-wide">Amount</p>
+                          <p className="text-xs text-gray-600 uppercase tracking-wide">
+                            Amount
+                          </p>
                           <p className="text-2xl font-bold text-gray-900">
                             Rs. {payments.amount.toLocaleString()}
                           </p>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 w-full justify-end">
                           {getStatusBadge(payments.status as any)}
                         </div>
@@ -526,5 +574,5 @@ export default function PaymentHistoryPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

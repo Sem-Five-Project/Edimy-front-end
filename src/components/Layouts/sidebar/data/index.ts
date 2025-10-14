@@ -32,7 +32,7 @@ export const NAV_DATA = [
             title: "Pending Approvals",
             url: "/dashboard/admin/verification/pending",
           },
-      
+
           {
             title: "Re-verification",
             url: "/dashboard/admin/verification/re-verify",
@@ -50,7 +50,7 @@ export const NAV_DATA = [
           {
             title: "Ongoing Sessions",
             url: "/dashboard/admin/sessions/ongoing",
-          }
+          },
         ],
       },
       {
@@ -68,7 +68,7 @@ export const NAV_DATA = [
           {
             title: "Pricing Policies",
             url: "/dashboard/admin/payments/pricing",
-          }
+          },
         ],
       },
       {
@@ -122,7 +122,7 @@ export const NAV_DATA = [
             url: "/dashboard/admin/ADMIN/create",
           },
         ],
-      }
+      },
     ],
   },
 ];

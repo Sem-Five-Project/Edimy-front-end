@@ -1,24 +1,28 @@
 "use client";
 
-import { useAuth } from '@/contexts/AuthContext';
-import { CurrencyProvider } from '@/contexts/CurrencyContext';
-import { BookingProvider } from '@/contexts/BookingContext';
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import DashboardSidebar from '@/components/layout/Sidebar';
-import { Toaster } from '@/components/ui/sonner';
+import { useAuth } from "@/contexts/AuthContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { BookingProvider } from "@/contexts/BookingContext";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import DashboardSidebar from "@/components/layout/Sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const isAdminRoute = pathname?.startsWith('/dashboard/admin');
+  const isAdminRoute = pathname?.startsWith("/dashboard/admin");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -46,7 +50,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </SidebarProvider>
         ) : (
-          <div className="space-y-6 text-gray-900 dark:text-gray-100">{children}</div>
+          <div className="space-y-6 text-gray-900 dark:text-gray-100">
+            {children}
+          </div>
         )}
       </BookingProvider>
     </CurrencyProvider>

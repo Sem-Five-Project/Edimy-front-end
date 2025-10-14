@@ -9,7 +9,8 @@ import { ThemeToggleSwitch } from "./theme-toggle";
 import { UserInfo } from "./user-info";
 
 export function Header() {
-  const { toggleSidebar, isMobile, searchTerm, setSearchTerm } = useSidebarContext();
+  const { toggleSidebar, isMobile, searchTerm, setSearchTerm } =
+    useSidebarContext();
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-stroke bg-white px-4 py-5 shadow-1 dark:border-stroke-dark dark:bg-gray-900 md:px-5 2xl:px-10">

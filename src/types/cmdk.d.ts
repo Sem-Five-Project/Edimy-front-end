@@ -1,4 +1,4 @@
-declare module 'cmdk' {
+declare module "cmdk" {
   const Command: any;
   const CommandInput: any;
   const CommandList: any;

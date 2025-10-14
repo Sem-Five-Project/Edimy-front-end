@@ -1,31 +1,37 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { 
-  searchStudentsByAdmin, 
-  getStudentStats, 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  searchStudentsByAdmin,
+  getStudentStats,
   deleteStudent,
-  type StudentsDto, 
+  type StudentsDto,
   type StudentStatsDto,
   type SearchStudentsParams,
-  StudentProfileStatus
-} from '@/lib/adminStudent';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Download, 
-  Eye, 
+  StudentProfileStatus,
+} from "@/lib/adminStudent";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Search,
+  Download,
+  Eye,
   Users,
   UserPlus,
   UserCheck,
-  AlertTriangle
-} from 'lucide-react';
+  AlertTriangle,
+} from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -34,16 +40,18 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<StudentsDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  
+
   // Search filters
-  const [nameSearch, setNameSearch] = useState('');
-  const [usernameSearch, setUsernameSearch] = useState('');
-  const [studentIdSearch, setStudentIdSearch] = useState('');
-  const [emailSearch, setEmailSearch] = useState('');
-  
+  const [nameSearch, setNameSearch] = useState("");
+  const [usernameSearch, setUsernameSearch] = useState("");
+  const [studentIdSearch, setStudentIdSearch] = useState("");
+  const [emailSearch, setEmailSearch] = useState("");
+
   // Dropdown filters
-  const [statusFilter, setStatusFilter] = useState<StudentProfileStatus | null>(null);
-  
+  const [statusFilter, setStatusFilter] = useState<StudentProfileStatus | null>(
+    null,
+  );
+
   const [currentPage, setCurrentPage] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
@@ -53,7 +61,7 @@ export default function StudentsPage() {
     totalStudents: 0,
     activeStudents: 0,
     suspendedStudents: 0,
-    newStudentsThisMonth: 0
+    newStudentsThisMonth: 0,
   });
 
   useEffect(() => {
@@ -76,21 +84,27 @@ export default function StudentsPage() {
     try {
       const studentsList = await searchStudentsByAdmin({
         page: currentPage,
-        size: ITEMS_PER_PAGE + 1 // Request one extra to check if more exists
+        size: ITEMS_PER_PAGE + 1, // Request one extra to check if more exists
       });
-      
+
       // Check if there are more students available
       const hasMoreStudents = studentsList.length > ITEMS_PER_PAGE;
-      const studentsToShow = hasMoreStudents ? studentsList.slice(0, ITEMS_PER_PAGE) : studentsList;
-      
+      const studentsToShow = hasMoreStudents
+        ? studentsList.slice(0, ITEMS_PER_PAGE)
+        : studentsList;
+
       setStudents(studentsToShow);
       // Update total count estimation based on whether we have more data
-      setTotalStudents(hasMoreStudents ? (currentPage + 1) * ITEMS_PER_PAGE + 1 : (currentPage * ITEMS_PER_PAGE) + studentsToShow.length);
-      
+      setTotalStudents(
+        hasMoreStudents
+          ? (currentPage + 1) * ITEMS_PER_PAGE + 1
+          : currentPage * ITEMS_PER_PAGE + studentsToShow.length,
+      );
+
       // Load statistics after students are loaded
       await loadStatistics();
     } catch (error) {
-      console.error('Error fetching initial students:', error);
+      console.error("Error fetching initial students:", error);
       setStudents([]);
       setTotalStudents(0);
       // Still try to load statistics even if students fail
@@ -105,22 +119,39 @@ export default function StudentsPage() {
       const stats = await getStudentStats();
       setStatistics(stats);
     } catch (error) {
-      console.error('Error fetching student statistics:', error);
+      console.error("Error fetching student statistics:", error);
       // Provide fallback statistics based on current page data
-      const activeStudentsCount = students.filter(s => s.status === StudentProfileStatus.ACTIVE).length;
-      const suspendedStudentsCount = students.filter(s => s.status === StudentProfileStatus.SUSPENDED).length;
-      
+      const activeStudentsCount = students.filter(
+        (s) => s.status === StudentProfileStatus.ACTIVE,
+      ).length;
+      const suspendedStudentsCount = students.filter(
+        (s) => s.status === StudentProfileStatus.SUSPENDED,
+      ).length;
+
       setStatistics({
-        totalStudents: totalStudents > 0 ? totalStudents : Math.max(students.length, 50),
-        activeStudents: activeStudentsCount > 0 ? activeStudentsCount : Math.floor(students.length * 0.8),
-        suspendedStudents: suspendedStudentsCount > 0 ? suspendedStudentsCount : Math.floor(students.length * 0.2),
-        newStudentsThisMonth: 8 // Fallback value
+        totalStudents:
+          totalStudents > 0 ? totalStudents : Math.max(students.length, 50),
+        activeStudents:
+          activeStudentsCount > 0
+            ? activeStudentsCount
+            : Math.floor(students.length * 0.8),
+        suspendedStudents:
+          suspendedStudentsCount > 0
+            ? suspendedStudentsCount
+            : Math.floor(students.length * 0.2),
+        newStudentsThisMonth: 8, // Fallback value
       });
     }
   };
 
   const hasSearchCriteria = () => {
-    return nameSearch || usernameSearch || studentIdSearch || emailSearch || statusFilter !== null;
+    return (
+      nameSearch ||
+      usernameSearch ||
+      studentIdSearch ||
+      emailSearch ||
+      statusFilter !== null
+    );
   };
 
   const handleSearchButtonClick = async () => {
@@ -135,20 +166,24 @@ export default function StudentsPage() {
         studentId: studentIdSearch ? parseInt(studentIdSearch) : undefined,
         status: statusFilter || undefined,
         page: 0, // Always start from page 0 for new searches
-        size: ITEMS_PER_PAGE + 1 // Request one extra to check if more exists
+        size: ITEMS_PER_PAGE + 1, // Request one extra to check if more exists
       };
 
       const studentsList = await searchStudentsByAdmin(searchParams);
-      
+
       // Check if there are more students available
       const hasMoreStudents = studentsList.length > ITEMS_PER_PAGE;
-      const studentsToShow = hasMoreStudents ? studentsList.slice(0, ITEMS_PER_PAGE) : studentsList;
-      
+      const studentsToShow = hasMoreStudents
+        ? studentsList.slice(0, ITEMS_PER_PAGE)
+        : studentsList;
+
       setStudents(studentsToShow);
       // Estimate total for pagination based on whether we have more data
-      setTotalStudents(hasMoreStudents ? ITEMS_PER_PAGE + 1 : studentsToShow.length);
+      setTotalStudents(
+        hasMoreStudents ? ITEMS_PER_PAGE + 1 : studentsToShow.length,
+      );
     } catch (error) {
-      console.error('Error searching students:', error);
+      console.error("Error searching students:", error);
       setStudents([]);
       setTotalStudents(0);
     } finally {
@@ -168,15 +203,19 @@ export default function StudentsPage() {
         studentId: studentIdSearch ? parseInt(studentIdSearch) : undefined,
         status: statusFilter || undefined,
         page: currentPage,
-        size: ITEMS_PER_PAGE
+        size: ITEMS_PER_PAGE,
       };
 
       const studentsList = await searchStudentsByAdmin(searchParams);
       setStudents(studentsList);
       // Estimate total for pagination - show next page if we got full page results
-      setTotalStudents(studentsList.length === ITEMS_PER_PAGE ? (currentPage + 1) * ITEMS_PER_PAGE + 1 : (currentPage * ITEMS_PER_PAGE) + studentsList.length);
+      setTotalStudents(
+        studentsList.length === ITEMS_PER_PAGE
+          ? (currentPage + 1) * ITEMS_PER_PAGE + 1
+          : currentPage * ITEMS_PER_PAGE + studentsList.length,
+      );
     } catch (error) {
-      console.error('Error searching students:', error);
+      console.error("Error searching students:", error);
       setStudents([]);
       setTotalStudents(0);
     } finally {
@@ -186,17 +225,17 @@ export default function StudentsPage() {
   };
 
   const handleClearSearch = () => {
-    setNameSearch('');
-    setUsernameSearch('');
-    setStudentIdSearch('');
-    setEmailSearch('');
+    setNameSearch("");
+    setUsernameSearch("");
+    setStudentIdSearch("");
+    setEmailSearch("");
     setStatusFilter(null);
     setCurrentPage(0);
     // Clear search will trigger loadInitialStudents through the useEffect
   };
 
-  const handleStatusFilter = (value: 'ALL' | 'ACTIVE' | 'SUSPENDED') => {
-    setStatusFilter(value === 'ALL' ? null : value as StudentProfileStatus);
+  const handleStatusFilter = (value: "ALL" | "ACTIVE" | "SUSPENDED") => {
+    setStatusFilter(value === "ALL" ? null : (value as StudentProfileStatus));
   };
 
   const handleExport = async () => {
@@ -210,33 +249,33 @@ export default function StudentsPage() {
         studentId: studentIdSearch ? parseInt(studentIdSearch) : undefined,
         status: statusFilter || undefined,
         page: 0,
-        size: 1000 // Get a large number to export all matching records
+        size: 1000, // Get a large number to export all matching records
       });
 
       // Convert data to CSV format
       const csvData = convertStudentsToCSV(allStudentsData);
-      
+
       // Create and download the file
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      
+      link.setAttribute("href", url);
+
       // Generate filename with current date
-      const currentDate = new Date().toISOString().split('T')[0];
+      const currentDate = new Date().toISOString().split("T")[0];
       const filename = `students_export_${currentDate}.csv`;
-      link.setAttribute('download', filename);
-      
+      link.setAttribute("download", filename);
+
       // Trigger download
-      link.style.visibility = 'hidden';
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       console.log(`Exported ${allStudentsData.length} students to ${filename}`);
     } catch (error) {
-      console.error('Error exporting students:', error);
-      alert('Error exporting students. Please try again.');
+      console.error("Error exporting students:", error);
+      alert("Error exporting students. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -245,18 +284,18 @@ export default function StudentsPage() {
   // Helper function to convert students data to CSV format
   const convertStudentsToCSV = (studentsData: StudentsDto[]): string => {
     const headers = [
-      'Student ID',
-      'First Name', 
-      'Last Name',
-      'Full Name',
-      'Username',
-      'Status',
-      'Export Date'
+      "Student ID",
+      "First Name",
+      "Last Name",
+      "Full Name",
+      "Username",
+      "Status",
+      "Export Date",
     ];
-    
-    const csvRows = [headers.join(',')];
-    
-    studentsData.forEach(student => {
+
+    const csvRows = [headers.join(",")];
+
+    studentsData.forEach((student) => {
       const row = [
         student.studentId,
         `"${student.firstName}"`, // Wrap in quotes to handle commas
@@ -264,19 +303,22 @@ export default function StudentsPage() {
         `"${student.firstName} ${student.lastName}"`,
         `"${student.username}"`,
         student.status,
-        new Date().toISOString().split('T')[0]
+        new Date().toISOString().split("T")[0],
       ];
-      csvRows.push(row.join(','));
+      csvRows.push(row.join(","));
     });
-    
-    return csvRows.join('\n');
+
+    return csvRows.join("\n");
   };
 
   const getStatusBadgeColor = (status: StudentProfileStatus) => {
     switch (status) {
-      case StudentProfileStatus.ACTIVE: return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case StudentProfileStatus.SUSPENDED: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case StudentProfileStatus.ACTIVE:
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case StudentProfileStatus.SUSPENDED:
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
@@ -287,13 +329,13 @@ export default function StudentsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Students Management</h1>
         <div className="flex gap-2">
-          <Button 
-            onClick={handleExport} 
+          <Button
+            onClick={handleExport}
             disabled={isExporting}
             variant="outline"
           >
             <Download className="w-4 h-4 mr-2" />
-            {isExporting ? 'Exporting...' : 'Export'}
+            {isExporting ? "Exporting..." : "Export"}
           </Button>
         </div>
       </div>
@@ -302,7 +344,9 @@ export default function StudentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Students
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -315,11 +359,15 @@ export default function StudentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              New This Month
+            </CardTitle>
             <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statistics.newStudentsThisMonth}</div>
+            <div className="text-2xl font-bold">
+              {statistics.newStudentsThisMonth}
+            </div>
             <p className="text-xs text-muted-foreground">
               New registrations this month
             </p>
@@ -328,11 +376,15 @@ export default function StudentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Students</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Students
+            </CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statistics.activeStudents}</div>
+            <div className="text-2xl font-bold">
+              {statistics.activeStudents}
+            </div>
             <p className="text-xs text-muted-foreground">
               Currently active students
             </p>
@@ -341,11 +393,15 @@ export default function StudentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Suspended Students</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Suspended Students
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statistics.suspendedStudents}</div>
+            <div className="text-2xl font-bold">
+              {statistics.suspendedStudents}
+            </div>
             <p className="text-xs text-muted-foreground">
               Currently suspended students
             </p>
@@ -360,7 +416,9 @@ export default function StudentsPage() {
             {/* Search Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Name</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Name
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -371,9 +429,11 @@ export default function StudentsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Username</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Username
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -384,9 +444,11 @@ export default function StudentsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Student ID</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Student ID
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -397,9 +459,11 @@ export default function StudentsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Email</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Email
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -411,36 +475,56 @@ export default function StudentsPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Filter Dropdowns */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Account Status</label>
-                <Select value={statusFilter === null ? 'ALL' : statusFilter} onValueChange={handleStatusFilter}>
+                <label className="text-sm font-medium mb-2 block">
+                  Account Status
+                </label>
+                <Select
+                  value={statusFilter === null ? "ALL" : statusFilter}
+                  onValueChange={handleStatusFilter}
+                >
                   <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:ring-slate-600">
                     <SelectValue className="text-white" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="ALL" className="text-white hover:bg-slate-700 focus:bg-slate-700">All Statuses</SelectItem>
-                    <SelectItem value="ACTIVE" className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300">Active</SelectItem>
-                    <SelectItem value="SUSPENDED" className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300">Suspended</SelectItem>
+                    <SelectItem
+                      value="ALL"
+                      className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                    >
+                      All Statuses
+                    </SelectItem>
+                    <SelectItem
+                      value="ACTIVE"
+                      className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300"
+                    >
+                      Active
+                    </SelectItem>
+                    <SelectItem
+                      value="SUSPENDED"
+                      className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300"
+                    >
+                      Suspended
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            
+
             {/* Search Actions */}
             <div className="flex justify-center gap-4 pt-4 border-t">
-              <Button 
-                onClick={handleSearchButtonClick} 
+              <Button
+                onClick={handleSearchButtonClick}
                 disabled={searching || loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8"
               >
                 <Search className="w-4 h-4 mr-2" />
-                {searching ? 'Searching...' : 'Search Students'}
+                {searching ? "Searching..." : "Search Students"}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleClearSearch}
                 disabled={searching || loading}
                 className="px-8"
@@ -465,21 +549,40 @@ export default function StudentsPage() {
               <table className="w-full">
                 <thead className="border-b bg-muted/50">
                   <tr>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Student ID</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Username</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Student ID
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Name
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Username
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Status
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {students.map((student) => (
-                    <tr key={student.studentId} className="border-b transition-colors hover:bg-muted/50">
-                      <td className="p-4 align-middle font-mono text-sm">{student.studentId}</td>
-                      <td className="p-4 align-middle">
-                        <div className="font-medium">{student.firstName} {student.lastName}</div>
+                    <tr
+                      key={student.studentId}
+                      className="border-b transition-colors hover:bg-muted/50"
+                    >
+                      <td className="p-4 align-middle font-mono text-sm">
+                        {student.studentId}
                       </td>
-                      <td className="p-4 align-middle text-muted-foreground">{student.username}</td>
+                      <td className="p-4 align-middle">
+                        <div className="font-medium">
+                          {student.firstName} {student.lastName}
+                        </div>
+                      </td>
+                      <td className="p-4 align-middle text-muted-foreground">
+                        {student.username}
+                      </td>
                       <td className="p-4 align-middle">
                         <Badge className={getStatusBadgeColor(student.status)}>
                           {student.status}
@@ -488,7 +591,9 @@ export default function StudentsPage() {
                       <td className="p-4 align-middle">
                         <div className="flex justify-center">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/admin/users/students/${student.studentId}`}>
+                            <Link
+                              href={`/dashboard/admin/users/students/${student.studentId}`}
+                            >
                               <Eye className="w-4 h-4 mr-2" />
                               View Profile
                             </Link>
@@ -503,12 +608,14 @@ export default function StudentsPage() {
           )}
 
           {/* Pagination */}
-          {(students.length > 0) && (
+          {students.length > 0 && (
             <div className="flex items-center justify-between p-4 border-t">
               <div className="text-sm text-muted-foreground">
-                Showing {currentPage * ITEMS_PER_PAGE + 1} to{' '}
-                {(currentPage * ITEMS_PER_PAGE) + students.length} students
-                {totalStudents > (currentPage * ITEMS_PER_PAGE + students.length) && ' (more available)'}
+                Showing {currentPage * ITEMS_PER_PAGE + 1} to{" "}
+                {currentPage * ITEMS_PER_PAGE + students.length} students
+                {totalStudents >
+                  currentPage * ITEMS_PER_PAGE + students.length &&
+                  " (more available)"}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -521,36 +628,46 @@ export default function StudentsPage() {
                       setLoading(true);
                       try {
                         let studentsList: StudentsDto[];
-                        
+
                         if (hasSearchCriteria()) {
                           // Handle paginated search
                           const searchParams: SearchStudentsParams = {
                             name: nameSearch || undefined,
                             username: usernameSearch || undefined,
                             email: emailSearch || undefined,
-                            studentId: studentIdSearch ? parseInt(studentIdSearch) : undefined,
+                            studentId: studentIdSearch
+                              ? parseInt(studentIdSearch)
+                              : undefined,
                             status: statusFilter || undefined,
                             page: newPage,
-                            size: ITEMS_PER_PAGE + 1 // Request one extra to check if more exists
+                            size: ITEMS_PER_PAGE + 1, // Request one extra to check if more exists
                           };
-                          studentsList = await searchStudentsByAdmin(searchParams);
+                          studentsList =
+                            await searchStudentsByAdmin(searchParams);
                         } else {
                           // Handle regular pagination - get all students with empty search
                           studentsList = await searchStudentsByAdmin({
                             page: newPage,
-                            size: ITEMS_PER_PAGE + 1
+                            size: ITEMS_PER_PAGE + 1,
                           });
                         }
-                        
+
                         // Check if there are more students available
-                        const hasMoreStudents = studentsList.length > ITEMS_PER_PAGE;
-                        const studentsToShow = hasMoreStudents ? studentsList.slice(0, ITEMS_PER_PAGE) : studentsList;
-                        
+                        const hasMoreStudents =
+                          studentsList.length > ITEMS_PER_PAGE;
+                        const studentsToShow = hasMoreStudents
+                          ? studentsList.slice(0, ITEMS_PER_PAGE)
+                          : studentsList;
+
                         setStudents(studentsToShow);
                         // Update total to reflect whether more data is available
-                        setTotalStudents((newPage * ITEMS_PER_PAGE) + studentsToShow.length + (hasMoreStudents ? 1 : 0));
+                        setTotalStudents(
+                          newPage * ITEMS_PER_PAGE +
+                            studentsToShow.length +
+                            (hasMoreStudents ? 1 : 0),
+                        );
                       } catch (error) {
-                        console.error('Error loading previous page:', error);
+                        console.error("Error loading previous page:", error);
                       } finally {
                         setLoading(false);
                       }
@@ -572,41 +689,54 @@ export default function StudentsPage() {
                     setLoading(true);
                     try {
                       let studentsList: StudentsDto[];
-                      
+
                       if (hasSearchCriteria()) {
                         // Handle paginated search
                         const searchParams: SearchStudentsParams = {
                           name: nameSearch || undefined,
                           username: usernameSearch || undefined,
                           email: emailSearch || undefined,
-                          studentId: studentIdSearch ? parseInt(studentIdSearch) : undefined,
+                          studentId: studentIdSearch
+                            ? parseInt(studentIdSearch)
+                            : undefined,
                           status: statusFilter || undefined,
                           page: newPage,
-                          size: ITEMS_PER_PAGE + 1 // Request one extra to check if more exists
+                          size: ITEMS_PER_PAGE + 1, // Request one extra to check if more exists
                         };
-                        studentsList = await searchStudentsByAdmin(searchParams);
+                        studentsList =
+                          await searchStudentsByAdmin(searchParams);
                       } else {
                         // Handle regular pagination - get all students with empty search
                         studentsList = await searchStudentsByAdmin({
                           page: newPage,
-                          size: ITEMS_PER_PAGE + 1
+                          size: ITEMS_PER_PAGE + 1,
                         });
                       }
-                      
+
                       // Check if there are more students available
-                      const hasMoreStudents = studentsList.length > ITEMS_PER_PAGE;
-                      const studentsToShow = hasMoreStudents ? studentsList.slice(0, ITEMS_PER_PAGE) : studentsList;
-                      
+                      const hasMoreStudents =
+                        studentsList.length > ITEMS_PER_PAGE;
+                      const studentsToShow = hasMoreStudents
+                        ? studentsList.slice(0, ITEMS_PER_PAGE)
+                        : studentsList;
+
                       setStudents(studentsToShow);
                       // Update total to reflect whether more data is available
-                      setTotalStudents((newPage * ITEMS_PER_PAGE) + studentsToShow.length + (hasMoreStudents ? 1 : 0));
+                      setTotalStudents(
+                        newPage * ITEMS_PER_PAGE +
+                          studentsToShow.length +
+                          (hasMoreStudents ? 1 : 0),
+                      );
                     } catch (error) {
-                      console.error('Error loading next page:', error);
+                      console.error("Error loading next page:", error);
                     } finally {
                       setLoading(false);
                     }
                   }}
-                  disabled={totalStudents <= (currentPage + 1) * ITEMS_PER_PAGE || loading}
+                  disabled={
+                    totalStudents <= (currentPage + 1) * ITEMS_PER_PAGE ||
+                    loading
+                  }
                 >
                   Next
                 </Button>

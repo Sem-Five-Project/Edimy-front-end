@@ -1,33 +1,33 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { 
-  searchTutorsByAdmin, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  searchTutorsByAdmin,
   getTutorStatistics,
-  type TutorsDto 
-} from '@/lib/adminTutor';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Download, 
-  Eye, 
+  type TutorsDto,
+} from "@/lib/adminTutor";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Search,
+  Download,
+  Eye,
   Users,
   UserPlus,
   Star,
-  AlertTriangle
-} from 'lucide-react';
+  AlertTriangle,
+} from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -36,17 +36,19 @@ export default function TutorsPage() {
   const [tutors, setTutors] = useState<TutorsDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  
+
   // Search filters
-  const [nameSearch, setNameSearch] = useState('');
-  const [usernameSearch, setUsernameSearch] = useState('');
-  const [tutorIdSearch, setTutorIdSearch] = useState('');
-  const [emailSearch, setEmailSearch] = useState('');
-  
+  const [nameSearch, setNameSearch] = useState("");
+  const [usernameSearch, setUsernameSearch] = useState("");
+  const [tutorIdSearch, setTutorIdSearch] = useState("");
+  const [emailSearch, setEmailSearch] = useState("");
+
   // Dropdown filters
-  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'SUSPENDED' | null>(null);
+  const [statusFilter, setStatusFilter] = useState<
+    "ACTIVE" | "SUSPENDED" | null
+  >(null);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
-  
+
   const [currentPage, setCurrentPage] = useState(0);
   const [totalTutors, setTotalTutors] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
@@ -57,7 +59,7 @@ export default function TutorsPage() {
     activeTutors: 0,
     verifiedTutors: 0,
     averageRating: 0,
-    newTutorsThisMonth: 0
+    newTutorsThisMonth: 0,
   });
 
   useEffect(() => {
@@ -81,16 +83,20 @@ export default function TutorsPage() {
     try {
       const tutorsList = await searchTutorsByAdmin({
         page: currentPage,
-        size: ITEMS_PER_PAGE
+        size: ITEMS_PER_PAGE,
       });
       setTutors(tutorsList);
       // Since we don't get total count from API, we'll show pagination if we get full page
-      setTotalTutors(tutorsList.length === ITEMS_PER_PAGE ? (currentPage + 1) * ITEMS_PER_PAGE + 1 : (currentPage * ITEMS_PER_PAGE) + tutorsList.length);
-      
+      setTotalTutors(
+        tutorsList.length === ITEMS_PER_PAGE
+          ? (currentPage + 1) * ITEMS_PER_PAGE + 1
+          : currentPage * ITEMS_PER_PAGE + tutorsList.length,
+      );
+
       // Load statistics after tutors are loaded for better fallback calculation
       await loadStatistics();
     } catch (error) {
-      console.error('Error fetching initial tutors:', error);
+      console.error("Error fetching initial tutors:", error);
       setTutors([]);
       setTotalTutors(0);
       // Still try to load statistics even if tutors fail
@@ -105,24 +111,40 @@ export default function TutorsPage() {
       const stats = await getTutorStatistics();
       setStatistics(stats);
     } catch (error) {
-      console.error('Error fetching tutor statistics:', error);
+      console.error("Error fetching tutor statistics:", error);
       // Provide fallback statistics based on current page data
       // This is a temporary fallback until the backend endpoint is fixed
-      const activeTutorsCount = tutors.filter(t => t.status === 'ACTIVE').length;
-      const verifiedTutorsCount = tutors.filter(t => t.verified).length;
-      
+      const activeTutorsCount = tutors.filter(
+        (t) => t.status === "ACTIVE",
+      ).length;
+      const verifiedTutorsCount = tutors.filter((t) => t.verified).length;
+
       setStatistics({
-        totalTutors: totalTutors > 0 ? totalTutors : Math.max(tutors.length, 50), // Use calculated total or estimate
-        activeTutors: activeTutorsCount > 0 ? activeTutorsCount : Math.floor(tutors.length * 0.8), // Estimate 80% active
-        verifiedTutors: verifiedTutorsCount > 0 ? verifiedTutorsCount : Math.floor(tutors.length * 0.6), // Estimate 60% verified
+        totalTutors:
+          totalTutors > 0 ? totalTutors : Math.max(tutors.length, 50), // Use calculated total or estimate
+        activeTutors:
+          activeTutorsCount > 0
+            ? activeTutorsCount
+            : Math.floor(tutors.length * 0.8), // Estimate 80% active
+        verifiedTutors:
+          verifiedTutorsCount > 0
+            ? verifiedTutorsCount
+            : Math.floor(tutors.length * 0.6), // Estimate 60% verified
         averageRating: 4.2, // Fallback average rating
-        newTutorsThisMonth: 12 // Fallback value
+        newTutorsThisMonth: 12, // Fallback value
       });
     }
   };
 
   const hasSearchCriteria = () => {
-    return nameSearch || usernameSearch || tutorIdSearch || emailSearch || statusFilter !== null || verifiedFilter !== null;
+    return (
+      nameSearch ||
+      usernameSearch ||
+      tutorIdSearch ||
+      emailSearch ||
+      statusFilter !== null ||
+      verifiedFilter !== null
+    );
   };
 
   const handleSearchButtonClick = async () => {
@@ -138,15 +160,19 @@ export default function TutorsPage() {
         status: statusFilter,
         verified: verifiedFilter,
         page: 0, // Always start from page 0 for new searches
-        size: ITEMS_PER_PAGE
+        size: ITEMS_PER_PAGE,
       };
 
       const tutorsList = await searchTutorsByAdmin(searchParams);
       setTutors(tutorsList);
       // Estimate total for pagination - show next page if we got full page results
-      setTotalTutors(tutorsList.length === ITEMS_PER_PAGE ? ITEMS_PER_PAGE + 1 : tutorsList.length);
+      setTotalTutors(
+        tutorsList.length === ITEMS_PER_PAGE
+          ? ITEMS_PER_PAGE + 1
+          : tutorsList.length,
+      );
     } catch (error) {
-      console.error('Error searching tutors:', error);
+      console.error("Error searching tutors:", error);
       setTutors([]);
       setTotalTutors(0);
     } finally {
@@ -167,16 +193,20 @@ export default function TutorsPage() {
         status: statusFilter,
         verified: verifiedFilter,
         page: currentPage,
-        size: ITEMS_PER_PAGE
+        size: ITEMS_PER_PAGE,
       };
 
       const tutorsList = await searchTutorsByAdmin(searchParams);
       setTutors(tutorsList);
       // Estimate total for pagination - show next page if we got full page results
-      setTotalTutors(tutorsList.length === ITEMS_PER_PAGE ? (currentPage + 1) * ITEMS_PER_PAGE + 1 : (currentPage * ITEMS_PER_PAGE) + tutorsList.length);
+      setTotalTutors(
+        tutorsList.length === ITEMS_PER_PAGE
+          ? (currentPage + 1) * ITEMS_PER_PAGE + 1
+          : currentPage * ITEMS_PER_PAGE + tutorsList.length,
+      );
       // Don't reset page when this is called from pagination
     } catch (error) {
-      console.error('Error searching tutors:', error);
+      console.error("Error searching tutors:", error);
       setTutors([]);
       setTotalTutors(0);
     } finally {
@@ -186,22 +216,23 @@ export default function TutorsPage() {
   };
 
   const handleClearSearch = () => {
-    setNameSearch('');
-    setUsernameSearch('');
-    setTutorIdSearch('');
-    setEmailSearch('');
+    setNameSearch("");
+    setUsernameSearch("");
+    setTutorIdSearch("");
+    setEmailSearch("");
     setStatusFilter(null);
     setVerifiedFilter(null);
     setCurrentPage(0);
     // Clear search will trigger loadInitialTutors through the useEffect
   };
 
-  const handleStatusFilter = (value: 'ALL' | 'ACTIVE' | 'SUSPENDED') => {
-    setStatusFilter(value === 'ALL' ? null : value);
+  const handleStatusFilter = (value: "ALL" | "ACTIVE" | "SUSPENDED") => {
+    setStatusFilter(value === "ALL" ? null : value);
   };
 
-  const handleVerifiedFilter = (value: 'ALL' | 'VERIFIED' | 'UNVERIFIED') => {
-    const verifiedValue = value === 'VERIFIED' ? true : value === 'UNVERIFIED' ? false : null;
+  const handleVerifiedFilter = (value: "ALL" | "VERIFIED" | "UNVERIFIED") => {
+    const verifiedValue =
+      value === "VERIFIED" ? true : value === "UNVERIFIED" ? false : null;
     setVerifiedFilter(verifiedValue);
   };
 
@@ -217,33 +248,33 @@ export default function TutorsPage() {
         status: statusFilter,
         verified: verifiedFilter,
         page: 0,
-        size: 1000 // Get a large number to export all matching records
+        size: 1000, // Get a large number to export all matching records
       });
 
       // Convert data to CSV format
       const csvData = convertTutorsToCSV(allTutorsData);
-      
+
       // Create and download the file
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      
+      link.setAttribute("href", url);
+
       // Generate filename with current date
-      const currentDate = new Date().toISOString().split('T')[0];
+      const currentDate = new Date().toISOString().split("T")[0];
       const filename = `tutors_export_${currentDate}.csv`;
-      link.setAttribute('download', filename);
-      
+      link.setAttribute("download", filename);
+
       // Trigger download
-      link.style.visibility = 'hidden';
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       console.log(`Exported ${allTutorsData.length} tutors to ${filename}`);
     } catch (error) {
-      console.error('Error exporting tutors:', error);
-      alert('Error exporting tutors. Please try again.');
+      console.error("Error exporting tutors:", error);
+      alert("Error exporting tutors. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -252,19 +283,19 @@ export default function TutorsPage() {
   // Helper function to convert tutors data to CSV format
   const convertTutorsToCSV = (tutorsData: TutorsDto[]): string => {
     const headers = [
-      'Tutor ID',
-      'First Name', 
-      'Last Name',
-      'Full Name',
-      'Hourly Rate',
-      'Status',
-      'Verified',
-      'Export Date'
+      "Tutor ID",
+      "First Name",
+      "Last Name",
+      "Full Name",
+      "Hourly Rate",
+      "Status",
+      "Verified",
+      "Export Date",
     ];
-    
-    const csvRows = [headers.join(',')];
-    
-    tutorsData.forEach(tutor => {
+
+    const csvRows = [headers.join(",")];
+
+    tutorsData.forEach((tutor) => {
       const row = [
         tutor.tutorId,
         `"${tutor.firstName}"`, // Wrap in quotes to handle commas
@@ -272,40 +303,45 @@ export default function TutorsPage() {
         `"${tutor.firstName} ${tutor.lastName}"`,
         tutor.hourlyRate,
         tutor.status,
-        tutor.verified ? 'Yes' : 'No',
-        new Date().toISOString().split('T')[0]
+        tutor.verified ? "Yes" : "No",
+        new Date().toISOString().split("T")[0],
       ];
-      csvRows.push(row.join(','));
+      csvRows.push(row.join(","));
     });
-    
-    return csvRows.join('\n');
+
+    return csvRows.join("\n");
   };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'SUSPENDED': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case "ACTIVE":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "SUSPENDED":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
   const totalPages = Math.ceil(totalTutors / ITEMS_PER_PAGE);
 
-  const activeTutorsCount = tutors.filter(t => t.status === 'ACTIVE').length;
-  const suspendedTutorsCount = tutors.filter(t => t.status === 'SUSPENDED').length;
+  const activeTutorsCount = tutors.filter((t) => t.status === "ACTIVE").length;
+  const suspendedTutorsCount = tutors.filter(
+    (t) => t.status === "SUSPENDED",
+  ).length;
 
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Tutors Management</h1>
         <div className="flex gap-2">
-          <Button 
-            onClick={handleExport} 
+          <Button
+            onClick={handleExport}
             disabled={isExporting}
             variant="outline"
           >
             <Download className="w-4 h-4 mr-2" />
-            {isExporting ? 'Exporting...' : 'Export'}
+            {isExporting ? "Exporting..." : "Export"}
           </Button>
         </div>
       </div>
@@ -327,11 +363,15 @@ export default function TutorsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              New This Month
+            </CardTitle>
             <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statistics.newTutorsThisMonth}</div>
+            <div className="text-2xl font-bold">
+              {statistics.newTutorsThisMonth}
+            </div>
             <p className="text-xs text-muted-foreground">
               New registrations this month
             </p>
@@ -340,11 +380,15 @@ export default function TutorsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Average Rating
+            </CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statistics.averageRating.toFixed(1)}</div>
+            <div className="text-2xl font-bold">
+              {statistics.averageRating.toFixed(1)}
+            </div>
             <p className="text-xs text-muted-foreground">
               Overall tutor rating
             </p>
@@ -372,7 +416,9 @@ export default function TutorsPage() {
             {/* Search Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Name</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Name
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -383,9 +429,11 @@ export default function TutorsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Username</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Username
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -396,9 +444,11 @@ export default function TutorsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Tutor ID</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Tutor ID
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -409,9 +459,11 @@ export default function TutorsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="text-sm font-medium mb-2 block">Search by Email</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Search by Email
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -423,50 +475,96 @@ export default function TutorsPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Filter Dropdowns */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Account Status</label>
-                <Select value={statusFilter === null ? 'ALL' : statusFilter} onValueChange={handleStatusFilter}>
+                <label className="text-sm font-medium mb-2 block">
+                  Account Status
+                </label>
+                <Select
+                  value={statusFilter === null ? "ALL" : statusFilter}
+                  onValueChange={handleStatusFilter}
+                >
                   <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:ring-slate-600">
                     <SelectValue className="text-white" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="ALL" className="text-white hover:bg-slate-700 focus:bg-slate-700">All Statuses</SelectItem>
-                    <SelectItem value="ACTIVE" className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300">Active</SelectItem>
-                    <SelectItem value="SUSPENDED" className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300">Suspended</SelectItem>
+                    <SelectItem
+                      value="ALL"
+                      className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                    >
+                      All Statuses
+                    </SelectItem>
+                    <SelectItem
+                      value="ACTIVE"
+                      className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300"
+                    >
+                      Active
+                    </SelectItem>
+                    <SelectItem
+                      value="SUSPENDED"
+                      className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300"
+                    >
+                      Suspended
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Verification Status</label>
-                <Select value={verifiedFilter === null ? 'ALL' : verifiedFilter ? 'VERIFIED' : 'UNVERIFIED'} onValueChange={handleVerifiedFilter}>
+                <label className="text-sm font-medium mb-2 block">
+                  Verification Status
+                </label>
+                <Select
+                  value={
+                    verifiedFilter === null
+                      ? "ALL"
+                      : verifiedFilter
+                        ? "VERIFIED"
+                        : "UNVERIFIED"
+                  }
+                  onValueChange={handleVerifiedFilter}
+                >
                   <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:ring-slate-600">
                     <SelectValue className="text-white" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="ALL" className="text-white hover:bg-slate-700 focus:bg-slate-700">All Verification</SelectItem>
-                    <SelectItem value="VERIFIED" className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300">Verified</SelectItem>
-                    <SelectItem value="UNVERIFIED" className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300">Unverified</SelectItem>
+                    <SelectItem
+                      value="ALL"
+                      className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                    >
+                      All Verification
+                    </SelectItem>
+                    <SelectItem
+                      value="VERIFIED"
+                      className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300"
+                    >
+                      Verified
+                    </SelectItem>
+                    <SelectItem
+                      value="UNVERIFIED"
+                      className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300"
+                    >
+                      Unverified
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            
+
             {/* Search Actions */}
             <div className="flex justify-center gap-4 pt-4 border-t">
-              <Button 
-                onClick={handleSearchButtonClick} 
+              <Button
+                onClick={handleSearchButtonClick}
                 disabled={searching || loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8"
               >
                 <Search className="w-4 h-4 mr-2" />
-                {searching ? 'Searching...' : 'Search Tutors'}
+                {searching ? "Searching..." : "Search Tutors"}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleClearSearch}
                 disabled={searching || loading}
                 className="px-8"
@@ -501,22 +599,29 @@ export default function TutorsPage() {
                 </thead>
                 <tbody>
                   {tutors.map((tutor) => (
-                    <tr key={tutor.tutorId} className="border-b hover:bg-muted/50">
+                    <tr
+                      key={tutor.tutorId}
+                      className="border-b hover:bg-muted/50"
+                    >
                       <td className="p-6 text-center">
                         <div className="font-medium">#{tutor.tutorId}</div>
                       </td>
                       <td className="p-6 text-center">
-                        <div className="font-medium">{tutor.firstName} {tutor.lastName}</div>
+                        <div className="font-medium">
+                          {tutor.firstName} {tutor.lastName}
+                        </div>
                       </td>
                       <td className="p-6 text-center">
-                        <div className="font-medium">{formatPrice(tutor.hourlyRate)}</div>
-                        <div className="text-sm text-muted-foreground">per hour</div>
+                        <div className="font-medium">
+                          {formatPrice(tutor.hourlyRate)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          per hour
+                        </div>
                       </td>
                       <td className="p-6 text-center">
                         <div className="flex justify-center">
-                          <Badge 
-                            className={getStatusBadgeColor(tutor.status)}
-                          >
+                          <Badge className={getStatusBadgeColor(tutor.status)}>
                             {tutor.status}
                           </Badge>
                         </div>
@@ -528,7 +633,10 @@ export default function TutorsPage() {
                               Verified
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-yellow-600">
+                            <Badge
+                              variant="outline"
+                              className="text-yellow-600"
+                            >
                               Unverified
                             </Badge>
                           )}
@@ -537,7 +645,9 @@ export default function TutorsPage() {
                       <td className="p-6 text-center">
                         <div className="flex justify-center">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/admin/users/tutors/${tutor.tutorId}`}>
+                            <Link
+                              href={`/dashboard/admin/users/tutors/${tutor.tutorId}`}
+                            >
                               <Eye className="w-4 h-4 mr-2" />
                               View Profile
                             </Link>
@@ -552,18 +662,20 @@ export default function TutorsPage() {
           )}
 
           {/* Pagination */}
-          {(tutors.length > 0) && (
+          {tutors.length > 0 && (
             <div className="flex items-center justify-between p-4 border-t">
               <div className="text-sm text-muted-foreground">
-                Showing {currentPage * ITEMS_PER_PAGE + 1} to{' '}
-                {(currentPage * ITEMS_PER_PAGE) + tutors.length} tutors
-                {tutors.length === ITEMS_PER_PAGE && ' (more available)'}
+                Showing {currentPage * ITEMS_PER_PAGE + 1} to{" "}
+                {currentPage * ITEMS_PER_PAGE + tutors.length} tutors
+                {tutors.length === ITEMS_PER_PAGE && " (more available)"}
               </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 0))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 0))
+                  }
                   disabled={currentPage === 0 || loading}
                 >
                   Previous
@@ -574,7 +686,7 @@ export default function TutorsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
                   disabled={tutors.length < ITEMS_PER_PAGE || loading}
                 >
                   Next

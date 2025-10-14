@@ -8,7 +8,7 @@ async function getZoomToken() {
       Authorization:
         "Basic " +
         Buffer.from(
-          process.env.ZOOM_CLIENT_ID + ":" + process.env.ZOOM_CLIENT_SECRET
+          process.env.ZOOM_CLIENT_ID + ":" + process.env.ZOOM_CLIENT_SECRET,
         ).toString("base64"),
       "Content-Type": "application/x-www-form-urlencoded",
     },
@@ -25,7 +25,6 @@ async function getZoomToken() {
 export async function POST() {
   const { access_token } = await getZoomToken();
 
-
   const res = await fetch("https://api.zoom.us/v2/users/me/meetings", {
     method: "POST",
     headers: {
@@ -40,10 +39,10 @@ export async function POST() {
       settings: {
         host_video: true,
         participant_video: true,
-    local_recording: true,      // Host can record locally
-    cloud_recording: true,      // Host can record to cloud
-    auto_recording: "none",    // No auto recording
-    // No participant recording option
+        local_recording: true, // Host can record locally
+        cloud_recording: true, // Host can record to cloud
+        auto_recording: "none", // No auto recording
+        // No participant recording option
         allow_multiple_devices: false,
         waiting_room: true,
         mute_upon_entry: true,

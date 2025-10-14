@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -12,13 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Calendar,
   Clock,
@@ -30,26 +31,26 @@ import {
   Edit,
   Trash2,
   Users,
-  ExternalLink
-} from "lucide-react"
-import Link from "next/link"
+  ExternalLink,
+} from "lucide-react";
+import Link from "next/link";
 
 interface Booking {
-  id: string
-  tutorName: string
-  tutorImage: string
-  subject: string
-  date: string
-  time: string
-  duration: string
-  status: "upcoming" | "completed" | "cancelled"
-  zoomLink: string
+  id: string;
+  tutorName: string;
+  tutorImage: string;
+  subject: string;
+  date: string;
+  time: string;
+  duration: string;
+  status: "upcoming" | "completed" | "cancelled";
+  zoomLink: string;
 }
 
 export default function BookingsPage() {
-  const [activeTab, setActiveTab] = useState("upcoming")
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [activeTab, setActiveTab] = useState("upcoming");
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const bookings: Booking[] = [
     {
@@ -85,18 +86,18 @@ export default function BookingsPage() {
       status: "completed",
       zoomLink: "https://zoom.us/j/456789123",
     },
-  ]
+  ];
 
   const handleCancelBooking = (booking: Booking) => {
-    setSelectedBooking(booking)
-    setCancelDialogOpen(true)
-  }
+    setSelectedBooking(booking);
+    setCancelDialogOpen(true);
+  };
 
   const confirmCancel = () => {
-    console.log("Cancelling booking:", selectedBooking?.id)
-    setCancelDialogOpen(false)
-    setSelectedBooking(null)
-  }
+    console.log("Cancelling booking:", selectedBooking?.id);
+    setCancelDialogOpen(false);
+    setSelectedBooking(null);
+  };
 
   const getStatusBadge = (status: Booking["status"]) => {
     switch (status) {
@@ -106,30 +107,30 @@ export default function BookingsPage() {
             <Clock className="h-3 w-3 mr-1" />
             Upcoming
           </Badge>
-        )
+        );
       case "completed":
         return (
           <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-300">
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Completed
           </Badge>
-        )
+        );
       case "cancelled":
         return (
           <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-300">
             <XCircle className="h-3 w-3 mr-1" />
             Cancelled
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   const filterBookings = (status: Booking["status"]) => {
-    return bookings.filter(b => b.status === status)
-  }
+    return bookings.filter((b) => b.status === status);
+  };
 
-  const totalUpcoming = filterBookings("upcoming").length
-  const totalCompleted = filterBookings("completed").length
+  const totalUpcoming = filterBookings("upcoming").length;
+  const totalCompleted = filterBookings("completed").length;
 
   const BookingCard = ({ booking }: { booking: Booking }) => (
     <Card className="border-blue-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-300">
@@ -143,7 +144,9 @@ export default function BookingsPage() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-slate-900 text-xl mb-1">{booking.subject}</CardTitle>
+              <CardTitle className="text-slate-900 text-xl mb-1">
+                {booking.subject}
+              </CardTitle>
               <CardDescription className="text-slate-600 font-medium flex items-center gap-2 mb-2">
                 <Users className="h-4 w-4" />
                 {booking.tutorName}
@@ -165,11 +168,11 @@ export default function BookingsPage() {
               <div>
                 <p className="text-xs text-slate-600">Date</p>
                 <p className="font-semibold text-slate-900">
-                  {new Date(booking.date).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date(booking.date).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
                   })}
                 </p>
               </div>
@@ -179,7 +182,9 @@ export default function BookingsPage() {
               <Clock className="h-5 w-5 text-green-600" />
               <div>
                 <p className="text-xs text-slate-600">Time & Duration</p>
-                <p className="font-semibold text-slate-900">{booking.time} ({booking.duration})</p>
+                <p className="font-semibold text-slate-900">
+                  {booking.time} ({booking.duration})
+                </p>
               </div>
             </div>
 
@@ -187,10 +192,12 @@ export default function BookingsPage() {
             <div className="flex items-center gap-3 p-4 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200">
               <Video className="h-6 w-6 text-purple-600" />
               <div className="flex-1">
-                <p className="text-xs text-purple-700 font-medium mb-1">Zoom Meeting Link</p>
-                <a 
-                  href={booking.zoomLink} 
-                  target="_blank" 
+                <p className="text-xs text-purple-700 font-medium mb-1">
+                  Zoom Meeting Link
+                </p>
+                <a
+                  href={booking.zoomLink}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline break-all flex items-center gap-1"
                 >
@@ -201,7 +208,7 @@ export default function BookingsPage() {
               <Button
                 size="sm"
                 className="bg-purple-600 hover:bg-purple-700 text-white shadow-md"
-                onClick={() => window.open(booking.zoomLink, '_blank')}
+                onClick={() => window.open(booking.zoomLink, "_blank")}
               >
                 <Video className="h-4 w-4 mr-1" />
                 Join Now
@@ -212,15 +219,15 @@ export default function BookingsPage() {
           {/* Actions */}
           {booking.status === "upcoming" && (
             <div className="flex gap-2 pt-4 border-t border-slate-200">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1 border-slate-300 hover:bg-slate-100 font-medium"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Reschedule
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50 font-medium"
                 onClick={() => handleCancelBooking(booking)}
               >
@@ -232,7 +239,7 @@ export default function BookingsPage() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -240,13 +247,20 @@ export default function BookingsPage() {
         {/* Header */}
         <div className="mb-8">
           <Link href="/dashboard/student/profile">
-            <Button variant="ghost" className="mb-4 text-slate-700 hover:text-slate-900 hover:bg-slate-200">
+            <Button
+              variant="ghost"
+              className="mb-4 text-slate-700 hover:text-slate-900 hover:bg-slate-200"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Profile
             </Button>
           </Link>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">My Bookings</h1>
-          <p className="text-slate-600">Manage your scheduled online tutoring sessions</p>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">
+            My Bookings
+          </h1>
+          <p className="text-slate-600">
+            Manage your scheduled online tutoring sessions
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -272,7 +286,9 @@ export default function BookingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-slate-900">{totalCompleted}</p>
+              <p className="text-4xl font-bold text-slate-900">
+                {totalCompleted}
+              </p>
               <p className="text-slate-600 text-sm mt-1">Finished sessions</p>
             </CardContent>
           </Card>
@@ -281,20 +297,20 @@ export default function BookingsPage() {
         {/* Bookings Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white border border-slate-200 shadow-sm mb-6">
-            <TabsTrigger 
-              value="upcoming" 
+            <TabsTrigger
+              value="upcoming"
               className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
             >
               Upcoming
             </TabsTrigger>
-            <TabsTrigger 
-              value="completed" 
+            <TabsTrigger
+              value="completed"
               className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
             >
               Completed
             </TabsTrigger>
-            <TabsTrigger 
-              value="cancelled" 
+            <TabsTrigger
+              value="cancelled"
               className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700"
             >
               Cancelled
@@ -303,15 +319,19 @@ export default function BookingsPage() {
 
           <TabsContent value="upcoming" className="space-y-6">
             {filterBookings("upcoming").length > 0 ? (
-              filterBookings("upcoming").map(booking => (
+              filterBookings("upcoming").map((booking) => (
                 <BookingCard key={booking.id} booking={booking} />
               ))
             ) : (
               <Card className="border-slate-200 bg-white shadow-lg">
                 <CardContent className="py-12 text-center">
                   <Calendar className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                  <p className="text-slate-600 text-lg font-medium">No upcoming bookings</p>
-                  <p className="text-slate-500 text-sm mt-2">Book a session to get started</p>
+                  <p className="text-slate-600 text-lg font-medium">
+                    No upcoming bookings
+                  </p>
+                  <p className="text-slate-500 text-sm mt-2">
+                    Book a session to get started
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -319,15 +339,19 @@ export default function BookingsPage() {
 
           <TabsContent value="completed" className="space-y-6">
             {filterBookings("completed").length > 0 ? (
-              filterBookings("completed").map(booking => (
+              filterBookings("completed").map((booking) => (
                 <BookingCard key={booking.id} booking={booking} />
               ))
             ) : (
               <Card className="border-slate-200 bg-white shadow-lg">
                 <CardContent className="py-12 text-center">
                   <CheckCircle2 className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                  <p className="text-slate-600 text-lg font-medium">No completed sessions yet</p>
-                  <p className="text-slate-500 text-sm mt-2">Your finished sessions will appear here</p>
+                  <p className="text-slate-600 text-lg font-medium">
+                    No completed sessions yet
+                  </p>
+                  <p className="text-slate-500 text-sm mt-2">
+                    Your finished sessions will appear here
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -337,8 +361,12 @@ export default function BookingsPage() {
             <Card className="border-slate-200 bg-white shadow-lg">
               <CardContent className="py-12 text-center">
                 <XCircle className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                <p className="text-slate-600 text-lg font-medium">No cancelled bookings</p>
-                <p className="text-slate-500 text-sm mt-2">Cancelled sessions will appear here</p>
+                <p className="text-slate-600 text-lg font-medium">
+                  No cancelled bookings
+                </p>
+                <p className="text-slate-500 text-sm mt-2">
+                  Cancelled sessions will appear here
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -353,22 +381,27 @@ export default function BookingsPage() {
                 Cancel Booking
               </DialogTitle>
               <DialogDescription className="text-slate-600">
-                Are you sure you want to cancel this booking? This action cannot be undone.
+                Are you sure you want to cancel this booking? This action cannot
+                be undone.
               </DialogDescription>
             </DialogHeader>
             {selectedBooking && (
               <div className="py-4 space-y-2 bg-slate-50 rounded-lg p-4">
                 <p className="text-sm text-slate-700">
-                  <span className="font-semibold">Subject:</span> {selectedBooking.subject}
+                  <span className="font-semibold">Subject:</span>{" "}
+                  {selectedBooking.subject}
                 </p>
                 <p className="text-sm text-slate-700">
-                  <span className="font-semibold">Tutor:</span> {selectedBooking.tutorName}
+                  <span className="font-semibold">Tutor:</span>{" "}
+                  {selectedBooking.tutorName}
                 </p>
                 <p className="text-sm text-slate-700">
-                  <span className="font-semibold">Date:</span> {new Date(selectedBooking.date).toLocaleDateString()}
+                  <span className="font-semibold">Date:</span>{" "}
+                  {new Date(selectedBooking.date).toLocaleDateString()}
                 </p>
                 <p className="text-sm text-slate-700">
-                  <span className="font-semibold">Time:</span> {selectedBooking.time}
+                  <span className="font-semibold">Time:</span>{" "}
+                  {selectedBooking.time}
                 </p>
               </div>
             )}
@@ -391,5 +424,5 @@ export default function BookingsPage() {
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

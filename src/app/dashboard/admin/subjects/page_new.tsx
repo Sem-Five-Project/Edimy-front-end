@@ -1,33 +1,66 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Plus, Search, Eye, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { subjectAPI, Subject as BackendSubject, EducationLevel, HighSchoolStreamType } from "@/lib/adminSubject";
+import { useState, useEffect } from "react";
+import { Plus, Search, Eye, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  subjectAPI,
+  Subject as BackendSubject,
+  EducationLevel,
+  HighSchoolStreamType,
+} from "@/lib/adminSubject";
 
 export default function SubjectManagement() {
   const [subjects, setSubjects] = useState<BackendSubject[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [educationFilter, setEducationFilter] = useState<string>('');
-  const [streamFilter, setStreamFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [educationFilter, setEducationFilter] = useState<string>("");
+  const [streamFilter, setStreamFilter] = useState<string>("");
   const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [currentSubject, setCurrentSubject] = useState<BackendSubject | null>(null);
+  const [currentSubject, setCurrentSubject] = useState<BackendSubject | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    educationLevel: '' as EducationLevel | '',
-    stream: '' as HighSchoolStreamType | ''
+    name: "",
+    educationLevel: "" as EducationLevel | "",
+    stream: "" as HighSchoolStreamType | "",
   });
 
   useEffect(() => {
@@ -41,24 +74,33 @@ export default function SubjectManagement() {
       const data = await subjectAPI.getAllSubjects();
       setSubjects(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch subjects');
-      console.error('Error fetching subjects:', err);
+      setError(err.message || "Failed to fetch subjects");
+      console.error("Error fetching subjects:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredSubjects = subjects.filter(subject => {
-    const matchesSearch = subject.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesEducation = educationFilter === 'all' || !educationFilter || subject.educationLevel === educationFilter;
-    const matchesStream = streamFilter === 'all' || !streamFilter || 
+  const filteredSubjects = subjects.filter((subject) => {
+    const matchesSearch = subject.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesEducation =
+      educationFilter === "all" ||
+      !educationFilter ||
+      subject.educationLevel === educationFilter;
+    const matchesStream =
+      streamFilter === "all" ||
+      !streamFilter ||
       (subject.stream && subject.stream === streamFilter);
     return matchesSearch && matchesEducation && matchesStream;
   });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedSubjects(filteredSubjects.map(subject => subject.subjectId!));
+      setSelectedSubjects(
+        filteredSubjects.map((subject) => subject.subjectId!),
+      );
     } else {
       setSelectedSubjects([]);
     }
@@ -68,7 +110,7 @@ export default function SubjectManagement() {
     if (checked) {
       setSelectedSubjects([...selectedSubjects, subjectId]);
     } else {
-      setSelectedSubjects(selectedSubjects.filter(id => id !== subjectId));
+      setSelectedSubjects(selectedSubjects.filter((id) => id !== subjectId));
     }
   };
 
@@ -83,7 +125,7 @@ export default function SubjectManagement() {
       await fetchSubjects();
       setSelectedSubjects([]);
     } catch (err: any) {
-      setError(err.message || 'Failed to delete subjects');
+      setError(err.message || "Failed to delete subjects");
     } finally {
       setIsLoading(false);
     }
@@ -92,14 +134,14 @@ export default function SubjectManagement() {
   const handleCreateSubject = async () => {
     try {
       if (!formData.name || !formData.educationLevel) {
-        setError('Name and education level are required');
+        setError("Name and education level are required");
         return;
       }
 
       const newSubjectData = {
         name: formData.name,
         educationLevel: formData.educationLevel,
-        ...(formData.stream && { stream: formData.stream })
+        ...(formData.stream && { stream: formData.stream }),
       };
 
       await subjectAPI.createSubject(newSubjectData);
@@ -108,7 +150,7 @@ export default function SubjectManagement() {
       resetForm();
       setError(null);
     } catch (err: any) {
-      setError(err.message || 'Failed to create subject');
+      setError(err.message || "Failed to create subject");
     }
   };
 
@@ -118,7 +160,7 @@ export default function SubjectManagement() {
       await subjectAPI.deleteSubject(subjectId);
       await fetchSubjects(); // Refresh the list
     } catch (err: any) {
-      setError(err.message || 'Failed to delete subject');
+      setError(err.message || "Failed to delete subject");
     } finally {
       setIsLoading(false);
     }
@@ -126,9 +168,9 @@ export default function SubjectManagement() {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      educationLevel: '',
-      stream: ''
+      name: "",
+      educationLevel: "",
+      stream: "",
     });
   };
 
@@ -165,7 +207,9 @@ export default function SubjectManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Subject Management</h1>
-          <p className="text-gray-600 mt-1">Manage subjects across different education levels</p>
+          <p className="text-gray-600 mt-1">
+            Manage subjects across different education levels
+          </p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -195,7 +239,9 @@ export default function SubjectManagement() {
               <SelectContent>
                 <SelectItem value="all">All Levels</SelectItem>
                 {Object.values(EducationLevel).map((level) => (
-                  <SelectItem key={level} value={level}>{level.replace(/_/g, ' ')}</SelectItem>
+                  <SelectItem key={level} value={level}>
+                    {level.replace(/_/g, " ")}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -206,7 +252,9 @@ export default function SubjectManagement() {
               <SelectContent>
                 <SelectItem value="all">All Streams</SelectItem>
                 {Object.values(HighSchoolStreamType).map((stream) => (
-                  <SelectItem key={stream} value={stream}>{stream}</SelectItem>
+                  <SelectItem key={stream} value={stream}>
+                    {stream}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -223,9 +271,9 @@ export default function SubjectManagement() {
                 {selectedSubjects.length} subject(s) selected
               </span>
               <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="destructive" 
+                <Button
+                  size="sm"
+                  variant="destructive"
                   onClick={handleBulkDelete}
                   disabled={isLoading}
                 >
@@ -246,7 +294,10 @@ export default function SubjectManagement() {
               <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={selectedSubjects.length === filteredSubjects.length && filteredSubjects.length > 0}
+                    checked={
+                      selectedSubjects.length === filteredSubjects.length &&
+                      filteredSubjects.length > 0
+                    }
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
@@ -259,7 +310,10 @@ export default function SubjectManagement() {
             <TableBody>
               {filteredSubjects.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No subjects found
                   </TableCell>
                 </TableRow>
@@ -269,12 +323,21 @@ export default function SubjectManagement() {
                     <TableCell>
                       <Checkbox
                         checked={selectedSubjects.includes(subject.subjectId!)}
-                        onCheckedChange={(checked) => handleSelectSubject(subject.subjectId!, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleSelectSubject(
+                            subject.subjectId!,
+                            checked as boolean,
+                          )
+                        }
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{subject.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {subject.name}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{subject.educationLevel.replace(/_/g, ' ')}</Badge>
+                      <Badge variant="outline">
+                        {subject.educationLevel.replace(/_/g, " ")}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {subject.stream ? (
@@ -295,7 +358,9 @@ export default function SubjectManagement() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDeleteSubject(subject.subjectId!)}
+                          onClick={() =>
+                            handleDeleteSubject(subject.subjectId!)
+                          }
                           disabled={isLoading}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -320,48 +385,71 @@ export default function SubjectManagement() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {error && (
-              <div className="text-red-600 text-sm">{error}</div>
-            )}
+            {error && <div className="text-red-600 text-sm">{error}</div>}
             <div>
               <Label htmlFor="name">Subject Name</Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Enter subject name"
               />
             </div>
             <div>
               <Label htmlFor="educationLevel">Education Level</Label>
-              <Select value={formData.educationLevel} onValueChange={(value) => setFormData({...formData, educationLevel: value as EducationLevel})}>
+              <Select
+                value={formData.educationLevel}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    educationLevel: value as EducationLevel,
+                  })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select education level" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(EducationLevel).map((level) => (
-                    <SelectItem key={level} value={level}>{level.replace(/_/g, ' ')}</SelectItem>
+                    <SelectItem key={level} value={level}>
+                      {level.replace(/_/g, " ")}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label htmlFor="stream">Stream (Optional)</Label>
-              <Select value={formData.stream} onValueChange={(value) => setFormData({...formData, stream: value as HighSchoolStreamType})}>
+              <Select
+                value={formData.stream}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    stream: value as HighSchoolStreamType,
+                  })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select stream (optional)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">None</SelectItem>
                   {Object.values(HighSchoolStreamType).map((stream) => (
-                    <SelectItem key={stream} value={stream}>{stream}</SelectItem>
+                    <SelectItem key={stream} value={stream}>
+                      {stream}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleCreateSubject} disabled={isLoading}>
@@ -385,22 +473,26 @@ export default function SubjectManagement() {
               </div>
               <div>
                 <Label>Education Level</Label>
-                <p className="text-sm text-gray-600">{currentSubject.educationLevel.replace(/_/g, ' ')}</p>
+                <p className="text-sm text-gray-600">
+                  {currentSubject.educationLevel.replace(/_/g, " ")}
+                </p>
               </div>
               <div>
                 <Label>Stream</Label>
-                <p className="text-sm text-gray-600">{currentSubject.stream || 'N/A'}</p>
+                <p className="text-sm text-gray-600">
+                  {currentSubject.stream || "N/A"}
+                </p>
               </div>
               <div>
                 <Label>Subject ID</Label>
-                <p className="text-sm text-gray-600">{currentSubject.subjectId}</p>
+                <p className="text-sm text-gray-600">
+                  {currentSubject.subjectId}
+                </p>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button onClick={() => setIsViewDialogOpen(false)}>
-              Close
-            </Button>
+            <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

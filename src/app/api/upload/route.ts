@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         (error, result) => {
           if (error) return reject(error);
           resolve(result);
-        }
+        },
       );
       uploadStream.end(buffer);
     });

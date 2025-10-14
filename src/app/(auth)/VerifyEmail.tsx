@@ -57,22 +57,22 @@
 //       // Simulate verification process
 //       // In production: const response = await authAPI.verifyEmail(verificationToken);
 //       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
 //       setIsVerified(true);
 //       setIsVerifying(false);
-      
+
 //       // Update user verification status
 //       const updatedUser = { ...pendingUser, isVerified: true };
 //       localStorage.setItem('user', JSON.stringify(updatedUser));
 //       localStorage.removeItem('pendingUser');
-      
+
 //       // Auto redirect to dashboard after verification
 //       setTimeout(() => {
 //         const token = localStorage.getItem('authToken') || '';
 //         login(updatedUser, token);
 //         navigate('/dashboard');
 //       }, 2000);
-      
+
 //     } catch (error) {
 //       setError('Verification failed. Please try again.');
 //       setIsVerifying(false);
@@ -86,7 +86,7 @@
 
 //     try {
 //       const response = await authAPI.resendVerification(email);
-      
+
 //       if (response.success) {
 //         setResendMessage('Verification email sent! Please check your inbox.');
 //       } else {
@@ -104,7 +104,7 @@
 //       setError('Please verify your email before accessing the dashboard.');
 //       return;
 //     }
-    
+
 //     const token = localStorage.getItem('authToken') || '';
 //     login(pendingUser, token);
 //     navigate('/dashboard');
@@ -126,8 +126,8 @@
 //             </CardDescription>
 //           </CardHeader>
 //           <CardContent>
-//             <Button 
-//               onClick={handleGoToDashboard} 
+//             <Button
+//               onClick={handleGoToDashboard}
 //               className="w-full bg-green-600 hover:bg-green-700"
 //             >
 //               Go to Dashboard
@@ -153,7 +153,7 @@
 //             {isVerifying ? 'Verifying...' : 'Verify Your Email'}
 //           </CardTitle>
 //           <CardDescription>
-//             {isVerifying 
+//             {isVerifying
 //               ? 'Please wait while we verify your email address.'
 //               : `We've sent a verification email to ${email}. Please check your inbox and verify your email address.`
 //             }
@@ -222,7 +222,6 @@
 //     </div>
 //   );
 // };
-
 
 export default function VerifyEmail() {
   return <div>Verify Email Page</div>;

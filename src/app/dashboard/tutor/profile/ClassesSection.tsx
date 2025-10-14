@@ -57,8 +57,12 @@ const ClassesSection: React.FC<ClassesSectionProps> = ({
         </div>
       ) : (
         <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-700 mb-2">No Classes Yet</h3>
-          <p className="text-gray-500 mb-6">Create your first class to get started with teaching!</p>
+          <h3 className="text-xl font-bold text-gray-700 mb-2">
+            No Classes Yet
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Create your first class to get started with teaching!
+          </p>
           <button
             onClick={() => setShowAddClassModal(true)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
