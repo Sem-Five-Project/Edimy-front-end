@@ -98,6 +98,9 @@ export interface Booking {
 
 export interface ApiResponse<T> {
   success: boolean;
+  headers?: {
+    [key: string]: string;
+  };
   data: T;
   message?: string;
   error?: string;
@@ -396,41 +399,46 @@ export interface ValidatePayHereWindowRes  {
 };
 
 export interface SelectedSlotPattern {
-  id: string; // Unique identifier for the pattern
   dayOfWeek: number; // 1-7 (Monday-Sunday)
-  times: string[]; // Array of time strings e.g., ['08:00', '14:00']
-  generatedSlots: RecurringSlot[];
+  startTime: string; // HH:mm format
+  endTime: string; // HH:mm format
+  id?: string;
+  times?: string[];
+  generatedSlots?: OccurrenceSlot[];
 }
 
-export interface RecurringSlot {
-  id: string; // Unique identifier combining pattern info
-  dateTime: string; // Full ISO datetime
-  dayOfWeek: number; // 1-7 (Monday-Sunday)  
-  time: string; // e.g., '08:00'
-  isAvailable: boolean;
-  isLocked?: boolean;
-  patternId: string; // Reference to parent pattern
+export interface WeekBreakdown {
+  weekStartDate: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD (alias for weekStartDate for backward compatibility)
+  slots: SelectedSlotPattern[];
+  total: number;
+  totalSlots: number; // alias for total for backward compatibility
 }
 
 export interface MonthlyClassBooking {
-  // id: string;
-  // tutorId: string;
-  // subjectId: string;
-  // languageId: string;
-  // patterns: SelectedSlotPattern[];
-  // weekBreakdown: WeekBreakdown[];
+  id: string;
+  tutorId: string;
+  subjectId: string;
+  languageId: string;
+  patterns: SelectedSlotPattern[];
+  weekBreakdown: WeekBreakdown[];
   totalSlots: number;
   totalCost: number;
-  //status: 'PENDING' | 'CONFIRMED' | 'FAILED';
-  //createdAt: string;
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED' | 'CANCELLED';
+  createdAt?: string;
   startDate: string;
   endDate: string;
 }
 
-export interface WeekBreakdown {
-  weekStartDate: string;
-  slots: RecurringSlot[];
-  totalSlots: number;
+export interface OccurrenceSlot {
+  id: string;
+  dateTime: string;
+  date: string;
+  start: string;
+  end: string;
+  dayOfWeek: number;
+  isAvailable?: boolean;
+  isLocked?: boolean;
 }
 
 export interface BookMonthlyClassReq {
@@ -707,3 +715,32 @@ export type BookingDetails = {
   paymentStatus: "paid" | "pending"
   slots?: number
 }
+  
+export type TutorRatingSummary = {
+  tutorId: number;
+  tutorName: string;
+  averageRating: number;
+  totalRatings: number;
+  fiveStarRatings: number;
+  fourStarRatings: number;
+  threeStarRatings: number;
+  twoStarRatings: number;
+  oneStarRatings: number;
+};
+
+export interface Rating {
+  ratingId: number;
+  studentId: number;
+  studentName: string;
+  tutorId: number;
+  tutorName: string;
+  sessionId: number;
+  sessionName: string;
+  ratingValue: number;
+  reviewText: string;
+  createdAt: string; // or Date if you convert it
+  updatedAt: string; // or Date if you convert it
+}
+
+
+

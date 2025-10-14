@@ -37,7 +37,7 @@ console.log("StudentDashboard render - user:", user);
 
   const upcomingClasses = bookings.filter(booking => 
     booking.status === 'confirmed' && 
-    new Date(booking.slot.date) >= new Date()
+    new Date(booking.slot.slotDate) >= new Date()
   );
 
   const recentBookings = bookings.slice(0, 3);
@@ -89,7 +89,7 @@ console.log("StudentDashboard render - user:", user);
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.fullName}!</h1>
+        <h1 className="text-2xl font-bold mb-2">Welcome back, {user ? `${user.firstName} ${user.lastName}` : ''}!</h1>
         <p className="text-blue-100">Ready to continue your learning journey?</p>
       </div>
 
@@ -126,19 +126,19 @@ console.log("StudentDashboard render - user:", user);
                     <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                       <div className="flex items-center space-x-4">
                         <Avatar>
-                          <AvatarImage src={booking.tutor.profileImage} />
+                          <AvatarImage src={booking.tutor.profileImage || undefined} />
                           <AvatarFallback>
-                            {booking.tutor.fullName.split(' ').map(n => n[0]).join('')}
+                            {booking.tutor.firstName[0]}{booking.tutor.lastName[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-medium">{booking.tutor.fullName}</h4>
+                          <h4 className="font-medium">{`${booking.tutor.firstName} ${booking.tutor.lastName}`}</h4>
                           <p className="text-sm text-muted-foreground">
-                            {booking.tutor.subjects.join(', ')}
+                            {booking.tutor.subjects.map(subject => subject.subjectName).join(', ')}
                           </p>
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                             <CalendarDays className="h-4 w-4" />
-                            <span>{formatDate(booking.slot.date)}</span>
+                            <span>{formatDate(booking.slot.slotDate)}</span>
                             <Clock className="h-4 w-4 ml-2" />
                             <span>{formatTime(booking.slot.startTime)} - {formatTime(booking.slot.endTime)}</span>
                           </div>
@@ -184,14 +184,14 @@ console.log("StudentDashboard render - user:", user);
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-primary">
-                            {new Date(booking.slot.date).getDate()}
+                            {new Date(booking.slot.slotDate).getDate()}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {new Date(booking.slot.date).toLocaleDateString('en-US', { month: 'short' })}
+                            {new Date(booking.slot.slotDate).toLocaleDateString('en-US', { month: 'short' })}
                           </div>
                         </div>
                         <div>
-                          <h4 className="font-medium">{booking.tutor.fullName}</h4>
+                          <h4 className="font-medium">{`${booking.tutor.firstName} ${booking.tutor.lastName}`}</h4>
                           <p className="text-sm text-muted-foreground">
                             {formatTime(booking.slot.startTime)} - {formatTime(booking.slot.endTime)}
                           </p>

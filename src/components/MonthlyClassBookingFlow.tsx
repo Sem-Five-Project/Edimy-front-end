@@ -229,7 +229,7 @@ export default function MonthlyClassBookingFlow({
                         {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][pattern.dayOfWeek - 1]}
                       </Badge>
                       <div className="flex gap-1">
-                        {pattern.times.map((time: string, timeIndex: number) => (
+                        {(pattern.times ?? []).map((time: string, timeIndex: number) => (
                           <Badge key={timeIndex} variant="secondary" className="text-xs">
                             {time}
                           </Badge>

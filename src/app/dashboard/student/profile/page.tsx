@@ -49,6 +49,9 @@
       queryKey: ["studentProfileInfo", studentId],
       enabled: Boolean(studentId),
       queryFn: async () => {
+        if (!studentId) {
+          throw new Error("Student ID is required");
+        }
         console.log("fetch student profile info for id", studentId);
         const res = await studentAPI.loadStudentProfileInfo(studentId);
         // The org API returns: { educationLevel, stream, classCount, sessionCount }
@@ -356,7 +359,7 @@
                         View All
                       </Badge>
                     </div>
-                    <CardTitle className="text-slate-900 text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                       Payment History
                     </CardTitle>
                     <CardDescription className="text-slate-600 mt-2 text-base leading-relaxed">
@@ -380,7 +383,7 @@
                         Manage
                       </Badge>
                     </div>
-                    <CardTitle className="text-slate-900 text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                       Current Classes
                     </CardTitle>
                     <CardDescription className="text-slate-600 mt-2 text-base leading-relaxed">
@@ -404,7 +407,7 @@
                         Schedule
                       </Badge>
                     </div>
-                    <CardTitle className="text-slate-900 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                       My Bookings
                     </CardTitle>
                     <CardDescription className="text-slate-600 mt-2 text-base leading-relaxed">

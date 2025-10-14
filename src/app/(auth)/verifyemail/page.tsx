@@ -22,11 +22,20 @@ export default function VerifyEmail() {
   const [resendMessage, setResendMessage] = useState('');
   const [countdown, setCountdown] = useState(5);
 
-  const pendingUser = JSON.parse(localStorage.getItem('pendingUser') || '{}');
-  const email = pendingUser.email || '';
+  // Avoid accessing localStorage at module init / during server render.
+  const [pendingUser, setPendingUser] = useState<any | null>(null);
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
-    if (!pendingUser.id) {
+    // Run only on client
+    if (typeof window === 'undefined') return;
+
+    const stored = JSON.parse(localStorage.getItem('pendingUser') || '{}');
+    setPendingUser(stored);
+    setEmail(stored.email || '');
+
+    if (!stored || !stored.id) {
+      // No pending user -> go back to register
       router.push('/register');
       return;
     }
@@ -52,7 +61,7 @@ export default function VerifyEmail() {
       clearTimeout(autoVerifyTimer);
       clearInterval(countdownTimer);
     };
-  }, []);
+  }, [router]);
 
   const handleAutoVerification = async () => {
     setIsVerifying(true);
@@ -73,7 +82,10 @@ export default function VerifyEmail() {
       
       // Auto redirect to dashboard after verification
       setTimeout(() => {
-        login(updatedUser);
+        // Since this is a simulated verification, we'll use a mock token
+        // In production, you would get the actual token from the verification response
+        const mockToken = 'mock-verification-token';
+        login(mockToken, updatedUser);
         router.push('/dashboard');
       }, 2000);
       
@@ -109,8 +121,8 @@ export default function VerifyEmail() {
       return;
     }
     
-    const token = localStorage.getItem('authToken') || '';
-    login(pendingUser);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') || 'mock-verification-token' : 'mock-verification-token';
+    login(token, pendingUser ?? {});
     router.push('/dashboard');
   };
 

@@ -294,9 +294,9 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
                 </label>
                 <div className="relative">
                   <Select
-                    value={bookingPreferences.selectedClassType?.id || ""}
+                    value={String(bookingPreferences.selectedClassType?.id || "")}
                     onValueChange={(value) => {
-                      const classType = CLASS_TYPES.find(ct => ct.id === value);
+                      const classType = CLASS_TYPES.find(ct => ct.id === Number(value));
                       setBookingPreferences(prev => ({ ...prev, selectedClassType: classType || null }));
                     }}
                   >
@@ -305,7 +305,7 @@ export const SlotSelection: React.FC<SlotSelectionProps> = ({
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-700 text-white">
                       {CLASS_TYPES.map((classType) => (
-                        <SelectItem key={classType.id} value={classType.id} className="hover:bg-slate-800 py-3">
+                        <SelectItem key={classType.id} value={String(classType.id)} className="hover:bg-slate-800 py-3">
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-3">
                               <span className="font-semibold">{classType.name}</span>

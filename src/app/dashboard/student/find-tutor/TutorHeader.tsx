@@ -66,7 +66,7 @@ export const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor, bookingPreferen
           <div className="relative group">
             <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-full opacity-75 group-hover:opacity-100 animate-pulse blur-lg"></div>
             <Avatar className="relative h-32 w-32 ring-4 ring-white/30 shadow-2xl group-hover:scale-105 transition-transform duration-300">
-              <AvatarImage src={tutor.profileImage} className="object-cover" />
+              <AvatarImage src={tutor.profileImage || undefined} className="object-cover" />
               <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-purple-600 via-pink-600 to-cyan-600 text-white">
                 {tutor.firstName[0]}
                 {tutor.lastName[0]}

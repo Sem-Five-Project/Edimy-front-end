@@ -242,8 +242,6 @@ const handleUploadDocument = async () => {
 
     const data = await res.json();
 
-   
-
     // Save document info to backend
     await classDocAPI.addClassDoc({
       classId: selectedDocClass,
