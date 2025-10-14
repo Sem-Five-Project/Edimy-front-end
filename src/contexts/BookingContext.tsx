@@ -24,6 +24,10 @@ interface ReservationDetails {
   expiresAt: string;
   timer: number;
 }
+interface RepayTimer {
+  expiresAt: string;
+  timer: number;
+}
 
 export type BookingStep = 'tutor-selection' | 'slot-selection' | 'payment' | 'confirmation';
 
@@ -45,6 +49,8 @@ interface BookingContextType {
   reservationDetails: ReservationDetails | null;
   setReservationDetails: (details: ReservationDetails | null) => void;
   
+  repayTimer : RepayTimer |null;
+  setRepayTimer :(details : RepayTimer | null) => void;
   // Navigation helpers
   canProceedToStep: (step: BookingStep) => boolean;
   proceedToStep: (step: BookingStep) => void;
@@ -70,6 +76,16 @@ interface BookingContextType {
   // Next month recurring slots for monthly bookings (just slot IDs)
   nextMonthSlots: number[] | null;
   setNextMonthSlots: (slotIds: number[] | null) => void;
+
+  // Next month/year context (for repay and previews)
+  nextMonth: number | null;
+  setNextMonth: (m: number | null) => void;
+  nextYear: number | null;
+  setNextYear: (y: number | null) => void;
+
+  // Selected class (for pay-for-next-month flow)
+  selectedClassId: number | null;
+  setSelectedClassId: (id: number | null) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -89,33 +105,94 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     finalPrice: 0,
   });
   const [reservationDetails, setReservationDetails] = useState<ReservationDetails | null>(null);
+  const [repayTimer, setRepayTimer] = useState<RepayTimer | null>(null);
+
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [monthlyBookingData, setMonthlyBookingData] = useState<MonthlyBookingData | null>(null);
   const [lockedSlotIds, setLockedSlotIds] = useState<number[]>([]);
   const [availabilitySlotsMap, setAvailabilitySlotsMap] = useState<Record<string, number[]>>({});
   const [nextMonthSlots, setNextMonthSlots] = useState<number[] | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+  const [nextMonth, setNextMonth] = useState<number | null>(null);
+  const [nextYear, setNextYear] = useState<number | null>(null);
 
   // Timer effect for reservation
+  // useEffect(() => {
+  //   let interval: NodeJS.Timeout;
+  //   if (reservationDetails && reservationDetails.timer > 0) {
+  //     interval = setInterval(() => {
+  //       setReservationDetails(prev => {
+  //         if (!prev || prev.timer <= 1) {
+  //           // Timer expired - reset slot selection
+  //           // clear locks on expiry
+  //           setLockedSlotIds([]);
+  //           setCurrentStep('slot-selection');
+  //           return null;
+  //         }
+  //         return { ...prev, timer: prev.timer - 1 };
+  //       });
+  //     }, 1000);
+  //       setRepayTimer(prev => {
+  //         if (!prev || prev.timer <= 1) {
+  //           // Timer expired - reset slot selection
+  //           // clear locks on expiry
+  //           setLockedSlotIds([]);
+  //           setCurrentStep('slot-selection');
+  //           return null;
+  //         }
+  //         return { ...prev, timer: prev.timer - 1 };
+  //       });
+  //     }, 1000);
+  //   }
+  //   return () => {
+  //     if (interval) clearInterval(interval);
+  //   };
+  // }, [reservationDetails?.timer]);
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (reservationDetails && reservationDetails.timer > 0) {
-      interval = setInterval(() => {
-        setReservationDetails(prev => {
-          if (!prev || prev.timer <= 1) {
-            // Timer expired - reset slot selection
-            // clear locks on expiry
-            setLockedSlotIds([]);
-            setCurrentStep('slot-selection');
-            return null;
-          }
-          return { ...prev, timer: prev.timer - 1 };
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [reservationDetails?.timer]);
+  let interval: NodeJS.Timeout | undefined; // Use optional type for clarity
+
+  if (reservationDetails && reservationDetails.timer > 0) {
+    // 1. Assign the interval ID to the 'interval' variable
+    interval = setInterval(() => {
+      // 2. Combine the state updates into a single interval tick
+
+      // Update the main reservation timer
+      setReservationDetails(prev => {
+        if (!prev || prev.timer <= 1) {
+          // Timer expired - perform all necessary reset actions
+          setLockedSlotIds([]);
+          setCurrentStep('slot-selection');
+          return null; // Set reservationDetails to null
+        }
+        return { ...prev, timer: prev.timer - 1 };
+      });
+      
+      // Update the separate repay timer (if it's meant to track the same countdown)
+      setRepayTimer(prev => {
+        // You only need to check the main timer (reservationDetails) for expiration
+        // or ensure setRepayTimer's state is consistent with setReservationDetails
+        // For simplicity, we'll assume it tracks the same count and only needs decrementing here.
+        if (!prev || prev.timer <= 1) {
+            // Note: The expiry logic will already have run in the setReservationDetails update.
+            // Returning null/the reset state here would be redundant but harmless, 
+            // *unless* setRepayTimer has its own unique expiration side effects.*
+            // If the full expiry logic is *only* supposed to run once, 
+            // you might remove the inner setLockedSlotIds/setCurrentStep calls from here.
+            
+            // Assuming repay timer just decrements until expiry
+            return null; 
+        }
+        return { ...prev, timer: prev.timer - 1 };
+      });
+
+    }, 1000); // The single interval runs every 1000ms
+  }
+
+  // Cleanup function - clears the single interval
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [reservationDetails, setReservationDetails, setRepayTimer, setLockedSlotIds, setCurrentStep]); // 3. Updated dependencies
 
   // Validation functions
   const canProceedToStep = (step: BookingStep): boolean => {
@@ -177,6 +254,7 @@ const goBack = async (): Promise<void> => {
       setLockedSlotIds([]);
       // Clear reservation so UI resets cleanly
       setReservationDetails(null);
+      setRepayTimer(null);
       // Clear any persisted one-time slot data
 
       setCurrentStep('slot-selection');
@@ -207,11 +285,13 @@ useEffect(()=>{
       finalPrice: 0,
     });
     setReservationDetails(null);
+    setRepayTimer(null);
     setBookingId(null);
     setMonthlyBookingData(null);
     setLockedSlotIds([]);
     setAvailabilitySlotsMap({});
     setNextMonthSlots(null);
+    setSelectedClassId(null);
   };
 
   const isBookingComplete = currentStep === 'confirmation' && bookingId !== null;
@@ -228,6 +308,8 @@ useEffect(()=>{
     setBookingPreferences,
     reservationDetails,
     setReservationDetails,
+    repayTimer,
+    setRepayTimer,
     canProceedToStep,
     proceedToStep,
     goBack,
@@ -243,6 +325,12 @@ useEffect(()=>{
     setAvailabilitySlotsMap,
     nextMonthSlots,
     setNextMonthSlots,
+    nextMonth,
+    setNextMonth,
+    nextYear,
+    setNextYear,
+    selectedClassId,
+    setSelectedClassId,
   }), [
     currentStep,
     tutor,
@@ -257,6 +345,9 @@ useEffect(()=>{
     lockedSlotIds,
     availabilitySlotsMap,
     nextMonthSlots,
+    nextMonth,
+    nextYear,
+    selectedClassId,
   ]);
 
   return (

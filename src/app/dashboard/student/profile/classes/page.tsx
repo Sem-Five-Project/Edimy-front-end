@@ -37,6 +37,8 @@ import {
   DollarSign
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation";
+import { useBooking } from "@/contexts/BookingContext";
 
 interface ClassMaterial {
   id: string
@@ -81,7 +83,7 @@ export default function ClassesPage() {
 
   const classes: ClassInfo[] = [
     {
-      id: "1",
+      id: "89",
       subject: "Advanced Mathematics",
       tutorName: "Dr. Sarah Johnson",
       tutorImage: "/placeholder.svg",
@@ -126,6 +128,8 @@ export default function ClassesPage() {
 
   const totalClasses = classes.length
   const totalSessions = classes.reduce((sum, c) => sum + c.completedSessions, 0)
+  const router = useRouter();
+  const { setSelectedClassId } = useBooking();
 
   const handleOpenReview = (classInfo: ClassInfo) => {
     setSelectedClass(classInfo)
@@ -147,10 +151,16 @@ export default function ClassesPage() {
     setReviewComment("")
   }
 
-  const handleOpenPayment = (classInfo: ClassInfo) => {
-    setSelectedClass(classInfo)
-    setPaymentDialogOpen(true)
-  }
+const handleOpenPayment = (classInfo: ClassInfo) => {
+  // Persist the selected class id in booking context for the next page
+  const classIdNum = Number(classInfo.id);
+    setSelectedClassId(classIdNum);
+  
+  console.log("class id :", classInfo.id);
+  // Navigate to pay-for-next-month page (no query needed since context carries it)
+  router.push(`/dashboard/student/pay-for-next-month`);
+};
+
 
   const handlePayment = () => {
     console.log("Payment processed for:", selectedClass?.id)

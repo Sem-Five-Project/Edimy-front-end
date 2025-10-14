@@ -44,7 +44,6 @@ interface PayHerePaymentProps {
   lockedSlotIds: number[]; // Array of locked slot IDs for this booking
   availabilitySlotsMap?: Record<string, number[]>; // availability_id -> [slotIds]
 }
-
 export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   tutor,
   selectedDate,
@@ -62,7 +61,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const { user, effectiveStudentId } = useAuth();
-  const { nextMonthSlots } = useBooking();
+  const { nextMonthSlots, selectedClassId, nextMonth: ctxNextMonth, nextYear: ctxNextYear } = useBooking();
   const [isProcessing, setIsProcessing] = useState(false);
   const [payHereReady, setPayHereReady] = useState(false);
   const [orderMeta, setOrderMeta] = useState<InitPayHerePendingRes | null>(null);
@@ -311,7 +310,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       }
 
       console.log("Payment window validation complete - proceeding to hash generation");
-
+      console.log("nextMonthSlots :",nextMonthSlots)
       // Step 2: Generate hash for PayHere
       const amountStr = totalAmount.toFixed(2);
       const hashResponse = await bookingAPI.generatePayHereHash(orderMeta.orderId, amountStr, "LKR");
@@ -509,12 +508,24 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       const metadataBaseDate = monthlyBookingData?.startDate
         ? new Date(monthlyBookingData.startDate)
         : selectedDate;
-      const metadataMonth = isMonthly ? metadataBaseDate.getMonth() + 1 : null;
-      const metadataYear = isMonthly ? metadataBaseDate.getFullYear() : null;
-      const metadataSlots: Record<string, number[]> =
-        availabilitySlotsMap && Object.keys(availabilitySlotsMap).length > 0
-          ? availabilitySlotsMap
-          : { default: Array.isArray(lockedSlotIds) ? lockedSlotIds : [] };
+  // Prefer context-provided nextMonth/nextYear for repay/next-month flows; fallback to current selection month
+  const metadataMonth = (ctxNextMonth ?? (isMonthly ? metadataBaseDate.getMonth() + 1 : null)) as number | null;
+  const metadataYear = (ctxNextYear ?? (isMonthly ? metadataBaseDate.getFullYear() : null)) as number | null;
+      // Build slots payload: prefer availability map, then lockedSlotIds, then nextMonthSlots as a fallback (repay case)
+      const metadataSlots: Record<string, number[]> = (() => {
+        if (availabilitySlotsMap && Object.keys(availabilitySlotsMap).length > 0) {
+          return availabilitySlotsMap;
+        }
+        const locked = Array.isArray(lockedSlotIds) ? lockedSlotIds : [];
+        if (locked.length > 0) {
+          return { default: locked };
+        }
+        const nextMonth = Array.isArray(nextMonthSlots) ? nextMonthSlots : [];
+        if (nextMonth.length > 0) {
+          return { default: nextMonth };
+        }
+        return { default: [] };
+      })();
 
       const customPayload = {
         paymentId: paymentIdForMetadata,
@@ -531,6 +542,21 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         isMonthly: !!isMonthly,
         nextMonthSlots: Array.isArray(nextMonthSlots) ? nextMonthSlots : []
       };
+      // Repay-specific payload for existing class payments
+      const isRepay = !!selectedClassId;
+      const repayPayload = isRepay ? {
+        type: 'repay',
+        classId: selectedClassId,
+        studentId: Number(studentIdNum),
+        paymentTime: new Date().toISOString(),
+        amount: Number(totalAmount),
+        month: metadataMonth,
+        year: metadataYear,
+        paymentId: paymentIdForMetadata,
+        // Ensure slots/default and nextMonthSlots are populated in repay mode
+        slots: metadataSlots,
+        nextMonthSlots: Array.isArray(nextMonthSlots) ? nextMonthSlots : []
+      } : undefined;
       console.log("custom payload:", customPayload);
       
 
@@ -539,7 +565,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         merchant_id: hashResponse.data.merchantId || "1228143", // Fallback to sandbox merchant ID
         return_url: `${window.location.origin}/payment/return`,
         cancel_url: `${window.location.origin}/payment/cancel`,
-        notify_url: `https://11435d629380.ngrok-free.app/api/payment/payhere/notify`,
+        notify_url: `https://5f977c88790c.ngrok-free.app/api/payment/payhere/notify`,
         order_id: orderMeta.orderId || orderMeta.order_id || `EDIMY-${Date.now()}`,
         items: isMonthly 
           ? `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} - Monthly (${monthlyBookingData?.totalSlots || 0} slots)`
@@ -575,7 +601,11 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         //   classType: bookingPreferences?.selectedClassType?.name,
         // }),
         // custom_2: selectedDate.toISOString(),
-        custom_1: JSON.stringify(customPayload)
+        // In repay mode, send only custom_2 and set custom_1 as null per requirement
+        ...(isRepay
+          ? { custom_1: null as any, custom_2: JSON.stringify(repayPayload) }
+          : { custom_1: JSON.stringify(customPayload) }
+        )
       };
 
       console.log("Payment object:", payment);

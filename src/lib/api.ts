@@ -681,8 +681,8 @@ export const tutorAPI = {
 // },
 getNextMonthSlots: async (
   availabilityIds: number[],
-  month: number,
-  year: number
+  month: number|null,
+  year: number|null
 ): Promise<ApiResponse<any>> => {
   try {
     if (!Array.isArray(availabilityIds) || availabilityIds.length === 0) {
@@ -1030,6 +1030,38 @@ export const bookingAPI = {
         success: false,
         data: { exists: false },
         error: e?.response?.data?.message || e.message || 'Failed to check class existence',
+      };
+    }
+  },
+
+  // Check if payment is already made for a specific class/month/year
+  checkPaymentStatus: async (params: {
+    studentId: number | string;
+    classId: number | string;
+    month: number;
+    year: number;
+  }): Promise<ApiResponse<{ isPaid: boolean }>> => {
+    try {
+      const query = {
+        studentId: params.studentId,
+        classId: params.classId,
+        month: params.month,
+        year: params.year,
+      };
+      console.log('Checking payment status with params:', query);
+      const res = await api.get('/student/bookings/is-paid', { params: query });
+      const data = res?.data || {};
+      // Expect response like { isPaid: true/false }
+      if (typeof data.isPaid === 'boolean') {
+        return { success: true, data: { isPaid: data.isPaid } };
+      }
+      return { success: true, data: { isPaid: false } };
+    } catch (e: any) {
+      console.error('checkPaymentStatus error:', e?.response?.data || e.message);
+      return {
+        success: false,
+        data: { isPaid: false },
+        error: e?.response?.data?.message || e.message || 'Failed to check payment status',
       };
     }
   },
@@ -1758,6 +1790,30 @@ confirmPayHerePayment: async (payload: {
           message: error?.response?.data?.message || 'Failed to cancel booking',
         },
         error: error?.response?.data?.message || 'Failed to cancel booking',
+      };
+    }
+  },
+
+  getReservedSlotsForClass: async (studentId: number, classId: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get(`/student/bookings/getreservedslots`, {
+        params: { studentId, classId }
+      });
+      console.log("Reserved slots response:", response.data.get_student_class_slots_with_rate);
+      // The actual data is nested inside "get_student_class_slots_with_rate"
+      if (response.data && response.data.get_student_class_slots_with_rate) {
+        return {
+          success: true,
+          data: response.data.get_student_class_slots_with_rate,
+        };
+      }
+      return { success: false, error: "Invalid data structure from server", data: null };
+    } catch (error: any) {
+      console.error('Get reserved slots failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error?.response?.data?.message || 'Failed to fetch reserved slots',
       };
     }
   },
