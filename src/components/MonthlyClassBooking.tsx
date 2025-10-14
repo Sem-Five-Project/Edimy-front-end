@@ -1,12 +1,18 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Clock, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { bookingAPI } from '@/lib/api';
-import { SelectedSlotPattern, RecurringSlot, type MonthlyClassBooking, BookMonthlyClassReq, WeekBreakdown } from '@/types';
+import { 
+  type WeekBreakdown, 
+  type SelectedSlotPattern, 
+  type OccurrenceSlot, 
+  type MonthlyClassBooking, 
+  type BookMonthlyClassReq 
+} from '@/types/monthlyBooking';
 
 interface MonthlyClassBookingProps {
   tutorId: string;
@@ -17,13 +23,13 @@ interface MonthlyClassBookingProps {
 }
 
 const DAYS_OF_WEEK = [
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
-  { value: 7, label: 'Sunday' },
+  { value: 1, label: 'Monday', dayOfWeek: 1 },
+  { value: 2, label: 'Tuesday', dayOfWeek: 2 },
+  { value: 3, label: 'Wednesday', dayOfWeek: 3 },
+  { value: 4, label: 'Thursday', dayOfWeek: 4 },
+  { value: 5, label: 'Friday', dayOfWeek: 5 },
+  { value: 6, label: 'Saturday', dayOfWeek: 6 },
+  { value: 0, label: 'Sunday', dayOfWeek: 0 },
 ];
 
 const TIME_SLOTS = [
@@ -40,110 +46,114 @@ export default function MonthlyClassBooking({
   onBookingSuccess,
   onBookingError
 }: MonthlyClassBookingProps) {
+  // State management
   const [selectedPatterns, setSelectedPatterns] = useState<SelectedSlotPattern[]>([]);
-  const [generatedSlots, setGeneratedSlots] = useState<RecurringSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<'select' | 'review' | 'confirm'>('select');
-
-  // Generate dates from current date to end of month
-  const generateMonthlySlots = (patterns: SelectedSlotPattern[]): RecurringSlot[] => {
-    const slots: RecurringSlot[] = [];
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const endOfMonth = new Date(currentYear, currentMonth + 1, 0); // Last day of current month
-
-    patterns.forEach(pattern => {
-      pattern.times.forEach(time => {
-        let currentDate = new Date(now);
-        
-        // Find the next occurrence of this day of week
-        while (currentDate.getDay() !== (pattern.dayOfWeek === 7 ? 0 : pattern.dayOfWeek)) {
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-
-        // Generate all occurrences until end of month
-        while (currentDate.getMonth() === currentMonth) {
-          const slotDateTime = new Date(currentDate);
-          const [hours, minutes] = time.split(':').map(Number);
-          slotDateTime.setHours(hours, minutes, 0, 0);
-
-          slots.push({
-            id: `${pattern.dayOfWeek}_${time}_${slotDateTime.toISOString().split('T')[0]}`,
-            dateTime: slotDateTime.toISOString(),
-            dayOfWeek: pattern.dayOfWeek,
-            time,
-            isAvailable: true,
-            isLocked: false,
-            patternId: pattern.id
-          });
-
-          // Move to next week
-          currentDate.setDate(currentDate.getDate() + 7);
-        }
-      });
-    });
-
-    return slots.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-  };
-
-  // Update generated slots when patterns change
-  useEffect(() => {
-    const slots = generateMonthlySlots(selectedPatterns);
-    setGeneratedSlots(slots);
-  }, [selectedPatterns]);
-
-  // Calculate weekly breakdown
-  const weekBreakdown = useMemo((): WeekBreakdown[] => {
-    const weeks: { [key: string]: RecurringSlot[] } = {};
-    
-    generatedSlots.forEach(slot => {
-      const date = new Date(slot.dateTime);
-      const weekStart = new Date(date);
-      weekStart.setDate(date.getDate() - date.getDay() + 1); // Monday of that week
-      const weekKey = weekStart.toISOString().split('T')[0];
-      
-      if (!weeks[weekKey]) {
-        weeks[weekKey] = [];
-      }
-      weeks[weekKey].push(slot);
-    });
-
-    return Object.entries(weeks).map(([weekStart, slots]) => ({
-      weekStartDate: weekStart,
-      slots,
-      totalSlots: slots.length
-    }));
-  }, [generatedSlots]);
-
-  // Total calculation
-  const totalSlots = generatedSlots.length;
-  const totalCost = totalSlots * SLOT_COST;
-
-  // Handle pattern selection
-  const addPattern = (dayOfWeek: number, times: string[]) => {
+  // Pattern management (single definition)
+  const addPattern = useCallback((dayOfWeek: number, times: string[]) => {
     if (selectedPatterns.length >= 4) {
       setError('Maximum 4 patterns allowed per week');
       return;
     }
 
+    const [startTime, endTime] = times;
     const newPattern: SelectedSlotPattern = {
       id: `${dayOfWeek}_${Date.now()}`,
       dayOfWeek,
       times,
+      startTime,
+      endTime,
       generatedSlots: []
     };
 
     setSelectedPatterns(prev => [...prev, newPattern]);
     setError('');
-  };
+  }, [selectedPatterns.length]);
 
-  const removePattern = (patternId: string) => {
+  const removePattern = useCallback((patternId: string) => {
     setSelectedPatterns(prev => prev.filter(p => p.id !== patternId));
-  };
+  }, []);
 
-  const handleBooking = async () => {
+  // Generate dates from current date to end of month
+  const generateMonthlySlots = useCallback((patterns: SelectedSlotPattern[]): OccurrenceSlot[] => {
+    const slots: OccurrenceSlot[] = [];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    patterns.forEach(pattern => {
+      let date = new Date(now);
+        
+      // Find the next occurrence of this day of week
+      while (date.getDay() !== pattern.dayOfWeek) {
+        date.setDate(date.getDate() + 1);
+      }
+
+      // Generate all occurrences until end of month
+      while (date.getMonth() === currentMonth) {
+        const slot: OccurrenceSlot = {
+          id: `${pattern.dayOfWeek}_${pattern.startTime}_${date.toISOString().split('T')[0]}`,
+          dateTime: date.toISOString(),
+          date: date.toISOString().split('T')[0],
+          dayOfWeek: pattern.dayOfWeek,
+          startTime: pattern.startTime,
+          endTime: pattern.endTime,
+          start: pattern.startTime,
+          end: pattern.endTime,
+          isAvailable: true,
+          isLocked: false
+        };
+
+        slots.push(slot);
+
+        // Move to next week
+        date.setDate(date.getDate() + 7);
+      }
+    });
+
+    return slots.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+  }, []);
+
+  // Generate slots and weekly breakdown whenever patterns change
+  const { slots, weekBreakdown, totalSlots } = useMemo(() => {
+    const slots = generateMonthlySlots(selectedPatterns);
+    const weeks: Record<string, OccurrenceSlot[]> = {};
+
+    // Group slots by week (Monday as start)
+    slots.forEach(slot => {
+      const date = new Date(slot.dateTime);
+      const weekStart = new Date(date);
+      const day = date.getDay();
+      // Calculate Monday of current week: if Sunday (0) go back 6 days, else go to (1 - day)
+      const diff = day === 0 ? -6 : 1 - day;
+      weekStart.setDate(date.getDate() + diff);
+      const weekKey = weekStart.toISOString().split('T')[0];
+
+      if (!weeks[weekKey]) weeks[weekKey] = [];
+      weeks[weekKey].push(slot);
+    });
+
+    const breakdown = Object.entries(weeks).map(([weekStart, weekSlots]) => ({
+      weekStartDate: weekStart,
+      date: weekStart,
+      slots: weekSlots,
+      total: weekSlots.length,
+      totalSlots: weekSlots.length
+    }));
+
+    return {
+      slots,
+      weekBreakdown: breakdown,
+      totalSlots: slots.length
+    };
+  }, [selectedPatterns, generateMonthlySlots]);
+
+  const totalCost = totalSlots * SLOT_COST;
+
+
+  const handleBooking = useCallback(async () => {
     if (totalSlots === 0) {
       setError('Please select at least one slot pattern');
       return;
@@ -198,7 +208,7 @@ export default function MonthlyClassBooking({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tutorId, subjectId, languageId, selectedPatterns, totalSlots, totalCost, weekBreakdown, onBookingSuccess, onBookingError]);
 
   return (
     <div className="space-y-6">
@@ -339,7 +349,7 @@ export default function MonthlyClassBooking({
                         <div key={slot.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                           <Clock className="h-4 w-4 text-blue-500" />
                           <span className="text-sm">
-                            {DAYS_OF_WEEK.find(d => d.value === slot.dayOfWeek)?.label} {slot.time}
+                            {DAYS_OF_WEEK.find(d => d.value === slot.dayOfWeek)?.label} {slot.startTime}
                           </span>
                         </div>
                       ))}

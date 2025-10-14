@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useBooking } from "@/contexts/BookingContext";
+import { getBookingCache } from '@/utils/bookingCache';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -22,17 +23,7 @@ import {
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { bookingAPI } from "@/lib/api";
 
-// PayHere payment object interface
-declare global {
-  interface Window {
-    payhere: {
-      startPayment: (payment: any) => void;
-      onCompleted: (orderId: string) => void;
-      onDismissed: () => void;
-      onError: (error: string) => void;
-    };
-  }
-}
+// PayHere payment object interface is declared in `src/types/payhere.d.ts`
 
 export default function PayHerePaymentPage({ params }: { params: { tutorId: string } }) {
   const router = useRouter();
@@ -40,10 +31,13 @@ export default function PayHerePaymentPage({ params }: { params: { tutorId: stri
   const {
     tutor,
     selectedDate,
-    selectedSlot,
     bookingPreferences,
     resetBookingState,
   } = useBooking();
+
+  // BookingContext no longer stores a single selectedSlot snapshot; fall back to local cache
+  const bookingCache = typeof window !== 'undefined' ? getBookingCache() : null;
+  const selectedSlot = bookingCache?.selectedSlot ?? null;
 
   // For now, let's mock a timer. In a real app, this would come from the reservation API call.
   const [reservationTimer, setReservationTimer] = useState(900); // 15 minutes
@@ -180,16 +174,25 @@ const handlePayHerePayment = async () => {
   setIsProcessing(true);
 
   try {
+    if (!selectedSlot) {
+      throw new Error('No selected slot available for payment');
+    }
+
     const orderId = `EDIMY_${Date.now()}_${selectedSlot.slotId}`;
     const hashResponse = await bookingAPI.generatePayHereHash(orderId, totalAmount, "LKR");
 
-    if (!hashResponse) {
-      throw new Error(hashResponse.error || "Failed to generate payment hash");
+    if (!hashResponse || !hashResponse.success || !hashResponse.data || !hashResponse.data.hash) {
+      throw new Error((hashResponse && (hashResponse as any).error) || "Failed to generate payment hash");
+    }
+
+    const merchantId = hashResponse.data.merchantId;
+    if (!merchantId) {
+      throw new Error('Missing merchantId from payment initialization');
     }
 
     const payment = {
       sandbox: true,
-      merchant_id: hashResponse.data.merchantId,
+  merchant_id: merchantId,
       return_url: `${window.location.origin}/payment/return`,
       cancel_url: `${window.location.origin}/payment/cancel`,
       notify_url: `${window.location.origin}/api/payment/notify`,

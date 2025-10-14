@@ -53,6 +53,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const [academicLoading, setAcademicLoading] = useState(false);
 
+  const toNum = (v: any): number | null => {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'number' && !Number.isNaN(v)) return v;
+    const n = Number(v);
+    return Number.isNaN(n) ? null : n;
+  };
+
+  const normalizeUser = (raw: any): User => {
+    const normStudentId = raw.role === 'STUDENT' ? (toNum(raw.studentId) ?? toNum(raw.id)) : toNum(raw.studentId);
+    const normTutorId = raw.role === 'TUTOR' ? (toNum(raw.tutorId) ?? toNum(raw.id)) : toNum(raw.tutorId);
+    return { ...raw, studentId: normStudentId, tutorId: normTutorId };
+  };
 
   const updateTokenFromInterceptor = (newToken: string) => {
     setToken(newToken);
@@ -102,19 +114,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 //     checkAuthStatus();
 //   }, []);
 
-//   const toNum = (v: any): number | null => {
-//     if (v === null || v === undefined) return null;
-//     if (typeof v === 'number' && !Number.isNaN(v)) return v;
-//     const n = Number(v);
-//     return Number.isNaN(n) ? null : n;
-//   };
-
-//   const normalizeUser = (raw: any): User => {
-//     const normStudentId = raw.role === 'STUDENT' ? (toNum(raw.studentId) ?? toNum(raw.id)) : toNum(raw.studentId);
-//     const normTutorId = raw.role === 'TUTOR' ? (toNum(raw.tutorId) ?? toNum(raw.id)) : toNum(raw.tutorId);
-//     return { ...raw, studentId: normStudentId, tutorId: normTutorId };
-//   };
-
 //   const checkAuthStatus = async () => {
 //     try {
 //       const newToken = await refreshAccessToken();
@@ -152,7 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       await authAPI.logout();
-    } catch {
+    } catch (error) {
       // ignore
        console.error('Logout API call failed:', error);
 
@@ -181,8 +180,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (user.studentId) {
         const res = await studentAPI.loadStudentAcademicInfo(user.studentId);
         if (res?.success && res.data) {
-          const educationLevel = res.data.educationLevel;
-          const stream = res.data.stream;
+          const educationLevel = res.data.educationLevel ?? undefined;
+          const stream = res.data.stream ?? undefined;
           updateUser({ educationLevel, stream });
           console.log('Loaded academic info:', res.data);
         } else {

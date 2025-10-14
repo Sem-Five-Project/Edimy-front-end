@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {InitPayHerePendingReq, InitPayHerePendingRes, ValidatePayHereWindowRes, BookMonthlyClassReq, BookMonthlyClassRes } from '@/types';
+import {InitPayHerePendingReq, InitPayHerePendingRes,Rating, ValidatePayHereWindowRes, BookMonthlyClassReq, BookMonthlyClassRes,TutorRatingSummary } from '@/types';
 interface BookingUpdateData {
   orderId: string;
   tutorId: string;
@@ -24,6 +24,7 @@ interface BookingUpdateData {
 // import { SubjectRequestBody, TutorSearchPayload } from '@/types';
 import { LoginCredentials, RegisterData, User, Tutor, TimeSlot, Booking, FilterOptions, ApiResponse,Class,ClassDoc,TutorAvailability,PageableResponse, Subject, TutorSubject } from '@/types';
 import { Timestamp } from 'next/dist/server/lib/cache-handlers/types';
+import { get } from 'http';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
 
@@ -1863,7 +1864,6 @@ export const classAPI = {
 export const classDocAPI ={
   //add a doc
   addClassDoc: async (classDocData: ClassDoc): Promise<any> => {
-    console.log('Adding class doc with data:*************', classDocData);
     try {
       const response = await api.post(`/class-docs/add`, classDocData);
       return response.data;
@@ -1876,7 +1876,6 @@ export const classDocAPI ={
       };
     }
   },
-  //get docs by classId
   getClassDocsByClassId: async (classId: number): Promise<ClassDoc[]> => {
     try {
       const response = await api.get(`/class-docs/class/${classId}`);
@@ -1886,7 +1885,6 @@ export const classDocAPI ={
       return [];
     }
   },
-  //delete a doc by docId
   deleteClassDoc: async (docId: number): Promise<ApiResponse<any>> => {
     try {
       const response = await api.delete(`/class-docs/delete/${docId}`);
@@ -2125,4 +2123,62 @@ export const sendFCMTokenAfterLogin = async (userId: string): Promise<void> => {
   } catch (error) {
     console.error("💥 Error sending FCM token after login:", error);
   }
+}
+  //rating
+  export const ratingAPI = {
+  submitRating: async (ratingData: {
+    sessionId: number;
+    tutorId: string;
+    rating: number;
+    comment?: string;
+  }): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('ratings', ratingData);
+      return response.data;
+    } catch (error) {
+      console.error('Rating submission failed:', error);
+      return {
+        success: false,
+        data: { message: 'Failed to submit rating' },
+        error: 'Network error',
+      };
+    }
+  },
+    getRatingForTutor: async (tutorId: number): Promise<{ ratingSummary: TutorRatingSummary }> => {
+      try {
+        const response = await api.get(`ratings/tutor/${tutorId}/summary`);
+        console.log('Get rating for tutor response:', response);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get rating for tutor:', error);
+        return {
+          ratingSummary: {
+            tutorId: 0,
+            tutorName: "None",
+            averageRating: 0,
+            totalRatings: 0,
+            fiveStarRatings: 0,
+            fourStarRatings: 0,
+            threeStarRatings: 0,
+            twoStarRatings: 0,
+            oneStarRatings: 0,
+          }
+        };
+      }
+    },
+    //Get all ratings for a specific tutor with pagination
+    getAllRatingsForTutor: async (tutorId: number, page: number = 0, limit: number = 10): Promise<ApiResponse<{ ratings: Rating[]; total: number; page: number; limit: number }>> => {
+      try {
+        const response = await api.get(`ratings/tutor/${tutorId}?page=${page}&size=${limit}`);
+        console.log('Get all ratings for tutor response:****+****', response);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get all ratings for tutor:', error);
+        return {
+          success: false,
+          data: { ratings: [], total: 0, page: 1, limit: 10 },
+          error: 'Network error',
+        };
+      }
+    },
 };

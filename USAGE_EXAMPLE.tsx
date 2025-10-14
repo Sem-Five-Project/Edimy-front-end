@@ -27,7 +27,11 @@ export function LoginExample() {
         //   }
         // }
         
-        loginWithResponse(response.data)
+        loginWithResponse({
+          accessToken: (response.data && (response.data as any).accessToken) || (response as any).accessToken || '',
+          tokenType: (response.data && (response.data as any).tokenType) || 'Bearer',
+          user: (response.data && (response.data as any).user) || (response as any).user,
+        })
         
         // Navigate to dashboard or profile
         // router.push('/dashboard/student/profile')

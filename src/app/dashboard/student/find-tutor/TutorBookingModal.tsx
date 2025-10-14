@@ -658,6 +658,7 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
               onCancel={handleCancel}
+              lockedSlotIds={[selectedSlot.slotId]} // Add the current slot ID to lockedSlotIds
             />
           )}
 {/* 

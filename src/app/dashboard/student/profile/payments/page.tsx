@@ -290,15 +290,23 @@ import Link from "next/link"
 import { studentAPI } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 
+interface APIPayment {
+  amount: number;
+  tutorName: string | null;
+  subject: string | null;
+  status: string | null;
+  paymentTime: number | null;
+}
+
 interface Payment {
-  id: string
-  amount: number
-  tutorName: string
-  subject: string
-  status: "completed" | "pending" | "failed"
-  paymentTime: string
-  method?: string
-  orderId?: string
+  id: string;
+  amount: number;
+  tutorName: string;
+  subject: string;
+  status: "completed" | "pending" | "failed";
+  paymentTime: string;
+  method?: string;
+  orderId?: string;
 }
 
 type TimeFilter = "last_month" | "last_6_months" | "last_year" | "all_time"
@@ -316,12 +324,21 @@ export default function PaymentHistoryPage() {
     isFetching,
     isError,
     error,
-  } = useQuery<Payment[]>({
+  } = useQuery<Payment>({
     queryKey: ["studentPayments", userId, timeFilter],
     enabled: Boolean(userId),
     queryFn: async () => {
       const res = await studentAPI.loadStudentProfilePayment(userId, timeFilter)
-      return res.data || []
+      const apiPayment = res.data as APIPayment;
+      // Transform the API payment into our Payment type
+      return {
+        id: String(Math.random()), // Generate a random ID since API doesn't provide one
+        amount: apiPayment.amount,
+        tutorName: apiPayment.tutorName || 'Unknown Tutor',
+        subject: apiPayment.subject || 'Unknown Subject',
+        status: (apiPayment.status?.toLowerCase() as 'completed' | 'pending' | 'failed') || 'pending',
+        paymentTime: apiPayment.paymentTime ? new Date(apiPayment.paymentTime).toISOString() : new Date().toISOString()
+      }
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -426,7 +443,7 @@ export default function PaymentHistoryPage() {
                 <p className="text-gray-600 text-lg">Failed to load payments</p>
                 <p className="text-gray-500 text-sm mt-2">{error?.message || "Please try again"}</p>
               </div>
-            ) : !payments || payments.length === 0 ? (
+            ) : !payments ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <CreditCard className="h-16 w-16 text-gray-400 mb-4" />
                 <p className="text-gray-600 text-lg font-medium">No payments found</p>
@@ -436,78 +453,73 @@ export default function PaymentHistoryPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {payments.map((payment) => (
-                  <Card
-                    key={payment.id}
-                    className="border-gray-200 hover:shadow-lg transition-all duration-200 bg-white"
-                  >
-                    <CardContent className="pt-4 pb-4">
-                      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                        {/* Left Section: Basic Info */}
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className="flex-1 space-y-2">
-                            {/* Subject */}
-                            <div className="flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                              <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide">Subject</p>
-                                <h3 className="font-bold text-gray-900 text-base">
-                                  {payment.subject}
-                                </h3>
-                              </div>
+                <Card className="border-gray-200 hover:shadow-lg transition-all duration-200 bg-white">
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                      {/* Left Section: Basic Info */}
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="flex-1 space-y-2">
+                          {/* Subject */}
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Subject</p>
+                              <h3 className="font-bold text-gray-900 text-base">
+                                {payments.subject}
+                              </h3>
                             </div>
-                            
-                            {/* Tutor Name */}
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                              <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide">Tutor</p>
-                                <p className="text-gray-900 font-semibold text-sm">
-                                  {payment.tutorName}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Center Section: Date & Time */}
-                        <div className="flex items-center gap-2 lg:min-w-[180px] p-3 rounded-lg bg-gray-50 border border-gray-200">
-                          <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase tracking-wide">Date & Time</p>
-                            <p className="text-gray-900 font-semibold text-sm">
-                              {new Date(payment.paymentTime).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </p>
-                            <p className="text-gray-600 text-xs mt-0.5">
-                              {new Date(payment.paymentTime).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Right Section: Amount & Status */}
-                        <div className="flex flex-col items-end gap-2 lg:min-w-[160px]">
-                          <div className="text-right p-3 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-md w-full">
-                            <p className="text-xs text-gray-600 uppercase tracking-wide">Amount</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                              Rs. {payment.amount.toLocaleString()}
-                            </p>
                           </div>
                           
-                          <div className="flex items-center gap-2 w-full justify-end">
-                            {getStatusBadge(payment.status)}
+                          {/* Tutor Name */}
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Tutor</p>
+                              <p className="text-gray-900 font-semibold text-sm">
+                                {payments.tutorName}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+                      {/* Center Section: Date & Time */}
+                      <div className="flex items-center gap-2 lg:min-w-[180px] p-3 rounded-lg bg-gray-50 border border-gray-200">
+                        <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Date & Time</p>
+                          <p className="text-gray-900 font-semibold text-sm">
+                            {new Date(payments.paymentTime).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-gray-600 text-xs mt-0.5">
+                            {new Date(payments.paymentTime).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right Section: Amount & Status */}
+                      <div className="flex flex-col items-end gap-2 lg:min-w-[160px]">
+                        <div className="text-right p-3 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-md w-full">
+                          <p className="text-xs text-gray-600 uppercase tracking-wide">Amount</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            Rs. {payments.amount.toLocaleString()}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 w-full justify-end">
+                          {getStatusBadge(payments.status as any)}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </CardContent>
