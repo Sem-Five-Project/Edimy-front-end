@@ -1337,13 +1337,13 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                         >
                           {isMonthlyClassType ? 'Create a new recurring class' : 'Book new one-time class'}
                         </button>
-                        <button
+                        {/* <button
                           type="button"
-                          onClick={() => {/* Placeholder for future reschedule flow */}}
+                          onClick={() => {}}
                           className="text-xs px-3 py-1 rounded-md font-medium transition border bg-white dark:bg-gray-800 text-blue-700 border-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700"
                         >
                           {isMonthlyClassType ? 'Reschedule existing' : 'Change time'}
-                        </button>
+                        </button> */}
                       </div>
                       {!overrideExistingClass && (
                         <div className="text-[10px] text-amber-700 dark:text-amber-300 italic">Select an action above to proceed or override to create a new class.</div>
@@ -2116,6 +2116,7 @@ const languageOptions = tutor.languages?.map((language, index) => ({
             )}
             
             <Button 
+            
               onClick={async () => {
                 await handleContinue();
                 if (isMonthlyClassType) {
@@ -2134,7 +2135,7 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                   }
                 }
               }}
-              //disabled={!isValid() || isLoading || nextMonthPatternsLoading}
+              disabled={!overrideExistingClass}
               size="lg"
               className="w-full h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-bold rounded-xl border-0 relative overflow-hidden group"
             >

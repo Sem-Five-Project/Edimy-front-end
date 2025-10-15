@@ -906,7 +906,7 @@ export const studentAPI = {
     try {
       console.log("studentId in loadStudentAcademicInfo :",studentId)
       const response = await api.get(
-        `/student/profile/${studentId}/academic-info`
+        `/students/${studentId}/academic-info`
       );
       console.log("response of loadStudentAcademicInfo :", response);
 
@@ -932,7 +932,7 @@ export const studentAPI = {
     try {
       
       const response = await api.get(
-        `/student/profile/${studentId}/profile-info`
+        `/students/${studentId}/profile-info`
       );
       console.log("response of loadStudentProfileInfo :", response);
 
