@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { CalendarDays, Clock, Star, BookOpen, ChevronRight, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarDays, Clock, Star, BookOpen, ChevronRight, AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { bookingAPI, studentAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +24,6 @@ type BookingDetails = {
   };
 };
 
-// Suggested tutors placeholder type and data
 type SuggestedTutor = { id: string; name: string; subject: string; rating: number; price: number; image: string };
 
 export default function StudentDashboard() {
@@ -83,17 +82,13 @@ export default function StudentDashboard() {
   const parsedUpcoming = useMemo(() => {
     const now = new Date();
     const items = bookings.map((b: BookingDetails) => {
-      const allSlots = (b.class_details.class_times || []).flatMap(ct => ct.slots || []);
+      const allSlots = (b.class_details.class_times || []).flatMap((ct) => ct.slots || []);
       const nextDate = allSlots
-        .map(d => new Date(d))
-        .filter(d => !isNaN(d.getTime()) && d >= now)
+        .map((d) => new Date(d))
+        .filter((d) => !isNaN(d.getTime()) && d >= now)
         .sort((a, b) => a.getTime() - b.getTime())[0];
-      return {
-        booking: b,
-        nextDate: nextDate || null,
-      };
-    }).filter(x => !!x.nextDate);
-    // sort by nextDate asc and take top 3
+      return { booking: b, nextDate: nextDate || null };
+    }).filter((x) => !!x.nextDate);
     return items.sort((a, b) => (a.nextDate!.getTime() - b.nextDate!.getTime())).slice(0, 3);
   }, [bookings]);
 
@@ -131,8 +126,8 @@ export default function StudentDashboard() {
                 <CardTitle>Current Bookings</CardTitle>
                 <CardDescription>Your active and upcoming sessions</CardDescription>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => router.push('/dashboard/student/profile/bookings')}
               >
@@ -158,14 +153,21 @@ export default function StudentDashboard() {
               ) : bookings.length > 0 ? (
                 <div className="space-y-4">
                   {bookings.slice(0, 3).map((b: BookingDetails) => {
-                    const tutorInitials = b.class_details.tutor.name.split(' ').map((n: string) => n[0]).join('').slice(0,2);
-                    const allSlots = (b.class_details.class_times || []).flatMap(ct => ct.slots || []);
+                    const tutorInitials = b.class_details.tutor.name
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')
+                      .slice(0, 2);
+                    const allSlots = (b.class_details.class_times || []).flatMap((ct) => ct.slots || []);
                     const next = allSlots
-                      .map(d => new Date(d))
-                      .filter(d => !isNaN(d.getTime()) && d >= new Date())
+                      .map((d) => new Date(d))
+                      .filter((d) => !isNaN(d.getTime()) && d >= new Date())
                       .sort((a, b) => a.getTime() - b.getTime())[0];
                     return (
-                      <div key={b.booking_id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                      <div
+                        key={b.booking_id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                      >
                         <div className="flex items-center space-x-4">
                           <Avatar>
                             <AvatarImage src={''} />
@@ -182,10 +184,8 @@ export default function StudentDashboard() {
                                 <CalendarDays className="h-4 w-4" />
                                 <span>{formatDate(next.toISOString())}</span>
                                 <Clock className="h-4 w-4 ml-2" />
-                                {/* Use first time range from class_times as representative */}
                                 <span>
-                                  {formatTime(b.class_details.class_times[0]?.start_time || '09:00')}
-                                  {' - '}
+                                  {formatTime(b.class_details.class_times[0]?.start_time || '09:00')} -
                                   {formatTime(b.class_details.class_times[0]?.end_time || '10:00')}
                                 </span>
                               </div>
@@ -199,7 +199,13 @@ export default function StudentDashboard() {
                             {b.booking_status}
                           </Badge>
                           <div className="mt-2">
-                            <Button size="sm" variant="outline" onClick={() => router.push('/dashboard/student/profile/bookings')}>Manage</Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push('/dashboard/student/profile/bookings')}
+                            >
+                              Manage
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -210,10 +216,7 @@ export default function StudentDashboard() {
                 <div className="text-center py-8">
                   <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">No bookings yet</p>
-                  <Button 
-                    className="mt-4" 
-                    onClick={() => router.push('/dashboard/student/find-tutor')}
-                  >
+                  <Button className="mt-4" onClick={() => router.push('/dashboard/student/find-tutor')}>
                     Find a Tutor
                   </Button>
                 </div>
@@ -253,9 +256,7 @@ export default function StudentDashboard() {
                     <div key={booking.booking_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">
-                            {nextDate!.getDate()}
-                          </div>
+                          <div className="text-2xl font-bold text-primary">{nextDate!.getDate()}</div>
                           <div className="text-sm text-muted-foreground">
                             {nextDate!.toLocaleDateString('en-US', { month: 'short' })}
                           </div>
@@ -263,11 +264,10 @@ export default function StudentDashboard() {
                         <div>
                           <h4 className="font-medium">{booking.class_details.tutor.name}</h4>
                           <p className="text-sm text-muted-foreground">
-                            {formatTime(booking.class_details.class_times[0]?.start_time || '09:00')} - {formatTime(booking.class_details.class_times[0]?.end_time || '10:00')}
+                            {formatTime(booking.class_details.class_times[0]?.start_time || '09:00')} -
+                            {formatTime(booking.class_details.class_times[0]?.end_time || '10:00')}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {booking.class_details.subject.name}
-                          </p>
+                          <p className="text-sm text-muted-foreground">{booking.class_details.subject.name}</p>
                         </div>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -345,11 +345,7 @@ export default function StudentDashboard() {
                   </div>
                 ))}
               </div>
-              <Button 
-                className="w-full mt-4" 
-                variant="outline"
-                onClick={() => router.push('/dashboard/student/find-tutor')}
-              >
+              <Button className="w-full mt-4" variant="outline" onClick={() => router.push('/dashboard/student/find-tutor')}>
                 Browse All Tutors
               </Button>
             </CardContent>
