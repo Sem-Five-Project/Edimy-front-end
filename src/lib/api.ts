@@ -375,6 +375,8 @@ export const authAPI = {
   > => {
     try {
       console.log("login credentials main :", credentials);
+      console.log("POST /auth/login -> url:", API_BASE_URL + "/auth/login", "payload:", credentials);
+
       const response = await api.post("/auth/login", credentials);
       console.log("login response main :", response.data);
       // Normalize user shape to ensure studentId/tutorId present when role-specific id provided separately
