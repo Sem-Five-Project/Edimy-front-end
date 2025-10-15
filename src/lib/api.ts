@@ -342,26 +342,45 @@ export const authAPI = {
     data: RegisterData,
   ): Promise<ApiResponse<{ user: User }>> => {
     try {
-      const response = await api.post("/auth/register", data);
-      return response.data;
-    } catch (error) {
-      console.error("Registration failed:", error);
-      // Mock response for frontend testing
-      return {
-        success: true,
-        data: {
-          user: {
-            id: "mock-user-id",
-            firstName: data.fullName.split(" ")[0],
-            lastName: data.fullName.split(" ").slice(1).join(" ") || "",
-            username: data.username,
-            email: data.email,
-            role: data.userType,
-            isVerified: false,
-            createdAt: new Date().toISOString(),
-          },
-        },
+      console.log("Registering user with data:", data);
+      
+      // Split fullName into firstName and lastName for backend
+      const nameParts = data.fullName.trim().split(/\s+/);
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || nameParts[0] || ""; // Use firstName as lastName if only one name provided
+      
+      // Transform the data to match backend expectations
+      const backendPayload = {
+        firstName,
+        lastName,
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+        role: data.userType, // Backend expects 'role' instead of 'userType'
       };
+      
+      console.log("Sending to backend:", backendPayload);
+      const response = await api.post("/auth/register", backendPayload);
+      console.log("Registration successful:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Registration failed:", error);
+      
+      // Extract error details from the response
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 
+                            error.response.data?.error || 
+                            "Registration failed";
+        console.error("Backend error:", error.response.data);
+        console.error("Status:", error.response.status);
+        
+        // Throw the error with detailed information
+        throw new Error(errorMessage);
+      }
+      
+      // Network or other errors
+      throw new Error(error.message || "Registration failed. Please try again.");
     }
   },
 
