@@ -79,23 +79,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(newToken);
   };
 
-  const setFallbackUser = () => {
-    console.log("🔄 Setting fallback user for development");
-    const fallbackUser: User = {
-      id: "fallback-user",
-      firstName: "Test",
-      lastName: "User",
-      username: "testuser",
-      email: "test@example.com",
-      role: "ADMIN", // Change this to test different roles
-      isVerified: true,
-      createdAt: new Date().toISOString(),
-    };
-    setUser(fallbackUser);
-    // Don't set a real token for fallback
-    setToken("fallback-token");
-  };
-
   useEffect(() => {
     // Only run auth check once
     if (!authCheckAttempted) {
@@ -109,33 +92,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log("🔍 Starting authentication check...");
 
-      // Skip health check for now and use fallback
-      console.log("🔍 Skipping API health check for testing...");
-      setFallbackUser();
+      // Try to refresh the access token using the refresh token cookie
+      const newToken = await refreshAccessToken();
+      setToken(newToken.accessToken);
+      setAuthToken(newToken.accessToken); // attach to axios
+
+      // Get the current user with the new token
+      const response = await authAPI.getCurrentUser();
+      if (response?.data?.user) {
+        setUser(normalizeUser(response.data.user));
+        console.log("✅ User authenticated successfully");
+      }
     } catch (err) {
       console.error("❌ Auth check failed:", err);
-      setFallbackUser();
-
-      //   useEffect(() => {
-      //     setTokenRefreshCallback(updateTokenFromInterceptor);
-      //     checkAuthStatus();
-      //   }, []);
-
-      //   const checkAuthStatus = async () => {
-      //     try {
-      //       const newToken = await refreshAccessToken();
-      //       setToken(newToken.accessToken);
-      //       setAuthToken(newToken.accessToken);
-      //       setAuthToken(newToken.accessToken); // attach to axios
-      //       //setUser(newUser);
-
-      //       // Test the token first
-
-      //       const response = await authAPI.getCurrentUser();
-      //       if (response?.data?.user) setUser(normalizeUser(response.data.user));
-      //     } catch {
-      //       setUser(null);
-      //       setToken(null);
+      // If token refresh or user fetch fails, clear the auth state
+      setUser(null);
+      setToken(null);
+      setAuthToken(null);
     } finally {
       setIsLoading(false);
     }
