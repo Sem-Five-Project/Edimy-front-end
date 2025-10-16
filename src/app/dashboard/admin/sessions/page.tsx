@@ -289,43 +289,15 @@ export default function AllSessionsPage() {
                 value={status}
                 onValueChange={(value) => setStatus(value)}
               >
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:ring-slate-600">
-                  <SelectValue
-                    placeholder="All statuses"
-                    className="text-white"
-                  />
+                <SelectTrigger>
+                  <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem
-                    value="all"
-                    className="text-white hover:bg-slate-700 focus:bg-slate-700"
-                  >
-                    All
-                  </SelectItem>
-                  <SelectItem
-                    value="Rescheduled"
-                    className="text-blue-300 hover:bg-slate-700 focus:bg-slate-700"
-                  >
-                    Rescheduled
-                  </SelectItem>
-                  <SelectItem
-                    value="Scheduled"
-                    className="text-green-300 hover:bg-slate-700 focus:bg-slate-700"
-                  >
-                    Scheduled
-                  </SelectItem>
-                  <SelectItem
-                    value="Completed"
-                    className="text-gray-300 hover:bg-slate-700 focus:bg-slate-700"
-                  >
-                    Completed
-                  </SelectItem>
-                  <SelectItem
-                    value="Cancelled"
-                    className="text-red-300 hover:bg-slate-700 focus:bg-slate-700"
-                  >
-                    Cancelled
-                  </SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="Rescheduled">Rescheduled</SelectItem>
+                  <SelectItem value="Scheduled">Scheduled</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>

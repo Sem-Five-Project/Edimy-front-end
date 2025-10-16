@@ -97,11 +97,11 @@ export function WeeksProfitChart({ data }: PropsType) {
         options={options}
         series={[
           {
-            name: "Completed",
+            name: "Completed Sessions",
             data: data.completed,
           },
           {
-            name: "Canceled",
+            name: "Cancelled Sessions",
             data: data.upcoming,
           },
         ]}
