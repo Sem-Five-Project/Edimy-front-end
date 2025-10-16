@@ -147,7 +147,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
         </div>
       </div>
       {/* Performance Metrics */}
-      <div className="lg:col-span-2">
+      {/* <div className="lg:col-span-2">
         <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-xl p-6 border border-blue-100">
           <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
             Performance Overview
@@ -170,7 +170,6 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
               <p className="text-sm text-green-600 mt-1">Excellent rating</p>
             </div>
           </div>
-          {/* Recent Activity */}
           <div className="bg-white rounded-xl p-4 shadow-md">
             <h3 className="font-semibold text-gray-700 mb-4">
               Recent Activity
@@ -228,9 +227,9 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </div>
+          </div> */}
+        {/* </div> */}
+      {/* </div> */}
     </div>
   );
 };

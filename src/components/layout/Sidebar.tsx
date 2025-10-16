@@ -103,18 +103,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           icon: User,
           path: "/dashboard/tutor/profile",
         },
-        {
-          id: "view-classes",
-          label: "My Classes",
-          icon: BookOpen,
-          path: "/dashboard/tutor/view-classes",
-        },
-        {
-          id: "students",
-          label: "Students",
-          icon: Users,
-          path: "/dashboard/tutor/students",
-        },
+        // {
+        //   id: "view-classes",
+        //   label: "My Classes",
+        //   icon: BookOpen,
+        //   path: "/dashboard/tutor/view-classes",
+        // },
+        // {
+        //   id: "students",
+        //   label: "Students",
+        //   icon: Users,
+        //   path: "/dashboard/tutor/students",
+        // },
       ];
     }
 

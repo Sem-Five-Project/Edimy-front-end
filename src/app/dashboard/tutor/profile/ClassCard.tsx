@@ -66,10 +66,12 @@ const ClassCard: React.FC<ClassCardProps> = ({
     console.log("Join class result:", result);
 
     if (result) {
-      // Navigate to the Zoom page, passing the link and user info as query params
-      router.push(
-        `/dashboard/tutor/profile/zoom?url=${encodeURIComponent(result)}&userName=${encodeURIComponent("Tutor")}&userEmail=${encodeURIComponent("tutor@example.com")}`,
-      );
+      // // Navigate to the Zoom page, passing the link and user info as query params
+      // router.push(
+      //   `/dashboard/tutor/profile/zoom?url=${encodeURIComponent(result)}&userName=${encodeURIComponent("Tutor")}&userEmail=${encodeURIComponent("tutor@example.com")}`,
+      // );
+      //open the link in a another window
+      window.open(result, "_blank");
     } else {
       alert("Failed to join class or Zoom link not found");
     }
