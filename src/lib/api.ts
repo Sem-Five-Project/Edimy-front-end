@@ -2108,7 +2108,7 @@ export const classAPI = {
   //join class using session id
   joinClass: async (sessionId: string): Promise<any> => {
     try {
-      const response = await api.get(`/sessions/18`);
+      const response = await api.get(`/sessions/75`);
       console.log("Join class response:*******************", response.data);
       return response.data.moderatorLink;
     } catch (error) {
