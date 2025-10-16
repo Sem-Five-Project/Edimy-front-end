@@ -14,13 +14,13 @@ export async function WeeksProfit({ className, timeFrame }: PropsType) {
   return (
     <div
       className={cn(
-        "rounded-[10px] bg-white px-7.5 pt-7.5 shadow-1 dark:bg-gray-900 dark:shadow-card",
+        "rounded-[10px] bg-white px-7.5 pt-7.5 shadow-md hover:shadow-lg transition-shadow dark:bg-gray-900",
         className,
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-body-2xlg font-bold text-dark dark:text-white">
-          Sessions {timeFrame || "this week"}
+          Weekly Sessions Overview
         </h2>
 
         <PeriodPicker

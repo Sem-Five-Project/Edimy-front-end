@@ -84,8 +84,29 @@ export async function updateStudentByIdForAdmin(
 }
 
 export async function getStudentStats(): Promise<StudentStatsDto> {
-  const response = await api.get<StudentStatsDto>("/students/stats");
-  return response.data;
+  try {
+    console.log("📊 Fetching student statistics...");
+    const response = await api.get<StudentStatsDto>("/students/stats");
+    console.log("✅ Student statistics fetched:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Failed to fetch student statistics:", error);
+    console.error("Error response:", error?.response?.data);
+    console.error("Error status:", error?.response?.status);
+    
+    // Return fallback statistics to prevent UI crash
+    if (error?.response?.status === 500 || error?.response?.status === 404) {
+      console.warn("Returning fallback statistics due to API error");
+      return {
+        totalStudents: 0,
+        activeStudents: 0,
+        suspendedStudents: 0,
+        newStudentsThisMonth: 0,
+      };
+    }
+    
+    throw error;
+  }
 }
 
 export interface SearchStudentsParams {
@@ -101,10 +122,32 @@ export interface SearchStudentsParams {
 export async function searchStudentsByAdmin(
   params: SearchStudentsParams = {},
 ): Promise<StudentsDto[]> {
-  const response = await api.get<StudentsDto[]>("/students/searchByAdmin", {
-    params,
-  });
-  return response.data;
+  try {
+    console.log("🔍 Searching students with params:", params);
+    
+    // Use the correct endpoint: /students/admin/search
+    const response = await api.get<StudentsDto[]>("/students/admin/search", {
+      params,
+    });
+    
+    console.log("✅ Students search successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Students search failed:", error);
+    console.error("Error response:", error?.response?.data);
+    console.error("Error status:", error?.response?.status);
+    
+    if (error?.response?.status === 500) {
+      console.warn("Backend returned 500 error. This might be due to:");
+      console.warn("1. Backend endpoint implementation issue");
+      console.warn("2. Database query error");
+      console.warn("3. Invalid search parameters");
+      console.warn("\nBackend error message:", error?.response?.data?.message);
+    }
+    
+    // Rethrow to let the component handle it
+    throw error;
+  }
 }
 
 export async function deleteStudent(id: number): Promise<void> {

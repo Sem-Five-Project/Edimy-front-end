@@ -12,7 +12,7 @@ export async function OverviewCardsGroup() {
         label="Total Sessions"
         data={{
           value: compactFormat(views.value),
-          growthRate: 0, // Remove the 0.43% indicator
+          growthRate: views.growthRate,
         }}
         Icon={icons.Sessions}
       />
@@ -21,7 +21,7 @@ export async function OverviewCardsGroup() {
         label="Total Profit"
         data={{
           value: compactFormat(profit.value) + " LKR",
-          growthRate: 0, // Remove the 4.35% indicator
+          growthRate: profit.growthRate,
         }}
         Icon={icons.Profit}
       />
@@ -30,7 +30,7 @@ export async function OverviewCardsGroup() {
         label="Total Subjects"
         data={{
           value: compactFormat(products.value),
-          growthRate: 0, // Remove the 2.59% indicator
+          growthRate: products.growthRate,
         }}
         Icon={icons.Subjects}
       />
@@ -39,7 +39,7 @@ export async function OverviewCardsGroup() {
         label="Total Users"
         data={{
           value: compactFormat(users.value),
-          growthRate: 0, // Remove the -0.95% gain symbol
+          growthRate: users.growthRate,
         }}
         Icon={icons.Users}
       />

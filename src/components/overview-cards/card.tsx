@@ -15,7 +15,7 @@ export function OverviewCard({ label, data, Icon }: PropsType) {
   const isDecreasing = data.growthRate < 0;
 
   return (
-    <div className="rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-900">
+    <div className="rounded-[10px] bg-white p-6 shadow-md hover:shadow-lg transition-shadow dark:bg-gray-900">
       <Icon />
 
       <div className="mt-6 flex items-end justify-between">

@@ -11,12 +11,16 @@ import { getCurrentAdmin, AdminUser } from "@/lib/admin";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { LogOutIcon, SettingsIcon, UserIcon } from "./icons";
+import { useRouter } from "next/navigation";
+import { authAPI } from "@/lib/api";
+import { LogOutIcon, UserIcon } from "./icons";
 
 export function UserInfo() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -33,6 +37,25 @@ export function UserInfo() {
 
     fetchAdminData();
   }, []);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent multiple logout attempts
+    
+    setIsLoggingOut(true);
+    setIsOpen(false);
+    
+    try {
+      await authAPI.logout();
+      // Redirect to login page after successful logout
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still redirect to login even if API call fails
+      router.push("/login");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   // Fallback user data
   const USER = {
@@ -137,30 +160,21 @@ export function UserInfo() {
 
             <span className="mr-auto text-base font-medium">View profile</span>
           </Link>
-
-          <Link
-            href={"/pages/settings"}
-            onClick={() => setIsOpen(false)}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] hover:bg-gray-2 hover:text-dark dark:hover:bg-dark-3 dark:hover:text-white"
-          >
-            <SettingsIcon />
-
-            <span className="mr-auto text-base font-medium">
-              Account Settings
-            </span>
-          </Link>
         </div>
 
         <hr className="border-[#E8E8E8] dark:border-dark-3" />
 
         <div className="p-2 text-base text-[#4B5563] dark:text-dark-6">
           <button
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] hover:bg-gray-2 hover:text-dark dark:hover:bg-dark-3 dark:hover:text-white"
-            onClick={() => setIsOpen(false)}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] hover:bg-gray-2 hover:text-dark dark:hover:bg-dark-3 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
           >
             <LogOutIcon />
 
-            <span className="text-base font-medium">Log out</span>
+            <span className="text-base font-medium">
+              {isLoggingOut ? "Logging out..." : "Log out"}
+            </span>
           </button>
         </div>
       </DropdownContent>
