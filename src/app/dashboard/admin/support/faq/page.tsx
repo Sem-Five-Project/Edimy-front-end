@@ -12,6 +12,7 @@ import {
   HelpCircle,
   CheckCircle,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,8 +100,19 @@ export default function FAQManagementPage() {
       setFaqs(faqsData);
       setStats(statsData);
     } catch (err: any) {
-      setError(err.message || "Failed to fetch data");
+      const errorMessage = 
+        err?.response?.data?.message || 
+        err?.response?.data?.error ||
+        err?.message || 
+        "Failed to fetch FAQ data. Please ensure the backend server is running.";
+      
+      setError(errorMessage);
       console.error("Error fetching FAQ data:", err);
+      console.error("Error details:", {
+        status: err?.response?.status,
+        data: err?.response?.data,
+        message: err?.message
+      });
     } finally {
       setLoading(false);
     }
@@ -263,16 +275,41 @@ export default function FAQManagementPage() {
 
       {/* Error Display */}
       {error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <div className="text-red-800">{error}</div>
+        <Card className="border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
+                  Error Loading FAQ Data
+                </h3>
+                <p className="text-red-800 dark:text-red-200 mb-4">{error}</p>
+                <div className="text-sm text-red-700 dark:text-red-300 space-y-1">
+                  <p>Possible causes:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Backend server is not running (expected at http://localhost:8083/api)</li>
+                    <li>FAQ endpoints are not implemented on the backend</li>
+                    <li>Database connection issue</li>
+                    <li>CORS or network connectivity problems</li>
+                  </ul>
+                </div>
+                <Button 
+                  onClick={fetchData} 
+                  variant="outline" 
+                  className="mt-4 border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -285,7 +322,7 @@ export default function FAQManagementPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -298,7 +335,7 @@ export default function FAQManagementPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -316,7 +353,7 @@ export default function FAQManagementPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="w-5 h-5" />
@@ -344,22 +381,13 @@ export default function FAQManagementPage() {
                 value={selectedCategory}
                 onValueChange={setSelectedCategory}
               >
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
-                  <SelectItem
-                    value="all"
-                    className="text-white hover:bg-gray-700"
-                  >
-                    All Categories
-                  </SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {FAQ_CATEGORIES.map((category) => (
-                    <SelectItem
-                      key={category.value}
-                      value={category.value}
-                      className="text-white hover:bg-gray-700"
-                    >
+                    <SelectItem key={category.value} value={category.value}>
                       {category.label}
                     </SelectItem>
                   ))}
@@ -369,28 +397,13 @@ export default function FAQManagementPage() {
             <div>
               <Label htmlFor="status">Status</Label>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
-                  <SelectItem
-                    value="all"
-                    className="text-white hover:bg-gray-700"
-                  >
-                    All Status
-                  </SelectItem>
-                  <SelectItem
-                    value="active"
-                    className="text-white hover:bg-gray-700"
-                  >
-                    Active
-                  </SelectItem>
-                  <SelectItem
-                    value="inactive"
-                    className="text-white hover:bg-gray-700"
-                  >
-                    Inactive
-                  </SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -399,7 +412,7 @@ export default function FAQManagementPage() {
       </Card>
 
       {/* FAQ Table */}
-      <Card>
+      <Card className="shadow-md">
         <CardHeader>
           <CardTitle>FAQs ({filteredFAQs.length})</CardTitle>
         </CardHeader>
@@ -479,7 +492,7 @@ export default function FAQManagementPage() {
 
       {/* Create FAQ Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700">
+        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">Create New FAQ</DialogTitle>
             <DialogDescription className="text-gray-300">
@@ -532,16 +545,12 @@ export default function FAQManagementPage() {
                   setFormData((prev) => ({ ...prev, category: value }))
                 }
               >
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectContent>
                   {FAQ_CATEGORIES.map((category) => (
-                    <SelectItem
-                      key={category.value}
-                      value={category.value}
-                      className="text-white hover:bg-gray-700"
-                    >
+                    <SelectItem key={category.value} value={category.value}>
                       {category.label}
                     </SelectItem>
                   ))}
@@ -585,7 +594,7 @@ export default function FAQManagementPage() {
 
       {/* Edit FAQ Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700">
+        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">Edit FAQ</DialogTitle>
             <DialogDescription className="text-gray-300">
@@ -647,16 +656,12 @@ export default function FAQManagementPage() {
                   setFormData((prev) => ({ ...prev, category: value }))
                 }
               >
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectContent>
                   {FAQ_CATEGORIES.map((category) => (
-                    <SelectItem
-                      key={category.value}
-                      value={category.value}
-                      className="text-white hover:bg-gray-700"
-                    >
+                    <SelectItem key={category.value} value={category.value}>
                       {category.label}
                     </SelectItem>
                   ))}
@@ -697,7 +702,7 @@ export default function FAQManagementPage() {
 
       {/* Preview FAQ Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700">
+        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">FAQ Preview</DialogTitle>
             <DialogDescription className="text-gray-300">

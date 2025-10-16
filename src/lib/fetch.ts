@@ -1,25 +1,93 @@
 export async function getOverviewData() {
-  // Fake delay
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  try {
+    // Server-side API call - first try to get a fresh access token from refresh token cookie
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
+    
+    // Get cookies from the request headers
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.getAll()
+      .map(cookie => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+    
+    // Try to refresh the access token first using the refresh token cookie
+    let accessToken = null;
+    try {
+      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
+        },
+        credentials: 'include',
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        accessToken = refreshData.accessToken;
+      }
+    } catch (refreshError) {
+      console.error('Failed to refresh token on server:', refreshError);
+    }
+    
+    // Now fetch the homepage data with the access token
+    const response = await fetch(`${API_BASE_URL}/admin/homepage`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(cookieHeader && { 'Cookie': cookieHeader }),
+        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+      },
+      credentials: 'include',
+      cache: 'no-store',
+    });
 
-  return {
-    views: {
-      value: 3456,
-      growthRate: 0.43,
-    },
-    profit: {
-      value: 4220,
-      growthRate: 4.35,
-    },
-    products: {
-      value: 3456,
-      growthRate: 2.59,
-    },
-    users: {
-      value: 3456,
-      growthRate: -0.95,
-    },
-  };
+    if (!response.ok) {
+      throw new Error(`Failed to fetch homepage data: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      views: {
+        value: data.totalSessions,
+        growthRate: data.sessionGainPercentage,
+      },
+      profit: {
+        value: data.totalProfit,
+        growthRate: data.sessionProfitGainPercentage,
+      },
+      products: {
+        value: data.totalSubjects,
+        growthRate: data.subjectGainPercentage,
+      },
+      users: {
+        value: data.totalUsers,
+        growthRate: data.userGainPercentage,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching overview data:', error);
+    // Return fallback data if API call fails
+    return {
+      views: {
+        value: 0,
+        growthRate: 0,
+      },
+      profit: {
+        value: 0,
+        growthRate: 0,
+      },
+      products: {
+        value: 0,
+        growthRate: 0,
+      },
+      users: {
+        value: 0,
+        growthRate: 0,
+      },
+    };
+  }
 }
 
 export async function getChatsData() {

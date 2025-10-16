@@ -18,7 +18,7 @@ export async function PaymentsOverview({
   return (
     <div
       className={cn(
-        "grid gap-2 rounded-[10px] bg-white px-7.5 pb-6 pt-7.5 shadow-1 dark:bg-gray-900 dark:shadow-card",
+        "grid gap-2 rounded-[10px] bg-white px-7.5 pb-6 pt-7.5 shadow-md hover:shadow-lg transition-shadow dark:bg-gray-900",
         className,
       )}
     >
@@ -32,31 +32,18 @@ export async function PaymentsOverview({
 
       <PaymentsOverviewChart data={data} />
 
-      <dl className="grid divide-stroke text-center dark:divide-dark-3 sm:grid-cols-2 sm:divide-x [&>div]:flex [&>div]:flex-col-reverse [&>div]:gap-1">
-        <div className="dark:border-dark-3 max-sm:mb-3 max-sm:border-b max-sm:pb-3">
+      <dl className="grid text-center [&>div]:flex [&>div]:flex-col-reverse [&>div]:gap-1">
+        <div>
           <dt className="text-xl font-bold text-dark dark:text-white">
             {standardFormat(
               data.received.reduce(
                 (acc: number, { y }: { y: number }) => acc + y,
                 0,
-              ),
+              ) * 1000, // Multiply back by 1000 since we divided in the service
             )}{" "}
             LKR
           </dt>
-          <dd className="font-medium dark:text-dark-6">Received Amount</dd>
-        </div>
-
-        <div>
-          <dt className="text-xl font-bold text-dark dark:text-white">
-            {standardFormat(
-              data.due.reduce(
-                (acc: number, { y }: { y: number }) => acc + y,
-                0,
-              ),
-            )}{" "}
-            LKR
-          </dt>
-          <dd className="font-medium dark:text-dark-6">Balance Due</dd>
+          <dd className="font-medium dark:text-dark-6">Total Payments {timeFrame === "yearly" ? "(in K)" : ""}</dd>
         </div>
       </dl>
     </div>

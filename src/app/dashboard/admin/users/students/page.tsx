@@ -55,6 +55,7 @@ export default function StudentsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Statistics state
   const [statistics, setStatistics] = useState({
@@ -81,6 +82,7 @@ export default function StudentsPage() {
 
   const loadInitialStudents = async () => {
     setLoading(true);
+    setApiError(null);
     try {
       const studentsList = await searchStudentsByAdmin({
         page: currentPage,
@@ -103,8 +105,24 @@ export default function StudentsPage() {
 
       // Load statistics after students are loaded
       await loadStatistics();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching initial students:", error);
+      
+      // Set error message for UI display
+      if (error?.response?.status === 500) {
+        setApiError(
+          "Backend server error. The students API endpoint may not be available. " +
+          "Please ensure the backend service is running and the database is connected."
+        );
+      } else if (error?.response?.status === 401) {
+        setApiError("Authentication required. Redirecting to login...");
+        setTimeout(() => router.push("/login"), 2000);
+      } else if (error?.response?.status === 404) {
+        setApiError("Students API endpoint not found. The backend may need to implement this endpoint.");
+      } else {
+        setApiError(`Failed to load students: ${error?.message || "Unknown error"}`);
+      }
+      
       setStudents([]);
       setTotalStudents(0);
       // Still try to load statistics even if students fail
@@ -158,12 +176,26 @@ export default function StudentsPage() {
     setCurrentPage(0); // Reset to first page when starting new search
     setSearching(true);
     setLoading(true);
+    setApiError(null);
     try {
+      // Validate student ID if provided
+      let parsedStudentId: number | undefined = undefined;
+      if (studentIdSearch) {
+        const parsed = parseInt(studentIdSearch.trim());
+        if (isNaN(parsed)) {
+          setApiError("Student ID must be a valid number");
+          setStudents([]);
+          setTotalStudents(0);
+          return;
+        }
+        parsedStudentId = parsed;
+      }
+
       const searchParams: SearchStudentsParams = {
-        name: nameSearch || undefined,
-        username: usernameSearch || undefined,
-        email: emailSearch || undefined,
-        studentId: studentIdSearch ? parseInt(studentIdSearch) : undefined,
+        name: nameSearch.trim() || undefined,
+        username: usernameSearch.trim() || undefined,
+        email: emailSearch.trim() || undefined,
+        studentId: parsedStudentId,
         status: statusFilter || undefined,
         page: 0, // Always start from page 0 for new searches
         size: ITEMS_PER_PAGE + 1, // Request one extra to check if more exists
@@ -182,8 +214,24 @@ export default function StudentsPage() {
       setTotalStudents(
         hasMoreStudents ? ITEMS_PER_PAGE + 1 : studentsToShow.length,
       );
-    } catch (error) {
+      // Clear any previous errors on successful search
+      setApiError(null);
+    } catch (error: any) {
       console.error("Error searching students:", error);
+      
+      // Set user-friendly error message
+      if (error?.response?.status === 500) {
+        setApiError(
+          "Search failed due to a server error. Please try different search criteria or contact support."
+        );
+      } else if (error?.response?.status === 400) {
+        setApiError(
+          "Invalid search parameters. Please check your input and try again."
+        );
+      } else {
+        setApiError(`Search failed: ${error?.message || "Unknown error"}`);
+      }
+      
       setStudents([]);
       setTotalStudents(0);
     } finally {
@@ -195,27 +243,58 @@ export default function StudentsPage() {
   const handleSearch = async () => {
     setSearching(true);
     setLoading(true);
+    setApiError(null);
     try {
+      // Validate student ID if provided
+      let parsedStudentId: number | undefined = undefined;
+      if (studentIdSearch) {
+        const parsed = parseInt(studentIdSearch.trim());
+        if (!isNaN(parsed)) {
+          parsedStudentId = parsed;
+        }
+      }
+
       const searchParams: SearchStudentsParams = {
-        name: nameSearch || undefined,
-        username: usernameSearch || undefined,
-        email: emailSearch || undefined,
-        studentId: studentIdSearch ? parseInt(studentIdSearch) : undefined,
+        name: nameSearch.trim() || undefined,
+        username: usernameSearch.trim() || undefined,
+        email: emailSearch.trim() || undefined,
+        studentId: parsedStudentId,
         status: statusFilter || undefined,
         page: currentPage,
-        size: ITEMS_PER_PAGE,
+        size: ITEMS_PER_PAGE + 1,
       };
 
       const studentsList = await searchStudentsByAdmin(searchParams);
-      setStudents(studentsList);
+      
+      // Check if there are more students available
+      const hasMoreStudents = studentsList.length > ITEMS_PER_PAGE;
+      const studentsToShow = hasMoreStudents
+        ? studentsList.slice(0, ITEMS_PER_PAGE)
+        : studentsList;
+
+      setStudents(studentsToShow);
       // Estimate total for pagination - show next page if we got full page results
       setTotalStudents(
-        studentsList.length === ITEMS_PER_PAGE
+        hasMoreStudents
           ? (currentPage + 1) * ITEMS_PER_PAGE + 1
-          : currentPage * ITEMS_PER_PAGE + studentsList.length,
+          : currentPage * ITEMS_PER_PAGE + studentsToShow.length,
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error searching students:", error);
+      
+      // Set user-friendly error message
+      if (error?.response?.status === 500) {
+        setApiError(
+          "Search failed due to a server error. Please try different search criteria."
+        );
+      } else if (error?.response?.status === 400) {
+        setApiError(
+          "Invalid search parameters. Please check your input and try again."
+        );
+      } else {
+        setApiError(`Search failed: ${error?.message || "Unknown error"}`);
+      }
+      
       setStudents([]);
       setTotalStudents(0);
     } finally {
@@ -342,7 +421,7 @@ export default function StudentsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Students
@@ -357,7 +436,7 @@ export default function StudentsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               New This Month
@@ -374,7 +453,7 @@ export default function StudentsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Active Students
@@ -391,7 +470,7 @@ export default function StudentsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Suspended Students
@@ -410,7 +489,7 @@ export default function StudentsPage() {
       </div>
 
       {/* Filters and Search */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-md">
         <CardContent className="p-6">
           <div className="space-y-4">
             {/* Search Fields */}
@@ -425,6 +504,11 @@ export default function StudentsPage() {
                     placeholder="Student name..."
                     value={nameSearch}
                     onChange={(e) => setNameSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearchButtonClick();
+                      }
+                    }}
                     className="pl-10"
                   />
                 </div>
@@ -440,6 +524,11 @@ export default function StudentsPage() {
                     placeholder="Username..."
                     value={usernameSearch}
                     onChange={(e) => setUsernameSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearchButtonClick();
+                      }
+                    }}
                     className="pl-10"
                   />
                 </div>
@@ -452,9 +541,15 @@ export default function StudentsPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
+                    type="number"
                     placeholder="Student ID..."
                     value={studentIdSearch}
                     onChange={(e) => setStudentIdSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearchButtonClick();
+                      }
+                    }}
                     className="pl-10"
                   />
                 </div>
@@ -470,6 +565,11 @@ export default function StudentsPage() {
                     placeholder="Email address..."
                     value={emailSearch}
                     onChange={(e) => setEmailSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearchButtonClick();
+                      }
+                    }}
                     className="pl-10"
                   />
                 </div>
@@ -486,26 +586,17 @@ export default function StudentsPage() {
                   value={statusFilter === null ? "ALL" : statusFilter}
                   onValueChange={handleStatusFilter}
                 >
-                  <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:ring-slate-600">
-                    <SelectValue className="text-white" />
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem
-                      value="ALL"
-                      className="text-white hover:bg-slate-700 focus:bg-slate-700"
-                    >
+                  <SelectContent>
+                    <SelectItem value="ALL">
                       All Statuses
                     </SelectItem>
-                    <SelectItem
-                      value="ACTIVE"
-                      className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300"
-                    >
+                    <SelectItem value="ACTIVE">
                       Active
                     </SelectItem>
-                    <SelectItem
-                      value="SUSPENDED"
-                      className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300"
-                    >
+                    <SelectItem value="SUSPENDED">
                       Suspended
                     </SelectItem>
                   </SelectContent>
@@ -514,35 +605,63 @@ export default function StudentsPage() {
             </div>
 
             {/* Search Actions */}
-            <div className="flex justify-center gap-4 pt-4 border-t">
-              <Button
-                onClick={handleSearchButtonClick}
-                disabled={searching || loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                {searching ? "Searching..." : "Search Students"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleClearSearch}
-                disabled={searching || loading}
-                className="px-8"
-              >
-                Clear Filters
-              </Button>
+            <div className="flex flex-col items-center gap-4 pt-4 border-t">
+              {apiError && hasSearchCriteria() && (
+                <div className="w-full max-w-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                    {apiError}
+                  </p>
+                </div>
+              )}
+              <div className="flex gap-4">
+                <Button
+                  onClick={handleSearchButtonClick}
+                  disabled={searching || loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  {searching ? "Searching..." : "Search Students"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClearSearch}
+                  disabled={searching || loading}
+                  className="px-8"
+                >
+                  Clear Filters
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Students Table */}
-      <Card>
+      <Card className="shadow-md">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-2 text-muted-foreground">Loading students...</p>
+            </div>
+          ) : apiError ? (
+            <div className="p-8 text-center">
+              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Students</h3>
+              <p className="text-muted-foreground mb-4">{apiError}</p>
+              <Button onClick={() => loadInitialStudents()} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="p-8 text-center">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Students Found</h3>
+              <p className="text-muted-foreground">
+                {hasSearchCriteria() 
+                  ? "Try adjusting your search filters" 
+                  : "No students are registered in the system yet"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">

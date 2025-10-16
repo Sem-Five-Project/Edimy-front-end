@@ -348,7 +348,7 @@ export default function TutorsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tutors</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -361,7 +361,7 @@ export default function TutorsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               New This Month
@@ -378,7 +378,7 @@ export default function TutorsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Average Rating
@@ -395,7 +395,7 @@ export default function TutorsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Tutors</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -410,7 +410,7 @@ export default function TutorsPage() {
       </div>
 
       {/* Filters and Search */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-md">
         <CardContent className="p-6">
           <div className="space-y-4">
             {/* Search Fields */}
@@ -486,26 +486,17 @@ export default function TutorsPage() {
                   value={statusFilter === null ? "ALL" : statusFilter}
                   onValueChange={handleStatusFilter}
                 >
-                  <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:ring-slate-600">
-                    <SelectValue className="text-white" />
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem
-                      value="ALL"
-                      className="text-white hover:bg-slate-700 focus:bg-slate-700"
-                    >
+                  <SelectContent>
+                    <SelectItem value="ALL">
                       All Statuses
                     </SelectItem>
-                    <SelectItem
-                      value="ACTIVE"
-                      className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300"
-                    >
+                    <SelectItem value="ACTIVE">
                       Active
                     </SelectItem>
-                    <SelectItem
-                      value="SUSPENDED"
-                      className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300"
-                    >
+                    <SelectItem value="SUSPENDED">
                       Suspended
                     </SelectItem>
                   </SelectContent>
@@ -526,26 +517,17 @@ export default function TutorsPage() {
                   }
                   onValueChange={handleVerifiedFilter}
                 >
-                  <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:ring-slate-600">
-                    <SelectValue className="text-white" />
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem
-                      value="ALL"
-                      className="text-white hover:bg-slate-700 focus:bg-slate-700"
-                    >
+                  <SelectContent>
+                    <SelectItem value="ALL">
                       All Verification
                     </SelectItem>
-                    <SelectItem
-                      value="VERIFIED"
-                      className="text-green-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-green-300"
-                    >
+                    <SelectItem value="VERIFIED">
                       Verified
                     </SelectItem>
-                    <SelectItem
-                      value="UNVERIFIED"
-                      className="text-yellow-300 hover:bg-slate-700 focus:bg-slate-700 focus:text-yellow-300"
-                    >
+                    <SelectItem value="UNVERIFIED">
                       Unverified
                     </SelectItem>
                   </SelectContent>
@@ -577,7 +559,7 @@ export default function TutorsPage() {
       </Card>
 
       {/* Tutors Table */}
-      <Card>
+      <Card className="shadow-md">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-8 text-center">
