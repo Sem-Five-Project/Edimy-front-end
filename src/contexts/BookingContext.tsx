@@ -111,7 +111,7 @@ interface BookingContextType {
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 export const BookingProvider: React.FC<{ children: ReactNode }> = ({
-  children,
+  children
 }) => {
   const router = useRouter();
 
@@ -306,7 +306,7 @@ const goBack = async (): Promise<void> => {
       break;
     }
   };
-
+}
   useEffect(() => {
     console.log("Locked slot IDs changed:", lockedSlotIds);
   }, [lockedSlotIds]);

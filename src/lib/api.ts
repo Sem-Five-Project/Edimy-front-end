@@ -1641,7 +1641,12 @@ updateBookingDetails: async (data: BookingUpdateData): Promise<{ success: boolea
     if (response?.data) {
       return response.data;
     }
-  },
+    throw new Error('Failed to update booking details');
+  } catch (error) {
+    console.error('Error updating booking details:', error);
+    throw error;
+  }
+},
   validateSlotAvailability: async (slotId: string): Promise<boolean> => {
     try {
       const response = await fetch(`/api/slots/${slotId}/validate`, {
@@ -1694,48 +1699,42 @@ updateBookingDetails: async (data: BookingUpdateData): Promise<{ success: boolea
   //   }
   // },
   // ...existing code...
-  reserveSlot: async (
+    reserveSlot: async (
     slotId: number,
-    options?: { recurring?: boolean | null; weekday?: number | null },
+    options?: { recurring?: boolean | null; weekday?: number | null }
   ): Promise<ApiResponse<{ reservationId: string; expiresAt: string }>> => {
     try {
       // Backend expects only a list of slot IDs
       const body = { slotIds: [slotId] };
-      const response = await api.post("/bookings/reserve", body);
-      console.log("Reserve slot response:", response);
+      const response = await api.post('/bookings/reserve', body);
+      console.log('Reserve slot response:', response);
 
       // Normalize to ApiResponse shape
       const payload = response?.data ?? response;
-      if (
-        payload &&
-        typeof payload === "object" &&
-        "reservationId" in payload
-      ) {
+      if (payload && typeof payload === 'object' && 'reservationId' in payload) {
         return {
           success: true,
           data: payload as { reservationId: string; expiresAt: string },
         };
       }
-      if (payload && typeof payload === "object" && "success" in payload) {
-        return payload as ApiResponse<{
-          reservationId: string;
-          expiresAt: string;
-        }>;
+      if (payload && typeof payload === 'object' && 'success' in payload) {
+        return payload as ApiResponse<{ reservationId: string; expiresAt: string }>;
       }
       return {
         success: false,
-        data: { reservationId: "", expiresAt: "" },
-        error: "Unexpected reserve response format",
+        data: { reservationId: '', expiresAt: '' },
+        error: 'Unexpected reserve response format',
       } as ApiResponse<{ reservationId: string; expiresAt: string }>;
     } catch (error) {
-      console.error("Reserve slot failed:", error);
+      console.error('Reserve slot failed:', error);
       return {
         success: false,
-        data: { reservationId: "", expiresAt: "" },
-        error: "Failed to reserve slot",
+        data: { reservationId: '', expiresAt: '' },
+        error: 'Failed to reserve slot',
       } as ApiResponse<{ reservationId: string; expiresAt: string }>;
     }
   },
+ 
   // ...existing code...
 
   // ...existing code...

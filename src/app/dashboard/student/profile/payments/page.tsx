@@ -11,7 +11,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 import {
   CreditCard,
   ArrowLeft,
@@ -31,17 +31,17 @@ import { studentAPI } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 
 interface Payment {
-  id: string;
-  amount: number;
-  tutorName: string;
-  subject: string;
-  status: "completed" | "pending" | "failed";
-  paymentTime: string;
-  method?: string;
-  orderId?: string;
+  id: string
+  amount: number
+  tutorName: string
+  subject: string
+  status: "completed" | "pending" | "failed"
+  paymentTime: string
+  method?: string
+  orderId?: string
 }
 
-type TimeFilter = "last_month" | "last_6_months" | "last_year" | "all_time";
+type TimeFilter = "last_month" | "last_6_months" | "last_year" | "all_time"
 
 export default function PaymentHistoryPage() {
   const { user } = useAuth()
@@ -103,7 +103,7 @@ export default function PaymentHistoryPage() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
-  });
+  })
 
   const isLoading = isPending
 
@@ -115,36 +115,36 @@ export default function PaymentHistoryPage() {
             <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
             Completed
           </Badge>
-        );
+        )
       case "pending":
         return (
           <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-300 font-medium">
             <Clock className="h-3.5 w-3.5 mr-1.5" />
             Pending
           </Badge>
-        );
+        )
       case "failed":
         return (
           <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-200 border-rose-300 font-medium">
             <XCircle className="h-3.5 w-3.5 mr-1.5" />
             Failed
           </Badge>
-        );
+        )
     }
-  };
+  }
 
   const getTimeFilterLabel = (filter: TimeFilter) => {
     switch (filter) {
       case "last_month":
-        return "Last Month";
+        return "Last Month"
       case "last_6_months":
-        return "Last 6 Months";
+        return "Last 6 Months"
       case "last_year":
-        return "Last Year";
+        return "Last Year"
       case "all_time":
-        return "All Time";
+        return "All Time"
     }
-  };
+  }
 
   const totalSpent = useMemo(() => {
     if (!payments) return 0
@@ -278,7 +278,6 @@ export default function PaymentHistoryPage() {
                             </div>
                           </div>
                         </div>
-                      </div>
 
                         {/* Center Section: Date & Time */}
                         <div className="xl:min-w-[200px] bg-slate-50 rounded-xl p-4 border border-slate-200">
@@ -315,14 +314,14 @@ export default function PaymentHistoryPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }

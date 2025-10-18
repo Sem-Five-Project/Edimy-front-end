@@ -393,34 +393,71 @@ export interface ValidatePayHereWindowRes {
   remainingSeconds: number;
 }
 
+// export interface SelectedSlotPattern {
+//   dayOfWeek: number; // 1-7 (Monday-Sunday)
+//   startTime: string; // HH:mm format
+//   endTime: string; // HH:mm format
+//   id?: string;
+//   times?: string[];
+//   generatedSlots?: OccurrenceSlot[];
+// }
 export interface SelectedSlotPattern {
+  id: string; // Unique identifier for the pattern
   dayOfWeek: number; // 1-7 (Monday-Sunday)
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
-  id?: string;
-  times?: string[];
-  generatedSlots?: OccurrenceSlot[];
+  times: string[]; // Array of time strings e.g., ['08:00', '14:00']
+  generatedSlots: RecurringSlot[];
 }
+
+export interface RecurringSlot {
+  id: string; // Unique identifier combining pattern info
+  dateTime: string; // Full ISO datetime
+  dayOfWeek: number; // 1-7 (Monday-Sunday)  
+  time: string; // e.g., '08:00'
+  isAvailable: boolean;
+  isLocked?: boolean;
+  patternId: string; // Reference to parent pattern
+}
+
+// export interface WeekBreakdown {
+//   weekStartDate: string; // YYYY-MM-DD
+//   date: string; // YYYY-MM-DD (alias for weekStartDate for backward compatibility)
+//   slots: SelectedSlotPattern[];
+//   total: number;
+//   totalSlots: number; // alias for total for backward compatibility
+// }
 
 export interface WeekBreakdown {
-  weekStartDate: string; // YYYY-MM-DD
-  date: string; // YYYY-MM-DD (alias for weekStartDate for backward compatibility)
-  slots: SelectedSlotPattern[];
-  total: number;
-  totalSlots: number; // alias for total for backward compatibility
+  weekStartDate: string;
+  slots: RecurringSlot[];
+  totalSlots: number;
 }
 
+// export interface MonthlyClassBooking {
+//   id: string;
+//   tutorId: string;
+//   subjectId: string;
+//   languageId: string;
+//   patterns: SelectedSlotPattern[];
+//   weekBreakdown: WeekBreakdown[];
+//   totalSlots: number;
+//   totalCost: number;
+//   status: "PENDING" | "CONFIRMED" | "FAILED" | "CANCELLED";
+//   createdAt?: string;
+//   startDate: string;
+//   endDate: string;
+// }
+
 export interface MonthlyClassBooking {
-  id: string;
-  tutorId: string;
-  subjectId: string;
-  languageId: string;
-  patterns: SelectedSlotPattern[];
-  weekBreakdown: WeekBreakdown[];
+  // id: string;
+  // tutorId: string;
+  // subjectId: string;
+  // languageId: string;
+  // patterns: SelectedSlotPattern[];
+  // weekBreakdown: WeekBreakdown[];
   totalSlots: number;
   totalCost: number;
-  status: "PENDING" | "CONFIRMED" | "FAILED" | "CANCELLED";
-  createdAt?: string;
+  //status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  //createdAt: string;
   startDate: string;
   endDate: string;
 }
