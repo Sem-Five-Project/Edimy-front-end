@@ -32,28 +32,131 @@ import {
 import { useBooking } from "@/contexts/BookingContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useRouter } from "next/navigation";
-import { bookingAPI, tutorAPI } from "@/lib/api";
+//import { bookingAPI, tutorAPI } from "@/lib/api";
+import { bookingAPI, tutorAPI } from "@/lib/api"; // This should be the correct path
 import { TimeSlot, CLASS_TYPES, BookingPreferences, MonthlyClassBooking, type SelectedSlotPattern, type RecurringSlot, type WeekBreakdown, type BookMonthlyClassReq } from "@/types";
-import { Checkbox } from "@radix-ui/react-checkbox";
+import next from 'next';
 
 export default function BookingSlotsPage() {
   const router = useRouter();
+  // const {
+  //   tutor,
+  //   selectedDate,
+  //   setSelectedDate,
+  //   proceedToStep,
+  //   setCurrentStep,
+  //   setReservationDetails,
+  //   setLockedSlotIds,
+  //   setBookingPreferences,
+  //   bookingPreferences,
+  //   currentStep,
+  //   setMonthlyBookingData,
+  //   setAvailabilitySlotsMap,
+  //   setNextMonthSlots,
+  // } = useBooking();
   const {
-    tutor,
-    selectedDate,
-    setSelectedDate,
-    proceedToStep,
-    setCurrentStep,
-    setReservationDetails,
-    setLockedSlotIds,
-    setBookingPreferences,
-    bookingPreferences,
-    currentStep,
-    setMonthlyBookingData,
-    setAvailabilitySlotsMap,
     setNextMonthSlots,
-    nextMonthSlots
+    // context state/setters we must populate so payment page doesn't redirect
+    setTutor: setTutorCtx,
+    setBookingPreferences: setBookingPreferencesCtx,
+    bookingPreferences: bookingPreferencesCtx,
+    setReservationDetails: setReservationDetailsCtx,
+    setRepayTimer:setRepayTimerCtx,
+    setLockedSlotIds: setLockedSlotIdsCtx,
+    setMonthlyBookingData: setMonthlyBookingDataCtx,
+    setAvailabilitySlotsMap: setAvailabilitySlotsMapCtx,
+    proceedToStep: proceedToStepCtx,
+    setCurrentStep: setCurrentStepCtx,
+    nextMonth: ctxNextMonth,
+    setNextMonth: setCtxNextMonth,
+    nextYear: ctxNextYear,
+    setNextYear: setCtxNextYear,
+    setPayForNextMonthFlow,
+
   } = useBooking();
+  
+  // Optional class meta passed from Classes page for immediate UI hydration
+  type PayNextClassMeta = {
+    classId: number | string
+    linkForMeeting?: string | null
+    tutorName?: string | null
+    subjectName?: string | null
+    languageName?: string | null
+    classType?: string | null
+    tutorId?: number
+    subjectId?: number
+    date?: string | null
+    startTime?: string | null
+    endTime?: string | null
+    hourlyRate?: number | 0
+    languageId?: number | null
+  };
+  const [classMeta, setClassMeta] = useState<PayNextClassMeta | null>(null);
+   // --- Dummy Data for Development ---
+  const [dummyBookingPrefs, setDummyBookingPrefs] = useState<BookingPreferences>({
+    selectedSubject: null,
+    selectedLanguage: null,
+    selectedClassType: { id: 2, name: 'Monthly', priceMultiplier: 1.0, description: 'Pay for next month.' },
+    finalPrice: 0,
+  });
+  // Removed dummy availability list; we'll derive from reserved class info
+
+  // Tutor state (was a constant before). Using state allows API to update it via setTutor.
+  const [tutor, setTutor] = useState<any>(null);
+
+  // Hydrate from sessionStorage meta early so we can render immediately
+  useEffect(() => {
+    // Hydrate from sessionStorage meta
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = window.sessionStorage.getItem('payNextClassMeta');
+        if (raw) {
+          const meta: PayNextClassMeta = JSON.parse(raw);
+          setClassMeta(meta);
+          // Initialize tutor stub and booking prefs for immediate UI
+          const tutorStub = {
+            id: meta.tutorId || undefined,
+            tutorProfileId: meta.tutorId || undefined,
+            firstName: meta.tutorName || 'Tutor',
+            lastName: '',
+            languages: meta.languageName ? [{ languageId: undefined, languageName: meta.languageName }] : [],
+            subjects: meta.subjectId || meta.subjectName ? [{ subjectId: meta.subjectId || 0, subjectName: meta.subjectName || '', hourlyRate: 0 }] : [],
+            hourlyRate: 0,
+          } as any;
+          setTutor(tutorStub);
+          setDummyBookingPrefs(prev => ({
+            ...prev,
+            selectedSubject: meta.subjectName ? { subjectId: meta.subjectId || 0, subjectName: meta.subjectName, hourlyRate: meta?.hourlyRate || 0} : prev.selectedSubject,
+            selectedLanguage: meta.languageName ? { languageId: 0, languageName: meta.languageName } : prev.selectedLanguage,
+            selectedClassType: { id: 2, name: 'Monthly', priceMultiplier: 1.0, description: 'Pay for next month.' },
+          }));
+          // Populate context to prevent payment page redirect later
+          setTutorCtx(tutorStub);
+          console.log("Tutor context set:", tutorStub);
+          console.log("meetaaaa :",meta);
+          // setBookingPreferencesCtx({
+          //   selectedSubject: meta.subjectName ? { subjectId: meta.subjectId || 0, subjectName: meta.subjectName, hourlyRate: meta?.hourlyRate || 0 } : null,
+          //   selectedLanguage: meta.languageName ? { languageId: meta.languageId || 0, languageName: meta.languageName } : null,
+          //   selectedClassType: { id: 2, name: 'Monthly', priceMultiplier: 1.0, description: 'Pay for next month.' },
+          //   finalPrice: 0,
+          // });
+        }
+      }
+    } catch {}
+  }, []);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const proceedToStep = (step: any) => console.log('Proceeding to step:', step);
+  const setCurrentStep = (step: any) => console.log('Setting current step:', step);
+  const setReservationDetails = (details: any) => console.log('Setting reservation details:', details);
+  const setLockedSlotIds = (ids: any) => console.log('Setting locked slot IDs:', ids);
+  const setBookingPreferences = setDummyBookingPrefs;
+  const bookingPreferences = dummyBookingPrefs;
+  const currentStep = 'payment';
+  const setMonthlyBookingData = (data: any) => console.log('Setting monthly booking data:', data);
+  const setAvailabilitySlotsMap = (map: any) => console.log('Setting availability map:', map);
+  //const setNextMonthSlots = (slots: any) => console.log('Setting next month slots:', slots);
+  // --- End of Dummy Data
+  //const tutor = 
 
   const { formatPrice, selectedCurrency } = useCurrency();
   const [availableSlots, setAvailableSlots] = useState<any[]>([]); // grouped: [{start_time,end_time,slots:[{slot_id,date,status}]}]
@@ -82,21 +185,276 @@ export default function BookingSlotsPage() {
   // Use bookingPreferences from context directly so selections persist across steps
   const preferences = bookingPreferences;
   // Auto-preselect single subject/language if only one and none selected yet
-  useEffect(() => {
-    if (!tutor) return;
-    const next: BookingPreferences = { ...bookingPreferences };
-    let changed = false;
-    if (!next.selectedSubject && tutor.subjects && tutor.subjects.length === 1) {
-      next.selectedSubject = tutor.subjects[0];
-      changed = true;
-    }
-    if (!next.selectedLanguage && tutor.languages && tutor.languages.length === 1) {
-      next.selectedLanguage = tutor.languages[0];
-      changed = true;
-    }
-    if (changed) setBookingPreferences(next);
-  }, [tutor]);
+
+
+  
  const [selectedWeekDays,setSelectedWeekDays] = useState<string[]>([]);
+
+  // Prefer class id from BookingContext, but allow deep-linking via query when needed
+  const { selectedClassId } = useBooking();
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const classIdFromQuery = searchParams.get('classId');
+  const classId = (selectedClassId != null) ? String(selectedClassId) : classIdFromQuery;
+  const [reservedSlotsLoading,setReservedSlotsLoading]=useState(false);
+  const [reservedClassInfo,setReservedClassInfo]=useState<any>();
+  type ReservedSlotDisplay = { day: string; time: string; dates: string[]; availabilityId?: number };
+  const [reservedSlots,setReservedSlots]=useState<ReservedSlotDisplay[]>([]);
+  const [totalReservedPrice,setTotalReservedPrice]=useState(0);
+  const { actorId, isStudent,effectiveStudentId } = useAuth();
+  // Payment status check state
+  const [paymentStatusLoading, setPaymentStatusLoading] = useState(false);
+  const [alreadyPaid, setAlreadyPaid] = useState(false);
+  const [paymentStatusError, setPaymentStatusError] = useState<string>('');
+
+  //const [reservedSlots,setReservedSlots] =useState([]);
+  const parseHourDiff = (start: string, end: string) => {
+  // start/end: "HH:MM:SS" or "HH:MM"
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  return (eh + em/60) - (sh + sm/60);
+};
+// Outside useEffect (top-level inside component)
+// Use context month/year so payment and repay payloads can access them
+const nextMonth = ctxNextMonth;
+const nextYear = ctxNextYear;
+//setTutorCtx(defaultTutor);
+useEffect(() => {
+  const fetchReservedSlots = async () => {
+    console.log("Fetching reserved slots...");
+    if (!classId || !effectiveStudentId) return;
+
+    setReservedSlotsLoading(true);
+    setError('');
+
+    try {
+      const response = await bookingAPI.getReservedSlotsForClass(
+        Number(effectiveStudentId),
+        Number(classId)
+      );
+
+      if (response.success && response.data) {
+        console.log("Reserved slots fetched successfully:", response.data);
+
+        let lockedSlotsMap = {};
+        const allSlotIds = response.data.all_slot_ids;
+         if (allSlotIds && Array.isArray(allSlotIds) && response.data.availability_details.length > 0) {
+              // Get the single availability ID from the first item in the details array
+              const availabilityId = response.data.availability_details[0].availability_id;
+              
+              // Create the required map: {"availability_id": [slot_ids]}
+              if (availabilityId) {
+                  lockedSlotsMap = { [availabilityId]: allSlotIds };
+              }
+          }
+          console.log("lockedSlotsMap :",lockedSlotsMap)
+
+    // Set the context with the newly created object map
+      setAvailabilitySlotsMapCtx(lockedSlotsMap); 
+    // --- END OF FIX ---
+    
+
+  setReservedClassInfo(response.data);
+        //setLockedSlotIdsCtx(response.data.locked_slot_ids || []);
+        
+
+        const slotsForDisplay: any[] = [];
+        let totalDuration = 0;
+        const allDates: string[] = [];
+
+        response.data.availability_details.forEach((detail: any) => {
+          const slotDuration = parseHourDiff(detail.start_time, detail.end_time);
+          totalDuration += slotDuration * detail.available_dates.length;
+
+          // collect all available dates
+          if (Array.isArray(detail.available_dates)) {
+            allDates.push(...detail.available_dates);
+          }
+
+          slotsForDisplay.push({
+            day: detail.week_day,
+            time: `${new Date(`1970-01-01T${detail.start_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(`1970-01-01T${detail.end_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+            dates: Array.isArray(detail.available_dates) ? detail.available_dates : [],
+            availabilityId: Number(detail.availability_id ?? detail.availabilityId ?? 0),
+          });
+        });
+
+        // 🧠 Determine next month & next year from latest available date
+        if (allDates.length > 0) {
+          const latestDate = new Date(
+            Math.max(...allDates.map((d) => new Date(d).getTime()))
+          );
+          const month = latestDate.getMonth() + 1; // 1-based
+          const year = latestDate.getFullYear();
+
+          if (month === 12) {
+            setCtxNextMonth(1);
+            setCtxNextYear(year + 1);
+          } else {
+            setCtxNextMonth(month + 1);
+            setCtxNextYear(year);
+          
+          }
+        }
+
+        const totalPrice = totalDuration * response.data.hourly_rate;
+
+        // Set tutor and prefs from reserved data if available
+        if (response.data?.tutor_details) {
+          setTutor(response.data.tutor_details);
+          setTutorCtx(response.data.tutor_details);
+        }
+        setDummyBookingPrefs(prev => ({
+          ...prev,
+          selectedSubject: response.data?.subject_details || prev.selectedSubject,
+          selectedLanguage: response.data?.language_details || prev.selectedLanguage,
+          selectedClassType: CLASS_TYPES.find(ct => ct.id === 2) ?? prev.selectedClassType,
+          finalPrice: totalPrice,
+        }));
+        // setDummyBookingPrefs({
+        //   ...(bookingPreferencesCtx ?? {}),
+        //   finalPrice: totalPrice,
+        // });
+
+
+        // setBookingPreferencesCtx({
+        //   ...(bookingPreferencesCtx ?? {}),
+        //   finalPrice: totalPrice,
+        // });
+
+        // show calendar with slight delay
+        setTimeout(() => {
+          setReservedSlots(slotsForDisplay);
+          setTotalReservedPrice(totalPrice);
+        }, 500);
+
+      } else {
+        setError(response.error || "Could not fetch reserved class details.");
+      }
+    } catch (e: any) {
+      setError(e.message || "An error occurred while fetching class details.");
+    } finally {
+      setReservedSlotsLoading(false);
+    }
+  };
+
+  fetchReservedSlots();
+}, [classId, effectiveStudentId]);
+
+// Check payment status when entering repay flow
+// Compute next month and year based on current date
+const now = new Date();
+let computedNextMonth = now.getMonth() + 2; // JS months are 0-indexed
+let computedNextYear = now.getFullYear();
+if (computedNextMonth > 12) {
+  computedNextMonth = 1;
+  computedNextYear += 1;
+}
+
+useEffect(()=>{
+  console.log("00000000000000000000 :",reservedClassInfo)
+},[reservedClassInfo])
+// Then in your effect:
+useEffect(() => {
+  console.log(
+    "Checking payment status for classId:", 
+    classId, 
+    "month:", 12, 
+    "year:", computedNextYear, 
+    "effectiveStudentId:", effectiveStudentId
+  );
+
+  const checkPaymentStatus = async () => {
+    if (!classId || !effectiveStudentId) return;
+
+    setPaymentStatusLoading(true);
+    setPaymentStatusError('');
+
+    try {
+      const response = await bookingAPI.checkPaymentStatus({
+        studentId: Number(effectiveStudentId),
+        classId: Number(classId),
+        month: computedNextMonth,
+        year: computedNextYear,
+      });
+      console.log("Payment status response:", response);
+
+      if (response.success) {
+        setAlreadyPaid(response.data.isPaid);
+        if (response.data.isPaid) {
+          console.log('Payment already made for this class/month/year');
+        }
+      } else {
+        setPaymentStatusError(response.error || 'Failed to check payment status');
+      }
+    } catch (e: any) {
+      setPaymentStatusError(e.message || 'Error checking payment status');
+    } finally {
+      setPaymentStatusLoading(false);
+    }
+  };
+
+  if (classId) {
+    checkPaymentStatus();
+  }
+}, [classId, effectiveStudentId]); // dependencies
+
+
+  // useEffect(() => {
+  //   const fetchReservedSlots = async () => {
+  //     console.log("Fetching reserved slots...");
+  //     if (!classId || !effectiveStudentId) return;
+
+  //     setReservedSlotsLoading(true);
+  //     setError('');
+  //     try {
+  //       const response = await bookingAPI.getReservedSlotsForClass(Number(effectiveStudentId), Number(classId));
+  //       if (response.success && response.data) {          
+  //         setReservedClassInfo(response.data);
+
+  //         const slotsForDisplay: any[] = [];
+  //         let totalDuration = 0;
+
+  //         response.data.availability_details.forEach((detail: any) => {
+  //           const slotDuration = parseHourDiff(detail.start_time,detail.end_time);
+  //           totalDuration += slotDuration * detail.available_dates.length;
+
+  //           slotsForDisplay.push({
+  //             day: detail.week_day,
+  //             time: `${new Date(`1970-01-01T${detail.start_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(`1970-01-01T${detail.end_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+  //             dates: Array.isArray(detail.available_dates) ? detail.available_dates : [],
+  //             availabilityId: Number(detail.availability_id ?? detail.availabilityId ?? 0),
+  //           });
+  //         });
+
+  //         // Introduce a small splash to show calendar ~0.5s before reserved data renders
+  //         const totalPrice = totalDuration * response.data.hourly_rate;
+  //         setTimeout(() => {
+  //           setReservedSlots(slotsForDisplay);
+  //           setTotalReservedPrice(totalPrice);
+  //         }, 500);
+
+  //         // Set context for payment
+  //         // setTutor(response.data.tutor_details);
+  //         // setBookingPreferences({
+  //         //   ...bookingPreferences,
+  //         //   selectedSubject: response.data.subject_details,
+  //         //   selectedLanguage: response.data.language_details,
+  //         //   selectedClassType: CLASS_TYPES.find(ct => ct.id === 2) ?? null, // Assuming monthly
+  //         //   finalPrice: totalPrice,
+  //         // });
+
+  //       } else {
+  //         setError(response.error || "Could not fetch reserved class details.");
+  //       }
+  //     } catch (e: any) {
+  //       setError(e.message || "An error occurred while fetching class details.");
+  //     } finally {
+  //       setReservedSlotsLoading(false);
+  //     }
+  //   };
+
+  //   fetchReservedSlots();
+  // }, [classId, effectiveStudentId]);
 
   // ADD this new state to mirror selected slot IDs for monthly
   const [monthlySelectedSlotIds, setMonthlySelectedSlotIds] = useState<number[]>([]);
@@ -164,7 +522,7 @@ const dateToYMD = (d: Date) =>
       console.log("Loaded slots data:", data);
   if (Array.isArray(data) && data.length > 0 && Object.prototype.hasOwnProperty.call(data[0], 'slots')) {
         // Grouped (monthly style) structure
-        const grouped = data.map((g: any) => ({
+        const groupedRaw = data.map((g: any) => ({
             start_time: g.start_time || g.startTime,
             end_time: g.end_time || g.endTime,
             availability_id : g.availability_id,
@@ -174,6 +532,17 @@ const dateToYMD = (d: Date) =>
               status: s.status || 'AVAILABLE'
             }))
         }));
+        // Filter to the selected weekday so users see only that day's occurrences
+        const targetWeekday = refDate.getDay(); // 0-6 (Sun-Sat)
+        const grouped = groupedRaw
+          .map((g: any) => ({
+            ...g,
+            slots: (g.slots || []).filter((s: any) => {
+              const d = new Date((s.date || '') + 'T00:00:00');
+              return !isNaN(d.getTime()) && d.getDay() === targetWeekday;
+            })
+          }))
+          .filter((g: any) => (g.slots || []).length > 0);
         setAvailableSlots(grouped);
       } else {
         setAvailableSlots(Array.isArray(data) ? data : []);
@@ -192,7 +561,6 @@ const dateToYMD = (d: Date) =>
       }, 0);
     }
   };
-  const { actorId, isStudent } = useAuth();
 
   // Existing class detection state
   const [existingClassLoading, setExistingClassLoading] = useState(false);
@@ -205,55 +573,91 @@ const dateToYMD = (d: Date) =>
     return ctId === 2 ? 'RECURRING' : 'ONE_TIME';
   };
 
-  // Effect: When all three selections are chosen, auto-check existing class
-  useEffect(() => {
-    const langId = preferences.selectedLanguage?.languageId;
-    const subjId = preferences.selectedSubject?.subjectId;
-    const ctId = preferences.selectedClassType?.id;
-    const ctBackend = classTypeToBackend(ctId);
-    console.log("Checking existing class for:", langId, subjId, ctBackend);
+ const handleRescheduleToggle = () => {
+    setOverrideExistingClass(!overrideExistingClass);
+  };
 
-    if (!tutor || !isStudent || !actorId || !langId || !subjId || !ctBackend) {
-      // Reset when incomplete or not student
-      setExistingClassData(null);
-      setExistingClassError('');
-      setOverrideExistingClass(false);
-      return;
-    }
+  // //   if (!tutor || !isStudent || !actorId || !langId || !subjId || !ctBackend) {
+  // //     // Reset when incomplete or not student
+  // //     setExistingClassData(null);
+  // //     setExistingClassError('');
+  // //     setOverrideExistingClass(false);
+  // //     return;
+  // //   }
+  //   if (!tutor || !isStudent || !actorId || !langId || !subjId || !ctBackend) {
+  //     // Reset when incomplete or not student
+  //     setExistingClassData(null);
+  //     setExistingClassError('');
+  //     setOverrideExistingClass(false);
+  //     return;
+  //   }
+  const isRescheduling = overrideExistingClass;
 
-    let cancelled = false;
-    (async () => {
-      try {
-        setExistingClassLoading(true);
-        setExistingClassError('');
-        setOverrideExistingClass(false);
-        const res = await bookingAPI.checkClassExist({
-          tutorId: tutor.id,
-          languageId: langId,
-          subjectId: subjId,
-          studentId: actorId,
-          classType: ctBackend,
-        });
-        console.log("Existing class check result:", res);
-        if (cancelled) return;
-        if (res.success) {
-          setExistingClassData(res.data);
-        } else {
-          setExistingClassData(null);
-          setExistingClassError(res.error || 'Failed to check class');
-        }
-      } catch (e: any) {
-        if (!cancelled) {
-          setExistingClassData(null);
-          setExistingClassError(e?.message || 'Failed to check class');
-        }
-      } finally {
-        if (!cancelled) setExistingClassLoading(false);
-      }
-    })();
+  // //   let cancelled = false;
+  // //   (async () => {
+  // //     try {
+  // //       setExistingClassLoading(true);
+  // //       setExistingClassError('');
+  // //       setOverrideExistingClass(false);
+  // //       const res = await bookingAPI.checkClassExist({
+  // //         tutorId: tutor.id,
+  // //         languageId: langId,
+  // //         subjectId: subjId,
+  // //         studentId: actorId,
+  // //         classType: ctBackend,
+  // //       });
+  // //       console.log("Existing class check result:", res);
+  // //       if (cancelled) return;
+  // //       if (res.success) {
+  // //         setExistingClassData(res.data);
+  // //       } else {
+  // //         setExistingClassData(null);
+  // //         setExistingClassError(res.error || 'Failed to check class');
+  // //       }
+  // //     } catch (e: any) {
+  // //       if (!cancelled) {
+  // //         setExistingClassData(null);
+  // //         setExistingClassError(e?.message || 'Failed to check class');
+  // //       }
+  // //     } finally {
+  // //       if (!cancelled) setExistingClassLoading(false);
+  // //     }
+  // //   })();
+  //   let cancelled = false;
+  //   (async () => {
+  //     try {
+  //       // setExistingClassLoading(true);
+  //       // setExistingClassError('');
+  //       // setOverrideExistingClass(false);
+  //       // const res = await bookingAPI.checkClassExist({
+  //       //   tutorId: tutor.id,
+  //       //   languageId: langId,
+  //       //   subjectId: subjId,
+  //       //   studentId: actorId,
+  //       //   classType: ctBackend,
+  //       // });
+  //       // console.log("Existing class check result:", res);
+  //       // if (cancelled) return;
+  //       // if (res.success) {
+  //       //   setExistingClassData(res.data);
+  //       // } else {
+  //       //   setExistingClassData(null);
+  //       //   setExistingClassError(res.error || 'Failed to check class');
+  //       // }
+  //     } catch (e: any) {
+  //       if (!cancelled) {
+  //         setExistingClassData(null);
+  //         setExistingClassError(e?.message || 'Failed to check class');
+  //       }
+  //     } finally {
+  //       if (!cancelled) setExistingClassLoading(false);
+  //     }
+  //   })();
 
-    return () => { cancelled = true; };
-  }, [tutor, isStudent, actorId, preferences.selectedLanguage?.languageId, preferences.selectedSubject?.subjectId, preferences.selectedClassType?.id]);
+  // //   return () => { cancelled = true; };
+  // // }, [tutor, isStudent, actorId, preferences.selectedLanguage?.languageId, preferences.selectedSubject?.subjectId, preferences.selectedClassType?.id]);
+  //   return () => { cancelled = true; };
+  // }, [tutor, isStudent, actorId, preferences.selectedLanguage?.languageId, preferences.selectedSubject?.subjectId, preferences.selectedClassType?.id]);
 
   // Helper to format weekday/time summary
   const formatExistingSlotsSummary = (slots?: { weekday: string; start_time: string; end_time: string }[]) => {
@@ -275,6 +679,7 @@ const dateToYMD = (d: Date) =>
   useEffect(() => {
     loadSlots();
     console.log("availabilitu slots :",availableSlots)
+    console.log("availability slots :",availableSlots)
   }, [tutor?.tutorProfileId, selectedDate, preferences.selectedClassType?.id]);
 
   const calculateSlotHours = (slot: TimeSlot | null) => {
@@ -456,7 +861,7 @@ const results = await Promise.all(
 
     return { all: occurrences.sort((a,b) => a.dateTime.localeCompare(b.dateTime)), weeks };
   };
-  const isMonthlyClassType = preferences.selectedClassType?.id === 2;
+  const isMonthlyClassType = dummyBookingPrefs.selectedClassType?.id ===2;
 
 // Line 391: Update payload for monthly booking data
   const recomputeMonthlyTotals = (occurrences: RecurringSlot[]) => {
@@ -496,12 +901,12 @@ const results = await Promise.all(
     const thresholdMoment = new Date(slotStart.getTime() - thresholdHours * 3600 * 1000);
     return now >= thresholdMoment;
   };
-const parseHourDiff = (start: string, end: string) => {
-  // start/end: "HH:MM:SS" or "HH:MM"
-  const [sh, sm] = start.split(':').map(Number);
-  const [eh, em] = end.split(':').map(Number);
-  return (eh + em/60) - (sh + sm/60);
-};
+// const parseHourDiff = (start: string, end: string) => {
+//   // start/end: "HH:MM:SS" or "HH:MM"
+//   const [sh, sm] = start.split(':').map(Number);
+//   const [eh, em] = end.split(':').map(Number);
+//   return (eh + em/60) - (sh + sm/60);
+// };
 
 // --- 4. ADD derived memo values (after selectedMonthlyOccurrences memo)
 const monthlyHours = React.useMemo(() => {
@@ -583,78 +988,77 @@ const formatMonthDay = (d: string) => {
   return `${parseInt(M,10)}-${parseInt(D,10)}`;
 };
 const fetchNextMonthPreview = async () => {
-  if (!tutor || currentPatterns.length === 0) return;
-  setNextMonthError('');
+  console.log("heeeee");
+  if (!tutor) return;
+  console.log("heeeee2");
+  setNextMonthError("");
   setNextMonthPatternsLoading(true);
+
+  // Build availabilityId list primarily from reserved class info (repay flow)
   let availabilityIdList: number[] = [];
-  try {
-    // Collect unique availability ids from selected occurrences
+  if (reservedClassInfo?.availability_details && Array.isArray(reservedClassInfo.availability_details)) {
+    availabilityIdList = Array.from(new Set(
+      reservedClassInfo.availability_details
+        .map((d: any) => Number(d.availability_id ?? d.availabilityId))
+        .filter((n: number) => !isNaN(n) && n > 0)
+    ));
+  }
+  // Fallback: collect from user's monthly selections
+  if (availabilityIdList.length === 0) {
     for (const occ of selectedMonthlyOccurrences) {
       if (occ.availabilityId && !availabilityIdList.includes(occ.availabilityId)) {
         availabilityIdList.push(occ.availabilityId);
       }
     }
+  }
+
+  try {
+    console.log("availability list :",availabilityIdList)
+    // Ensure unique
+    availabilityIdList = Array.from(new Set(availabilityIdList));
+
     if (availabilityIdList.length === 0) {
       setNextMonthPatternsLoading(false);
       return;
     }
 
-    // Determine next month/year based on first selected slot date or today
+    // Get next month/year
+    console.log("selectedMonthlyOccurrences :",selectedMonthlyOccurrences)
     const baseDateStr = selectedMonthlyOccurrences[0]?.date || dateToYMD(new Date());
-    const base = new Date(baseDateStr + 'T00:00:00');
-    // Using current date as of October 16, 2025. Next month is November.
-    let nextMonth = base.getMonth() + 2; // e.g., Oct(9) + 2 = 11 (Nov)
-    let nextYear = base.getFullYear();
-    if (nextMonth === 13) { nextMonth = 1; nextYear += 1; }
-
-    // Call new API
-    const resp = await tutorAPI.getNextMonthSlots(availabilityIdList, nextMonth, nextYear);
+    const base = new Date(baseDateStr + "T00:00:00");
+    console.log("base :",base,"basedateStr :",baseDateStr)
+    
+   
+  console.log("Fetching next month slots for availability IDs:", availabilityIdList, "for", nextYear, nextMonth);
+  const resp = await tutorAPI.getNextMonthSlots(availabilityIdList, computedNextMonth, computedNextYear);
     console.log("Next month slots response:", resp);
+
     if (!resp.success) {
-      throw new Error(resp.error || 'Failed fetching next month slots');
+      throw new Error(resp.error || "Failed fetching next month slots");
     }
 
-    const data = resp.data;
-    console.log("Raw next-month API data:", data);
-
+  const data = resp.data;
+    console.log("Raw next-month API data:", data[0].all_slot_ids);
+  // Save flat list of next-month slot IDs to context (used in payment payload)
+  setNextMonthSlots( data[0].all_slot_ids || []);
+    // 🧠 Adjusted normalization logic for new structure
     let slotRecords: any[] = [];
 
-    // --- FIX START: This entire parsing block is now more robust ---
     if (Array.isArray(data)) {
-      // First, check if the data is in the nested format like [{ get_next_month_slots: [...] }]
-      const nestedSlots = data[0]?.get_next_month_slots;
-      // const nestedSlots = data[0]?.get_next_month_slots;
-
-      const all_slot_ids = data[0]?.all_slot_ids;
-      setNextMonthSlots(all_slot_ids || []);
-
-      console.log("Nested slots check:", nestedSlots);
-      console.log("All slot IDs check:", all_slot_ids);
-
-      if (Array.isArray(nestedSlots)) {
-        slotRecords = nestedSlots;
-      } else {
-        // Otherwise, filter the array to get only the valid slot records,
-        // ignoring other objects like `all_slot_ids`.
-        slotRecords = data.filter(
-          (item: any) => item && (item.week_day || item.weekDay) && (item.start_time || item.startTime)
-        );
-      }
-    } else if (data && typeof data === "object") {
-      // Handle cases where the response is an object wrapper
-      if (Array.isArray((data as any).get_next_month_slots)) {
-        slotRecords = (data as any).get_next_month_slots;
-      } else if (Array.isArray((data as any).data?.get_next_month_slots)) {
-        slotRecords = (data as any).data.get_next_month_slots;
+      // Separate objects that have slot info vs all_slot_ids
+      const availabilityItems = data.filter(
+        (d) => d.availability_id && d.week_day
+      );
+      if (availabilityItems.length > 0) {
+        slotRecords = availabilityItems;
+      } else if (data.length > 0 && Array.isArray(data[0].get_next_month_slots)) {
+        slotRecords = data[0].get_next_month_slots;
       }
     }
-    // --- FIX END ---
 
-    if (!Array.isArray(slotRecords)) slotRecords = [];
+    console.log("Normalized slotRecords:", slotRecords);
 
-    console.log("Normalized next-month slot records:", slotRecords);
-
-    const preview: typeof nextMonthPreview = slotRecords
+    const preview = slotRecords
       .map((r: any) => {
         const weekDayRaw = r.week_day || r.weekDay;
         const startRaw = r.start_time || r.startTime;
@@ -663,7 +1067,6 @@ const fetchNextMonthPreview = async () => {
 
         if (!weekDayRaw || !startRaw || !endRaw) {
           console.warn("Skipping malformed record:", r);
-
           return null;
         }
 
@@ -684,55 +1087,176 @@ const fetchNextMonthPreview = async () => {
           dateList: dates
         };
       })
-      .filter(Boolean) as any[];
+      .filter(Boolean);
 
     console.log("Next month preview parsed:", preview);
 
-    if (preview.length === 0 && slotRecords.length > 0) {
-        // This case indicates a parsing error *after* normalization
-        console.error("Data was normalized but resulted in an empty preview. Check mapping logic.");
-        setNextMonthError("Could not parse the availability data for next month.");
-    } else if (preview.length === 0) {
+    if (preview[0]?.dateList.length === 0) {
       setNextMonthError("No next month availability returned for selected patterns.");
     }
 
-    setNextMonthPreview(preview);
+    setNextMonthPreview(preview.filter(Boolean) as Array<{
+      weekday: number;
+      dayName: string;
+      start: string;
+      end: string;
+      totalDates: number;
+      availableDates: number;
+      dateList: string[];
+    }>);
   } catch (e: any) {
-    setNextMonthError(e?.message || 'Failed to prepare next month preview');
+    console.error("Error fetching next month preview:", e);
+    setNextMonthError(e?.message || "Failed to prepare next month preview");
     setNextMonthPreview([]);
   } finally {
     setNextMonthPatternsLoading(false);
   }
 };
 
-useEffect(() => {
-  console.log("Next month slots updated:", nextMonthSlots);
-},[nextMonthSlots])
+//   const fetchNextMonthPreview = async () => {
+//     console.log("heeeee")
+//   if (!defaultTutor) return;
+//   setNextMonthError('');
+//   setNextMonthPatternsLoading(true);
+
+//   let availabilityIdList: number[] = [];
+//     if(!overrideExistingClass){
+//     availabilityIdList = dummyAvailabilityIdList;
+//   }
+//   try {
+//     // Collect unique availability ids from selected occurrences
+//     for (const occ of selectedMonthlyOccurrences) {
+//       if (occ.availabilityId && !availabilityIdList.includes(occ.availabilityId)) {
+//         availabilityIdList.push(occ.availabilityId);
+//       }
+//     }
+//     if (availabilityIdList.length === 0) {
+//       setNextMonthPatternsLoading(false);
+//       return;
+//     }
+
+//     // Determine next month/year based on first selected slot date or today
+//     const baseDateStr = selectedMonthlyOccurrences[0]?.date || dateToYMD(new Date());
+//     const base = new Date(baseDateStr + 'T00:00:00');
+//     let nextMonth = base.getMonth() + 2; // JS month + 1 then next month => +2
+//     let nextYear = base.getFullYear();
+//     if (nextMonth === 13) { nextMonth = 1; nextYear += 1; }
+
+//     // Call new API
+//     console.log("Fetching next month slots for availability IDs:", availabilityIdList, "for", nextYear, nextMonth);
+//     const resp = await tutorAPI.getNextMonthSlots(availabilityIdList, nextMonth, nextYear);
+//     console.log("Next month slots response:", resp);
+//     if (!resp.success) {
+//       throw new Error(resp.error || 'Failed fetching next month slots');
+//     }
+
+//     // Response shape example:
+//     // [{ get_next_month_slots: [ { end_time,start_time,week_day,availability_id,available_dates:[...] }, ... ] }]
+//     const data = resp.data;
+//     console.log("Raw next-month API data:", data);
+
+//     let slotRecords: any[] = [];
+
+//     if (Array.isArray(data)) {
+//       // Case A: [{ get_next_month_slots: [...] }]
+//       if (data[0]?.get_next_month_slots && Array.isArray(data[0].get_next_month_slots)) {
+//         slotRecords = data[0].get_next_month_slots;
+//       }
+//       // Case B: direct array of slot objects
+//       else if (data.length && (data[0].week_day || data[0].weekDay)) {
+//         slotRecords = data;
+//       }
+//       // Case C: wrapper objects inside array
+//       else {
+//         const found = data.find(
+//           (o: any) => o && Array.isArray(o.get_next_month_slots)
+//         );
+//         if (found) slotRecords = found.get_next_month_slots;
+//       }
+//     } else if (data && typeof data === "object") {
+//       // Case D: { get_next_month_slots: [...] }
+//       if (Array.isArray((data as any).get_next_month_slots)) {
+//         slotRecords = (data as any).get_next_month_slots;
+//       }
+//       // Case E: { data: { get_next_month_slots: [...] } }
+//       else if (Array.isArray((data as any).data?.get_next_month_slots)) {
+//         slotRecords = (data as any).data.get_next_month_slots;
+//       }
+//     }
+
+//     if (!Array.isArray(slotRecords)) slotRecords = [];
+
+//     console.log("Normalized next-month slot records:", slotRecords);
+
+//     const preview: typeof nextMonthPreview = slotRecords
+//       .map((r: any) => {
+//         const weekDayRaw = r.week_day || r.weekDay;
+//         const startRaw = r.start_time || r.startTime;
+//         const endRaw = r.end_time || r.endTime;
+//         const availId = r.availability_id || r.availabilityId;
+
+//         if (!weekDayRaw || !startRaw || !endRaw) {
+//           console.warn("Skipping malformed record:", r);
+//           return null;
+//         }
+
+//         const weekdayIdx = weekDayNameToIndex(String(weekDayRaw));
+//         const dates: string[] = Array.isArray(r.available_dates)
+//           ? r.available_dates
+//           : Array.isArray(r.availableDates)
+//           ? r.availableDates
+//           : [];
+
+//         return {
+//           weekday: weekdayIdx,
+//           dayName: dayShort(weekdayIdx),
+//             start: startRaw,
+//           end: endRaw,
+//           totalDates: dates.length,
+//           availableDates: dates.length,
+//           dateList: dates
+//         };
+//       })
+//       .filter(Boolean) as any[];
+
+//     console.log("Next month preview parsed:", preview);
+
+//     if (preview.length === 0) {
+//       setNextMonthError("No next month availability returned for selected patterns.");
+//     }
+
+//     setNextMonthPreview(preview);
+//     //setNextMonthPreview(preview);
+//   } catch (e: any) {
+//     setNextMonthError(e?.message || 'Failed to prepare next month preview');
+//     setNextMonthPreview([]);
+//   } finally {
+//     setNextMonthPatternsLoading(false);
+//   }
+// };
+
 
   // Trigger fetch when user toggles lock next month ON
   useEffect(() => {
-    if (lockNextMonth && isMonthlyClassType && selectedMonthlyOccurrences.length > 0) {
+    // Auto-fetch next month preview for repay flow when reserved class info is present
+    const shouldFetchForRepay = !!reservedClassInfo && Array.isArray(reservedClassInfo.availability_details) && reservedClassInfo.availability_details.length > 0;
+    if ((lockNextMonth && isMonthlyClassType && selectedMonthlyOccurrences.length > 0) || shouldFetchForRepay) {
       fetchNextMonthPreview();
     } else {
       setNextMonthPreview([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lockNextMonth, JSON.stringify(currentPatterns), isMonthlyClassType, selectedMonthlyOccurrences.length]);
+  }, [lockNextMonth, JSON.stringify(currentPatterns), isMonthlyClassType, selectedMonthlyOccurrences.length, JSON.stringify(reservedClassInfo?.availability_details || [])]);
 
   // UPDATE: Validation for monthly
   const isValid = () => {
-    if (!tutor) return false;
-    
-    if (preferences.selectedClassType?.id === 2) {
-      return selectedMonthlyOccurrences.length > 0 && 
-             preferences.selectedSubject && 
-             (tutor.languages.length <= 1 || preferences.selectedLanguage);
+  if (!tutor) return false;
+    // Monthly route: show proceed when at least one occurrence is selected
+    if (isMonthlyClassType) {
+      return selectedMonthlyOccurrences.length > 0;
     }
-    
-    return selectedSlotLocal && 
-           preferences.selectedSubject && 
-           preferences.selectedClassType &&
-           (tutor.languages.length <= 1 || preferences.selectedLanguage);
+    // One-time (kept for completeness if used elsewhere)
+    return !!selectedSlotLocal;
   };
 
 
@@ -827,6 +1351,31 @@ useEffect(() => {
       setError('');
     }
   };
+  // useEffect(() => {
+  //   if (isMonthlyClassType) {
+  //     setMonthlySelectedSlotIds(selectedOccurrenceIds);
+  //   }
+  // }, [isMonthlyClassType, selectedOccurrenceIds]);
+  // // When patterns change, regenerate occurrences and totals
+  // useEffect(() => {
+  //   (async () => {
+  // if (isMonthlyClassType && selectedPatterns.length > 0) {
+  //   const { all, weeks } = await generateOccurrences(selectedPatterns);
+  //   setGeneratedSlots(all);
+  //   setWeekBreakdown(weeks);
+  //   // Reset exclusions if patterns changed fundamentally (optional: keep if same ids)
+  //   // setExcludedOccurrenceIds([]);
+  //   const filtered = all.filter(o => !excludedOccurrenceIds.includes(o.id) && o.isAvailable);
+  //   //setMonthlyTotal(recomputeMonthlyTotals(filtered));
+  //     } else {
+  //       setGeneratedSlots([]);
+  //       setWeekBreakdown([]);
+  //       //setMonthlyTotal(0);
+  //   setExcludedOccurrenceIds([]);
+  //     }
+  //   })();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [JSON.stringify(selectedPatterns), preferences.selectedSubject, preferences.selectedClassType, tutor, JSON.stringify(excludedOccurrenceIds)]);
   useEffect(() => {
     if (isMonthlyClassType) {
       setMonthlySelectedSlotIds(selectedOccurrenceIds);
@@ -867,6 +1416,93 @@ const handleContinue = async () => {
   setIsLoading(true);
 
   try {
+    // Repay flow: if classId is present, proceed without requiring manual monthly selection
+    if (classId) {
+      // Ensure nextMonthSlots are prepared
+      if (!nextMonthPreview.length) {
+        try { await fetchNextMonthPreview(); } catch {}
+      }
+      // Populate context for payment page
+      if (reservedClassInfo?.tutor_details) {
+        setTutorCtx(reservedClassInfo.tutor_details);
+      } else if (tutor) {
+        setTutorCtx(tutor);
+      }
+      setBookingPreferencesCtx({
+        selectedSubject: reservedClassInfo?.subject_details || preferences.selectedSubject || null,
+        selectedLanguage: reservedClassInfo?.language_details || preferences.selectedLanguage || null,
+        selectedClassType: CLASS_TYPES.find(ct => ct.id === 2) ?? null,
+        finalPrice: isMonthlyClassType
+                ? monthlyTotal
+                : calculatePrice(),
+      });
+      // Not locking current slots; payment will carry nextMonthSlots via context
+      const now = new Date();
+      const validOccurrences = selectedMonthlyOccurrences.filter(o => {
+        const slotStart = new Date(`${o.date}T${o.start}`);
+        const threshold = new Date(slotStart.getTime() - 2 * 3600 * 1000);
+        return !(now.toDateString() === slotStart.toDateString() && now >= threshold);
+      });
+
+      if (validOccurrences.length !== selectedMonthlyOccurrences.length) {
+        // prune removed
+        setSelectedMonthlyById(prev => {
+          const updated = { ...prev };
+          Object.values(prev).forEach(v => {
+            const slotStart = new Date(`${v.date}T${v.start}`);
+            const threshold = new Date(slotStart.getTime() - 2 * 3600 * 1000);
+            if (now.toDateString() === slotStart.toDateString() && now >= threshold) {
+              delete (updated as any)[v.slotId];
+            }
+          });
+          return updated;
+        });
+        setSelectedOccurrenceIds(validOccurrences.map(v => v.slotId));
+        setError("Some slots were inside 2h start window and were removed. Review then retry.");
+        setIsLoading(false);
+        return;
+      }
+
+      const slotIds = validOccurrences
+        .filter(o => o.status === "AVAILABLE")
+        .map(o => o.slotId);
+
+      if (slotIds.length === 0) {
+        setError("Select at least one available slot.");
+        setIsLoading(false);
+        return;
+      }
+      console.log("slot ids :",slotIds)
+      setLockedSlotIdsCtx(slotIds);
+      const response = await bookingAPI.reserveSlots(slotIds);
+      console.log("response :",response)
+      if (!response.success) {
+        setError(response.error || "Failed to reserve selected slots.");
+        setIsLoading(false);
+        return;
+      }
+      // setDummyBookingPrefs(prev => ({
+      //   ...prev,
+      //   finalPrice:bookingPreferences.finalPrice || 100,
+      // }));
+      //setAvailabilitySlotsMapCtx(undefined as any);
+      const groupedAvail: Record<string, number[]> = {};
+      validOccurrences.forEach(v => {
+        const rec = (selectedMonthlyById as any)[v.slotId];
+        const key = rec?.availabilityId != null ? String(rec.availabilityId) : 'default';
+        if (!groupedAvail[key]) groupedAvail[key] = [];
+        groupedAvail[key].push(v.slotId);
+      });
+      console.log("groupedAvail :",groupedAvail)
+       setAvailabilitySlotsMapCtx(groupedAvail);
+      const expireAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      setRepayTimerCtx({ expiresAt: expireAt, timer: 900 });
+      proceedToStepCtx("payment");
+      setCurrentStepCtx('payment');
+      router.push("/dashboard/student/pay-for-next-month/payment");
+      setIsLoading(false);
+      return;
+    }
     // ======================= MONTHLY FLOW =======================
     if (isMonthlyClassType) {
       if (selectedMonthlyOccurrences.length === 0) {
@@ -928,8 +1564,7 @@ const handleContinue = async () => {
         if (!groupedAvail[key]) groupedAvail[key] = [];
         groupedAvail[key].push(v.slotId);
       });
-      console.log("groupedAvail :",groupedAvail)
-      setAvailabilitySlotsMap(groupedAvail);
+  setAvailabilitySlotsMapCtx(groupedAvail);
 
 
       const firstDate = validOccurrences[0].date;
@@ -953,17 +1588,18 @@ console.log("h1")
       };
 console.log("h2")
       
-          setMonthlyBookingData(booking);
+          setMonthlyBookingDataCtx(booking);
+          console.log("monthly booking data set :",booking)
           const finalPreferences = {
             ...preferences,
             finalPrice: monthlyTotal
           };
 console.log("h3")
 
-      setBookingPreferences(finalPreferences);
+  setBookingPreferencesCtx(finalPreferences);
 console.log("h4")
-          setLockedSlotIds(slotIds)
-      setReservationDetails({
+      setLockedSlotIdsCtx(slotIds)
+    setReservationDetailsCtx({
         reservationSlotId: response.data?.reservationId || `temp-${Date.now()}`,
         expiresAt:
           response.data?.expiresAt ||
@@ -972,10 +1608,10 @@ console.log("h4")
       });
 console.log("h5")
 
-      proceedToStep("payment");
-      console.log("h6")
-
-      router.push("/dashboard/student/find-tutor/book/payment");
+  proceedToStepCtx("payment");
+    console.log("h6")
+    setCurrentStepCtx('payment');
+    router.push("/dashboard/student/pay-for-next-month/payment");
       console.log("h7")
 
       return; // CRITICAL: stop here so single flow never runs
@@ -1014,9 +1650,9 @@ console.log("h5")
       // Set availability -> [slotIds] mapping in context (no sessionStorage)
       const availId = (selectedSlotLocal as any).availabilityId;
       if (availId != null) {
-        setAvailabilitySlotsMap({ [String(availId)]: [selectedSlotLocal.slotId] });
+  setAvailabilitySlotsMapCtx({ [String(availId)]: [selectedSlotLocal.slotId] });
       } else {
-        setAvailabilitySlotsMap({ default: [selectedSlotLocal.slotId] });
+  setAvailabilitySlotsMapCtx({ default: [selectedSlotLocal.slotId] });
       }
     } catch {}
 
@@ -1026,9 +1662,9 @@ console.log("h5")
     };
 
     //setSelectedSlot(selectedSlotLocal);
-    setLockedSlotIds([selectedSlotLocal.slotId]);
-    setBookingPreferences(finalPreferences);
-    setReservationDetails({
+  setLockedSlotIdsCtx([selectedSlotLocal.slotId]);
+  setBookingPreferencesCtx(finalPreferences);
+  setReservationDetailsCtx({
       reservationSlotId: singleResp.data?.reservationId || `temp-${Date.now()}`,
       expiresAt:
         singleResp.data?.expiresAt ||
@@ -1036,8 +1672,9 @@ console.log("h5")
       timer: 900
     });
 
-    proceedToStep("payment");
-    router.push("/dashboard/student/find-tutor/book/payment");
+  proceedToStepCtx("payment");
+    setCurrentStepCtx('payment');
+    router.push("/dashboard/student/pay-for-next-month/payment");
   } catch (err: any) {
     console.error("Booking error:", err);
     setError(err?.message || "Failed to process booking. Please try again.");
@@ -1178,21 +1815,17 @@ console.log("h5")
   //     setIsLoading(false);
   //   }
   // };
-  if (!tutor) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-    </div>
-  );
+
 
   // Prepare options for dropdowns
-  const subjectOptions = tutor.subjects?.map(subject => ({
-    value: subject.subjectId.toString(),
+  const subjectOptions = (tutor?.subjects || []).map((subject: any) => ({
+    value: 1,
     label: subject.subjectName || 'Unnamed Subject',
     sublabel: `${formatPrice(subject.hourlyRate)}/hr`,
   })) || [];
 
-const languageOptions = tutor.languages?.map((language, index) => ({
-  value: language.languageId.toString(),
+const languageOptions = (tutor?.languages || []).map((language: any, index: number) => ({
+  value: 1,
   label: language.languageName || `Language ${language.languageId}`,
 })) || [];
 
@@ -1202,34 +1835,249 @@ const languageOptions = tutor.languages?.map((language, index) => ({
     //badge: type.priceMultiplier < 1.0 ? `${Math.round((1 - type.priceMultiplier) * 100)}% OFF` : undefined
   }));
 
+  // If already paid, render only the focused message and nothing else
+  if (alreadyPaid) {
+    const displayMonth = nextMonth ?? computedNextMonth;
+    const displayYear = nextYear ?? computedNextYear;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
+        <Card className="max-w-xl w-full shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <CardTitle className="text-2xl">Already Paid</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 dark:text-gray-300">
+              You have already paid for {displayMonth}/{displayYear}. No additional payment is needed.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+
       {/* Progress Bar */}
-      <BookingProgress currentStep={currentStep} />
       
       <div className="max-w-7xl mx-auto p-4 space-y-6">
+        {/* Back to Classes */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/dashboard/student/profile/classes")}
+            className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to My Classes
+          </Button>
+        </div>
           {error && (
         <Alert variant="destructive" className="animate-in slide-in-from-top-2 duration-300">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-        {/* Header with Back Button and Currency Selector */}
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/dashboard/student/find-tutor")}
-            className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tutors
-          </Button>
-          <CurrencySelector />
-        </div>
 
-        {/* Tutor Info Card */}
-        <div className="animate-in fade-in-50 duration-500">
-          <TutorInfoCard tutor={tutor} />
+      
+      {/* --- Reserved Class Details Section --- */}
+      <Card className="animate-in slide-in-from-top-2 duration-300">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            Existing Class Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border items-center">
+            <div><p className="text-sm text-slate-500">Tutor</p><p className="font-semibold">{classMeta?.tutorName || `${tutor?.firstName ?? ''} ${tutor?.lastName ?? ''}`}</p></div>
+            <div><p className="text-sm text-slate-500">Subject</p><p className="font-semibold">{bookingPreferences.selectedSubject?.subjectName || classMeta?.subjectName}</p></div>
+            <div><p className="text-sm text-slate-500">Language</p><p className="font-semibold">{bookingPreferences.selectedLanguage?.languageName || classMeta?.languageName}</p></div>
+            <div><p className="text-sm text-slate-500">Total Price</p><p className="font-bold text-lg text-blue-600">{formatPrice(totalReservedPrice)}</p></div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-2">Reserved Time Slots:</h4>
+            {reservedSlots.length > 0 ? (
+              <div className="space-y-2">
+                {reservedSlots.map((slot, index) => (
+                  <div key={index} className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-sm">{slot.day}</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">{slot.time}</span>
+                      {slot.availabilityId ? (
+                        <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-white/60 dark:bg-black/30 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300">
+                          ID #{slot.availabilityId}
+                        </span>
+                      ) : null}
+                    </div>
+                    {slot.dates && slot.dates.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {slot.dates.map((d) => (
+                          <span key={d} className="text-[10px] px-2 py-0.5 rounded bg-white/70 dark:bg-black/20 border border-blue-200/60 dark:border-blue-800/40 text-slate-700 dark:text-slate-300">
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              reservedSlotsLoading ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                </div>
+              ) :
+              <Alert variant="default" className="bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-800 dark:text-yellow-300">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  No reserved slots found. You need to book a new class.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+          {isMonthlyClassType && reservedSlotsLoading && (
+                        <div className="pt-4 border-t border-gray-200/80 dark:border-gray-700/80">
+              <label className="flex items-start gap-3 text-sm cursor-pointer select-none group p-3 rounded-lg hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={lockNextMonth}
+                    disabled={nextMonthPatternsLoading}
+                    onChange={(e) => setLockNextMonth(e.target.checked)}
+                  />
+                  <div className="w-5 h-5 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-disabled:opacity-50 transition-all duration-200 peer-checked:shadow-lg shadow-blue-200 dark:shadow-blue-800"></div>
+                  <svg className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    Reserve Next Month's Schedule
+                  </span>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    reserve <strong className="text-blue-600 dark:text-blue-400">same weekday & time patterns</strong> for next month. If you do not pay for next month at least <strong>48 hours</strong> before its first class, those future locks are automatically canceled.                  </div>
+                </div>
+              </label>
+
+              {lockNextMonth && (
+                <div className="mt-4 rounded-xl border-2 border-blue-200/60 dark:border-blue-700/60 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm p-4 space-y-3 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                      📅 Next Month Preview
+                    </span>
+                    {nextMonthPatternsLoading && (
+                      <span className="text-xs px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-800/40 text-blue-600 dark:text-blue-200 animate-pulse">
+                        Loading...
+                      </span>
+                    )}
+                  </div>
+                  
+                  {nextMonthError && (
+                    <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+                      {nextMonthError}
+                    </div>
+                  )}
+                  
+                  {!nextMonthPatternsLoading && nextMonthPreview.length === 0 && !nextMonthError && (
+                    <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                      No patterns available for next month
+                    </div>
+                  )}
+
+                  {nextMonthPreview.length > 0 && (
+                    <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                      {nextMonthPreview.map(p => {
+                        const timeRange = `${formatTimeCompact(p.start)}-${formatTimeCompact(p.end)}`;
+                        const datesJoined = p.dateList.map(formatMonthDay).join(', ');
+                        return (
+                          <div
+                            key={`${p.weekday}-${p.start}-${p.end}`}
+                            className="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/30 rounded-lg border border-blue-100/50 dark:border-blue-800/30"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                              <span className="font-medium text-gray-800 dark:text-gray-200 text-xs">
+                                {p.dayName} {timeRange}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                              {datesJoined}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          
+
+          {reservedSlots.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t">
+              <Button onClick={handleRescheduleToggle} variant="outline" className="flex-1">
+                {isRescheduling ? (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Use Booked Reserved Slots
+                  </>
+                ) : (
+                  <>
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Reschedule for Next Month
+                  </>
+                )}
+              </Button>
+              {!isRescheduling && (
+                <Button 
+                  onClick={() => {
+                    setTutorCtx(tutor);
+                    setPayForNextMonthFlow(true);
+                    setBookingPreferencesCtx(dummyBookingPrefs)
+                    setRepayTimerCtx({
+                      expiresAt:new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+                      timer: 900
+                    });
+                    router.push('/dashboard/student/pay-for-next-month/payment');
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Pay for Reserved Slots
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {/* --- End of Reserved Class Details Section --- */}
+
+      {/* --- Conditionally Rendered Booking UI --- */}
+      {(isRescheduling || reservedSlots.length === 0) && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          {isRescheduling && (
+            <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                You are in rescheduling mode. Select new time slots for the next month. Your previous selections will be overridden upon payment.
+              </AlertDescription>
+            </Alert>
+          )}
+
+        {/* Header with Back Button and Currency Selector */}
+        <div className="flex items-center justify-end">
+
+          <CurrencySelector />
         </div>
 
         {/* Error Alert */}
@@ -1240,136 +2088,6 @@ const languageOptions = tutor.languages?.map((language, index) => ({
           </Alert>
         )}
 
-        {/* Preferences Section */}
-        <Card className="animate-in slide-in-from-bottom-4 duration-500 delay-100 border-0 bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-blue-950/30 dark:via-gray-900 dark:to-blue-950/30 shadow-lg">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              Booking Preferences
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Subject Selection */}
-              {tutor.subjects && tutor.subjects.length > 1 && (
-                <StyledSelect
-                  value={preferences.selectedSubject?.subjectId.toString() || ""}
-                  onValueChange={(value) => {
-                    const subject = tutor.subjects.find(s => s.subjectId.toString() === value);
-                    setBookingPreferences({
-                      ...bookingPreferences,
-                      selectedSubject: subject || null,
-                    });
-                  }}
-                  placeholder="Choose subject"
-                  options={subjectOptions}
-                  label="Subject"
-                  icon={<BookOpen className="w-4 h-4" />}
-                />
-              )}
-
-              {/* Language Selection */}
-                {tutor.languages && tutor.languages.length > 1 && (
-                  <StyledSelect
-                    value={preferences.selectedLanguage?.languageId.toString() || ""}
-                    onValueChange={(value) => {
-                      const lang = tutor.languages.find(l => l.languageId.toString() === value) || null;
-                      setBookingPreferences({
-                        ...bookingPreferences,
-                        selectedLanguage: lang,
-                      });
-                    }}
-                    placeholder="Choose language"
-                    options={languageOptions}
-                    label="Language"
-                    icon={<Globe className="w-4 h-4" />}
-                  />
-                )}
-
-              {/* Class Type Selection */}
-              <StyledSelect
-                value={preferences.selectedClassType?.id?.toString() || ""}
-                onValueChange={(value) => {
-                  const classType = CLASS_TYPES.find(ct => ct.id === Number(value));
-                  setAvailableSlots([]);
-                  setBookingPreferences({
-                    ...bookingPreferences,
-                    selectedClassType: classType || null,
-                  });
-                }}
-                placeholder="Choose class type"
-                options={classTypeOptions}
-                label="Class Type"
-                icon={<Users className="w-4 h-4" />}
-              />
-            </div>
-              {(preferences.selectedLanguage && preferences.selectedSubject && preferences.selectedClassType && isStudent) && (
-                <div className="mt-4 md:col-span-3">
-                  {existingClassLoading && (
-                    <div className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">Checking for existing class...</div>
-                  )}
-                  {!existingClassLoading && existingClassError && (
-                    <div className="text-xs text-red-600 dark:text-red-400">{existingClassError}</div>
-                  )}
-                  {!existingClassLoading && existingClassData?.exists && (
-                    <div className="p-4 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                            You already have this {isMonthlyClassType ? 'recurring (monthly)' : 'one-time'} class
-                          </div>
-                          <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
-                            Class ID: {existingClassData.class_id}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {/* Navigate to class detail view placeholder */}}
-                          className="text-[10px] px-2 py-1 rounded-md bg-amber-200/70 dark:bg-amber-800/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 hover:bg-amber-200/90 transition"
-                        >View Class</button>
-                      </div>
-                      {existingClassData.slots && existingClassData.slots.length > 0 && (
-                        <div className="text-[11px] text-amber-800 dark:text-amber-300 bg-white/60 dark:bg-gray-800/40 p-2 rounded-md border border-amber-200 dark:border-amber-700">
-                          {isMonthlyClassType ? (
-                            <>{formatExistingSlotsSummary(existingClassData.slots)}</>
-                          ) : (
-                            // For one-time presume first slot describes the session
-                            (() => {
-                              const s = existingClassData.slots![0];
-                              return `${s.weekday.slice(0,3)} ${s.start_time.slice(0,5)}-${s.end_time.slice(0,5)}`;
-                            })()
-                          )}
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setOverrideExistingClass(!overrideExistingClass)}
-                          className={`text-xs px-3 py-1 rounded-md font-medium transition border ${overrideExistingClass ? 'bg-red-600 text-white border-red-700 shadow' : 'bg-white dark:bg-gray-800 text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-gray-700'}`}
-                        >
-                          {isMonthlyClassType ? 'Create a new recurring class' : 'Book new one-time class'}
-                        </button>
-                        {/* <button
-                          type="button"
-                          onClick={() => {}}
-                          className="text-xs px-3 py-1 rounded-md font-medium transition border bg-white dark:bg-gray-800 text-blue-700 border-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700"
-                        >
-                          {isMonthlyClassType ? 'Reschedule existing' : 'Change time'}
-                        </button> */}
-                      </div>
-                      {!overrideExistingClass && (
-                        <div className="text-[10px] text-amber-700 dark:text-amber-300 italic">Select an action above to proceed or override to create a new class.</div>
-                      )}
-                    </div>
-                  )}
-                  {!existingClassLoading && existingClassData && existingClassData.exists === false && (
-                    <div className="text-[11px] text-green-600 dark:text-green-400 mt-1">No existing class with this combination. You can proceed.</div>
-                  )}
-                </div>
-              )}
-          </CardContent>
-        </Card>
-
 
         {/* Monthly selection bar and summary */
         // Controls included: per-locked occurrence removal and continue-from-week
@@ -1379,7 +2097,7 @@ const languageOptions = tutor.languages?.map((language, index) => ({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-blue-600" />
-                Monthly Class Schedule
+                Next Month Class Schedule
               </CardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Your selected time slots for this month. Remove any slot by clicking the X button.
@@ -1753,13 +2471,16 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                                     className={`relative flex flex-col items-center justify-center rounded-lg border px-2 py-2 min-w-[74px] text-[11px] font-medium select-none transition-all duration-200
                                       ${statusClasses(status)}
                                       ${
-                                        status === "AVAILABLE"
+                                        status === "AVAILABLE" && !groupChecked
                                           ? "cursor-pointer hover:shadow-md"
-                                          : "cursor-not-allowed opacity-70"
+                                          : status === "AVAILABLE" && groupChecked
+                                          ? "cursor-not-allowed opacity-80"
+                                          : "cursor-not-allowed"
                                       }
                                       ${chosen && status === "AVAILABLE" ? "border-green-500 ring-1 ring-green-400" : ""}
                                     `}
                                     onClick={() => {
+                                      if (groupChecked) return;
                                       if (status !== "AVAILABLE") return;
                                       if (isMonthlyClassType) {
                                         if (selectedTimeRange !== rangeKey) setSelectedTimeRange(rangeKey);
@@ -1794,19 +2515,13 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                                             end: group.end_time,
                                             status: status,
                                             weekKey,
-                                            availabilityId: occ.availability_id
+                                            availabilityId: group.availability_id
                                           };
                                         }
 
                                         setError('');
                                         setSelectedMonthlyById(tempMap);
                                         setSelectedOccurrenceIds(Object.keys(tempMap).map(Number));
-                                        // Sync the Select All checkbox to reflect partial selections
-                                        const avail = (group.slots || []).filter((o: any) => o.status === 'AVAILABLE');
-                                        setRangeSelectAll(prev => ({
-                                          ...prev,
-                                          [rangeKey]: avail.every((o: any) => !!tempMap[o.slot_id])
-                                        }));
                                       } else {
                                         setSelectedTimeRange(rangeKey);
                                         setSelectedOccurrenceIds([occ.slot_id]);
@@ -1864,9 +2579,9 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                         if(isMonthlyClassType){
                           return null;
                         }
-                        if (shouldHideSlot(slot.slotDate, slot.startTime.slice(0,5), 3)) {
-                          return null;
-                        }
+                        // if (shouldHideSlot(slot.slotDate, slot.startTime.slice(0,5), 3)) {
+                        //   return null;
+                        // }
 
                         const formatTime = (t: string) =>
                           new Date(`2000-01-01T${t}`).toLocaleTimeString("en-US", {
@@ -1953,9 +2668,21 @@ const languageOptions = tutor.languages?.map((language, index) => ({
         
 
         {/* Price Summary & Continue Button */}
-        {(preferences.selectedSubject && preferences.selectedClassType && (selectedSlotLocal || (isMonthlyClassType && selectedMonthlyOccurrences.length > 0))) && (
+  {/* {(isMonthlyClassType && selectedMonthlyOccurrences.length > 0) && ( */}
 <Card className="animate-in slide-in-from-bottom-4 duration-500 delay-400 border-2 border-blue-200/80 dark:border-blue-800/80 bg-gradient-to-br from-blue-50 via-white to-blue-50/50 dark:from-blue-950/30 dark:via-gray-900 dark:to-blue-950/20 shadow-lg hover:shadow-xl transition-all duration-300">
   <CardContent className="p-6">
+    {error && (
+      <div className="mb-4">
+        <div className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300">
+          <svg className="w-4 h-4 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div className="text-sm">{error}</div>
+        </div>
+      </div>
+    )}
     {/* Header */}
     <div className="flex items-center gap-3 mb-6">
       <div className="w-2 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
@@ -2028,7 +2755,7 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                 </div>
                 <div className="flex-1">
                   <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    Lock Next Month's Schedule
+                    Reserve Next Month's Schedule
                   </span>
                   <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     reserve <strong className="text-blue-600 dark:text-blue-400">same weekday & time patterns</strong> for next month. If you do not pay for next month at least <strong>48 hours</strong> before its first class, those future locks are automatically canceled.                  </div>
@@ -2111,6 +2838,46 @@ const languageOptions = tutor.languages?.map((language, index) => ({
 
       {/* Right Side - Total Amount & CTA */}
       <div className="lg:w-80 flex-shrink-0">
+        {/* Already Paid Alert */}
+        {alreadyPaid && (
+          <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 dark:bg-green-800/50 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <div className="font-semibold text-green-800 dark:text-green-200">Already Paid</div>
+                <div className="text-sm text-green-600 dark:text-green-400">
+                  You have already paid for {(nextMonth ?? computedNextMonth)}/{(nextYear ?? computedNextYear)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Status Loading */}
+        {paymentStatusLoading && (
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-600 dark:text-blue-400" />
+              <span className="text-sm text-blue-600 dark:text-blue-400">Checking payment status...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Status Error */}
+        {paymentStatusError && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              <div>
+                <div className="font-semibold text-red-800 dark:text-red-200">Payment Check Failed</div>
+                <div className="text-sm text-red-600 dark:text-red-400">{paymentStatusError}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 dark:from-blue-500/5 dark:via-purple-500/5 dark:to-pink-500/5 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 h-full">
           <div className="text-center">
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">Total Amount</div>
@@ -2131,30 +2898,32 @@ const languageOptions = tutor.languages?.map((language, index) => ({
             )}
             
             <Button 
-            
               onClick={async () => {
+                setPayForNextMonthFlow(true);
                 await handleContinue();
-                // if (isMonthlyClassType) {
-                //   // Set next month slot IDs in context if lockNextMonth is enabled
-                //   // Note: The backend should provide slot IDs in the next month API response
-                //   // For now, we'll store null and the backend will handle next month booking
-                //   // based on the availability patterns
-                //   if (lockNextMonth && nextMonthPreview.length > 0) {
-                //     // TODO: Extract slot IDs from API response when available
-                //     // The API should return slot IDs for next month slots
-                //     console.log("Next month lock enabled with preview data:", nextMonthPreview);
-                //     // For now, set empty array to indicate next month booking is requested
-                //     setNextMonthSlots([]);
-                //   } else {
-                //     setNextMonthSlots(null);
-                //   }
-                // }
+                if (isMonthlyClassType) {
+                  // Set next month slot IDs in context if lockNextMonth is enabled
+                  // Note: The backend should provide slot IDs in the next month API response
+                  // For now, we'll store null and the backend will handle next month booking
+                  // based on the availability patterns
+                  if (lockNextMonth && nextMonthPreview.length > 0) {
+                    // TODO: Extract slot IDs from API response when available
+                    // The API should return slot IDs for next month slots
+                    console.log("Next month lock enabled with preview data:", nextMonthPreview);
+                    // Backend does not yet provide next-month slot IDs; keep null for now (type number[])
+                    //setNextMonthSlots(null);
+                  } else {
+                    //setNextMonthSlots(null);
+                  }
+                }
               }}
-              disabled={
-                !isValid() || (existingClassData?.exists === true && !overrideExistingClass)
-              }
+              disabled={!isValid() || isLoading || nextMonthPatternsLoading || alreadyPaid}
               size="lg"
-              className="w-full h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-bold rounded-xl border-0 relative overflow-hidden group"
+              className={`w-full h-12 ${
+                alreadyPaid 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700'
+              } text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-bold rounded-xl border-0 relative overflow-hidden group`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               {isLoading || nextMonthPatternsLoading ? (
@@ -2162,6 +2931,8 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
                 </>
+              ) : alreadyPaid ? (
+                "Payment Already Made"
               ) : isValid() ? (
                 <>
                   Continue to Payment
@@ -2183,8 +2954,11 @@ const languageOptions = tutor.languages?.map((language, index) => ({
     </div>
   </CardContent>
 </Card>
-        )}
+       {/*  )} */}
       </div>
+      )}
+    </div>
     </div>
   );
 }
+// Sticky bottom bar is appended by the component's return block above; no export changes
