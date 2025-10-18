@@ -1,9 +1,12 @@
+'use client';
+
 import { DotIcon } from "@/assets/icons";
 import { formatMessageTime } from "@/lib/format-message-time";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { getChatsData } from "@/lib/fetch";
+import { useEffect, useState } from "react";
+import api from "@/lib/api";
 
 type ChatData = {
   name: string;
@@ -18,8 +21,72 @@ type ChatData = {
   unreadCount: number;
 };
 
-export async function ChatsCard() {
-  const data = await getChatsData();
+export function ChatsCard() {
+  const [data, setData] = useState<ChatData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get('/admin/chats');
+        const apiData = response.data?.data ?? response.data;
+        
+        if (Array.isArray(apiData)) {
+          setData(apiData);
+        } else {
+          setData(apiData?.chats ?? []);
+        }
+      } catch (error) {
+        console.error('Error fetching chats data:', error);
+        // Fallback mock data
+        setData([
+          {
+            name: 'Jacob Jones',
+            profile: '/images/user/user-01.png',
+            isActive: true,
+            lastMessage: {
+              content: 'See you tomorrow at the meeting!',
+              type: 'text',
+              timestamp: '2024-12-19T14:30:00Z',
+              isRead: false,
+            },
+            unreadCount: 3,
+          },
+          {
+            name: 'Wilium Smith',
+            profile: '/images/user/user-03.png',
+            isActive: true,
+            lastMessage: {
+              content: 'Thanks for the update',
+              type: 'text',
+              timestamp: '2024-12-19T10:15:00Z',
+              isRead: true,
+            },
+            unreadCount: 0,
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="col-span-12 rounded-[10px] bg-white py-6 shadow-1 dark:bg-gray-900 dark:shadow-card xl:col-span-4">
+        <h2 className="mb-5.5 px-7.5 text-body-2xlg font-bold text-dark dark:text-white">
+          Chats
+        </h2>
+        <div className="animate-pulse px-7.5 space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="col-span-12 rounded-[10px] bg-white py-6 shadow-1 dark:bg-gray-900 dark:shadow-card xl:col-span-4">

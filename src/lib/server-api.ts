@@ -12,46 +12,63 @@ export const createServerApi = async () => {
   const cookieStore = await cookies();
   
   // Get all cookies and format them for the request
-  const cookieHeader = cookieStore.getAll()
+  const allCookies = cookieStore.getAll();
+  const cookieHeader = allCookies
     .map(cookie => `${cookie.name}=${cookie.value}`)
     .join('; ');
+
+  console.log('Server API - Cookies available:', allCookies.map(c => c.name).join(', '));
 
   // Create axios instance with cookies
   const serverApi = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 10000,
+    timeout: 15000,
     headers: {
       "Content-Type": "application/json",
       ...(cookieHeader && { 'Cookie': cookieHeader }),
     },
-    withCredentials: true,
   });
 
-  // Try to refresh token if needed
-  try {
-    const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(cookieHeader && { 'Cookie': cookieHeader }),
-      },
-      withCredentials: true,
-    });
+  // Try to refresh token if we have cookies
+  if (cookieHeader) {
+    try {
+      console.log('Server API - Attempting token refresh...');
+      const refreshResponse = await axios.post(
+        `${API_BASE_URL}/auth/refresh`, 
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieHeader,
+          },
+          timeout: 10000,
+        }
+      );
 
-    if (refreshResponse.status === 200 && refreshResponse.data?.accessToken) {
-      // Add the refreshed access token to subsequent requests
-      serverApi.defaults.headers.common['Authorization'] = 
-        `Bearer ${refreshResponse.data.accessToken}`;
+      if (refreshResponse.status === 200 && refreshResponse.data?.accessToken) {
+        console.log('Server API - Token refresh successful');
+        // Add the refreshed access token to subsequent requests
+        serverApi.defaults.headers.common['Authorization'] = 
+          `Bearer ${refreshResponse.data.accessToken}`;
+      }
+    } catch (error: any) {
+      console.warn('Server API - Token refresh failed:', error?.response?.status, error?.message);
+      // Continue without token - will use cookies only
     }
-  } catch (error) {
-    // Refresh failed - continue without token
-    console.log('Token refresh not available on server');
+  } else {
+    console.warn('Server API - No cookies available for authentication');
   }
 
   // Simple error logging interceptor (no window access)
   serverApi.interceptors.response.use(
     (response) => response,
     (error) => {
-      console.error("Server API error:", error.message);
+      console.error("Server API error:", {
+        url: error?.config?.url,
+        status: error?.response?.status,
+        message: error.message,
+        data: error?.response?.data,
+      });
       return Promise.reject(error);
     }
   );
