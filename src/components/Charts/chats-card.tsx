@@ -5,6 +5,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { getChatsData } from "@/lib/fetch";
 
+type ChatData = {
+  name: string;
+  profile: string;
+  isActive: boolean;
+  lastMessage: {
+    content: string;
+    type: string;
+    timestamp: string;
+    isRead: boolean;
+  };
+  unreadCount: number;
+};
+
 export async function ChatsCard() {
   const data = await getChatsData();
 
@@ -15,7 +28,7 @@ export async function ChatsCard() {
       </h2>
 
       <ul>
-        {data.map((chat, key) => (
+        {data.map((chat: ChatData, key: number) => (
           <li key={key}>
             <Link
               href="/"
