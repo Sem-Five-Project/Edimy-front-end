@@ -60,35 +60,27 @@ export const NAV_DATA = [
           {
             title: "All Transactions",
             url: "/dashboard/admin/payments/transactions",
-          },
-          {
-            title: "Tutor Payouts",
-            url: "/dashboard/admin/payments/payouts",
-          },
-          {
-            title: "Pricing Policies",
-            url: "/dashboard/admin/payments/pricing",
-          },
+          }
         ],
       },
-      {
-        title: "Notifications",
-        icon: Icons.Bell,
-        items: [
-          {
-            title: "Email Templates",
-            url: "/dashboard/admin/notifications/email-templates",
-          },
-          {
-            title: "Announcements",
-            url: "/dashboard/admin/notifications/announcements",
-          },
-          {
-            title: "SendGrid Dashboard",
-            url: "/dashboard/admin/notifications/sendgrid",
-          },
-        ],
-      },
+      // {
+      //   title: "Notifications",
+      //   icon: Icons.Bell,
+      //   items: [
+      //     {
+      //       title: "Email Templates",
+      //       url: "/dashboard/admin/notifications/email-templates",
+      //     },
+      //     {
+      //       title: "Announcements",
+      //       url: "/dashboard/admin/notifications/announcements",
+      //     },
+      //     {
+      //       title: "SendGrid Dashboard",
+      //       url: "/dashboard/admin/notifications/sendgrid",
+      //     },
+      //   ],
+      // },
       {
         title: "Support System",
         icon: Icons.FourCircle,
@@ -107,10 +99,10 @@ export const NAV_DATA = [
             title: "Subject Management",
             url: "/dashboard/admin/subjects",
           },
-          {
-            title: "Class Management",
-            url: "/dashboard/admin/tags",
-          },
+          // {
+          //   title: "Class Management",
+          //   url: "/dashboard/admin/tags",
+          // },
         ],
       },
       {
