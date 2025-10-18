@@ -35,10 +35,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ stats }) => {
                 <Icon className="text-white" size={24} />
               </div>
             </div>
-            <div className="mt-4 flex items-center text-green-600">
-              <TrendingUp size={14} className="mr-1" />
-              <span className="text-sm font-medium">+12% this week</span>
-            </div>
+      
           </div>
         );
       })}
