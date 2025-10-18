@@ -71,50 +71,79 @@ export default function BookingSlotsPage() {
     setNextMonth: setCtxNextMonth,
     nextYear: ctxNextYear,
     setNextYear: setCtxNextYear,
+    setPayForNextMonthFlow,
+
   } = useBooking();
+  
+  // Optional class meta passed from Classes page for immediate UI hydration
+  type PayNextClassMeta = {
+    classId: number | string
+    linkForMeeting?: string | null
+    tutorName?: string | null
+    subjectName?: string | null
+    languageName?: string | null
+    classType?: string | null
+    tutorId?: number
+    subjectId?: number
+    date?: string | null
+    startTime?: string | null
+    endTime?: string | null
+    hourlyRate?: number | 0
+    languageId?: number | null
+  };
+  const [classMeta, setClassMeta] = useState<PayNextClassMeta | null>(null);
    // --- Dummy Data for Development ---
   const [dummyBookingPrefs, setDummyBookingPrefs] = useState<BookingPreferences>({
-    selectedSubject: { subjectId: 1, subjectName: 'Mathematics', hourlyRate: 1500 },
-    selectedLanguage: { languageId: 1, languageName: 'English' },
-    selectedClassType: { id: 2, name: 'ome time', priceMultiplier: 1.0, description: 'Book for a full month.' },
-    finalPrice: 12000,
+    selectedSubject: null,
+    selectedLanguage: null,
+    selectedClassType: { id: 2, name: 'Monthly', priceMultiplier: 1.0, description: 'Pay for next month.' },
+    finalPrice: 0,
   });
   // Removed dummy availability list; we'll derive from reserved class info
 
   // Tutor state (was a constant before). Using state allows API to update it via setTutor.
-  const defaultTutor = {
-    id: 1,
-    tutorProfileId: 1,
-    firstName: 'John',
-    lastName: 'Doe',
-    username: 'johndoe',
-    email: 'john.doe@example.com',
-    role: 'TUTOR',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-    subjects: [
-      { subjectId: 1, subjectName: 'Mathematics', hourlyRate: 1500 },
-      { subjectId: 2, subjectName: 'Physics', hourlyRate: 1600 },
-    ],
-    languages: [
-      { languageId: 1, languageName: 'English' },
-      { languageId: 2, languageName: 'Sinhala' },
-    ],
-    experience: 5,
-    rating: 4.8,
-    classCompletionRate: 95,
-    bio: 'An experienced and passionate tutor specializing in Mathematics and Physics.',
-    hourlyRate: 1500,
-    totalClasses: 120,
-    completedClasses: 115,
-  } as any;
-  const [tutor, setTutor] = useState<any>(defaultTutor);
+  const [tutor, setTutor] = useState<any>(null);
 
-  if (!defaultTutor) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-    </div>
-  );
+  // Hydrate from sessionStorage meta early so we can render immediately
+  useEffect(() => {
+    // Hydrate from sessionStorage meta
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = window.sessionStorage.getItem('payNextClassMeta');
+        if (raw) {
+          const meta: PayNextClassMeta = JSON.parse(raw);
+          setClassMeta(meta);
+          // Initialize tutor stub and booking prefs for immediate UI
+          const tutorStub = {
+            id: meta.tutorId || undefined,
+            tutorProfileId: meta.tutorId || undefined,
+            firstName: meta.tutorName || 'Tutor',
+            lastName: '',
+            languages: meta.languageName ? [{ languageId: undefined, languageName: meta.languageName }] : [],
+            subjects: meta.subjectId || meta.subjectName ? [{ subjectId: meta.subjectId || 0, subjectName: meta.subjectName || '', hourlyRate: 0 }] : [],
+            hourlyRate: 0,
+          } as any;
+          setTutor(tutorStub);
+          setDummyBookingPrefs(prev => ({
+            ...prev,
+            selectedSubject: meta.subjectName ? { subjectId: meta.subjectId || 0, subjectName: meta.subjectName, hourlyRate: meta?.hourlyRate || 0} : prev.selectedSubject,
+            selectedLanguage: meta.languageName ? { languageId: 0, languageName: meta.languageName } : prev.selectedLanguage,
+            selectedClassType: { id: 2, name: 'Monthly', priceMultiplier: 1.0, description: 'Pay for next month.' },
+          }));
+          // Populate context to prevent payment page redirect later
+          setTutorCtx(tutorStub);
+          console.log("Tutor context set:", tutorStub);
+          console.log("meetaaaa :",meta);
+          // setBookingPreferencesCtx({
+          //   selectedSubject: meta.subjectName ? { subjectId: meta.subjectId || 0, subjectName: meta.subjectName, hourlyRate: meta?.hourlyRate || 0 } : null,
+          //   selectedLanguage: meta.languageName ? { languageId: meta.languageId || 0, languageName: meta.languageName } : null,
+          //   selectedClassType: { id: 2, name: 'Monthly', priceMultiplier: 1.0, description: 'Pay for next month.' },
+          //   finalPrice: 0,
+          // });
+        }
+      }
+    } catch {}
+  }, []);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const proceedToStep = (step: any) => console.log('Proceeding to step:', step);
   const setCurrentStep = (step: any) => console.log('Setting current step:', step);
@@ -156,20 +185,9 @@ export default function BookingSlotsPage() {
   // Use bookingPreferences from context directly so selections persist across steps
   const preferences = bookingPreferences;
   // Auto-preselect single subject/language if only one and none selected yet
-  useEffect(() => {
-    if (!tutor) return;
-    const next: BookingPreferences = { ...bookingPreferences };
-    let changed = false;
-    if (!next.selectedSubject && tutor.subjects && tutor.subjects.length === 1) {
-      next.selectedSubject = tutor.subjects[0];
-      changed = true;
-    }
-    if (!next.selectedLanguage && tutor.languages && tutor.languages.length === 1) {
-      next.selectedLanguage = tutor.languages[0];
-      changed = true;
-    }
-    if (changed) setBookingPreferences(next);
-  }, [tutor]);
+
+
+  
  const [selectedWeekDays,setSelectedWeekDays] = useState<string[]>([]);
 
   // Prefer class id from BookingContext, but allow deep-linking via query when needed
@@ -228,13 +246,14 @@ useEffect(() => {
                   lockedSlotsMap = { [availabilityId]: allSlotIds };
               }
           }
+          console.log("lockedSlotsMap :",lockedSlotsMap)
 
     // Set the context with the newly created object map
       setAvailabilitySlotsMapCtx(lockedSlotsMap); 
     // --- END OF FIX ---
     
 
-        setReservedClassInfo(response.data);
+  setReservedClassInfo(response.data);
         //setLockedSlotIdsCtx(response.data.locked_slot_ids || []);
         
 
@@ -279,16 +298,28 @@ useEffect(() => {
 
         const totalPrice = totalDuration * response.data.hourly_rate;
 
-        // Set shared context so payment page has tutor and prefs (prevents redirect)
+        // Set tutor and prefs from reserved data if available
         if (response.data?.tutor_details) {
+          setTutor(response.data.tutor_details);
           setTutorCtx(response.data.tutor_details);
         }
-        setBookingPreferencesCtx({
-          selectedSubject: response.data?.subject_details || null,
-          selectedLanguage: response.data?.language_details || null,
-          selectedClassType: CLASS_TYPES.find(ct => ct.id === 2) ?? null,
+        setDummyBookingPrefs(prev => ({
+          ...prev,
+          selectedSubject: response.data?.subject_details || prev.selectedSubject,
+          selectedLanguage: response.data?.language_details || prev.selectedLanguage,
+          selectedClassType: CLASS_TYPES.find(ct => ct.id === 2) ?? prev.selectedClassType,
           finalPrice: totalPrice,
-        });
+        }));
+        // setDummyBookingPrefs({
+        //   ...(bookingPreferencesCtx ?? {}),
+        //   finalPrice: totalPrice,
+        // });
+
+
+        // setBookingPreferencesCtx({
+        //   ...(bookingPreferencesCtx ?? {}),
+        //   finalPrice: totalPrice,
+        // });
 
         // show calendar with slight delay
         setTimeout(() => {
@@ -319,6 +350,9 @@ if (computedNextMonth > 12) {
   computedNextYear += 1;
 }
 
+useEffect(()=>{
+  console.log("00000000000000000000 :",reservedClassInfo)
+},[reservedClassInfo])
 // Then in your effect:
 useEffect(() => {
   console.log(
@@ -955,7 +989,7 @@ const formatMonthDay = (d: string) => {
 };
 const fetchNextMonthPreview = async () => {
   console.log("heeeee");
-  if (!defaultTutor) return;
+  if (!tutor) return;
   console.log("heeeee2");
   setNextMonthError("");
   setNextMonthPatternsLoading(true);
@@ -996,7 +1030,7 @@ const fetchNextMonthPreview = async () => {
     
    
   console.log("Fetching next month slots for availability IDs:", availabilityIdList, "for", nextYear, nextMonth);
-  const resp = await tutorAPI.getNextMonthSlots(availabilityIdList, nextMonth, nextYear);
+  const resp = await tutorAPI.getNextMonthSlots(availabilityIdList, computedNextMonth, computedNextYear);
     console.log("Next month slots response:", resp);
 
     if (!resp.success) {
@@ -1216,7 +1250,7 @@ const fetchNextMonthPreview = async () => {
 
   // UPDATE: Validation for monthly
   const isValid = () => {
-    if (!defaultTutor) return false;
+  if (!tutor) return false;
     // Monthly route: show proceed when at least one occurrence is selected
     if (isMonthlyClassType) {
       return selectedMonthlyOccurrences.length > 0;
@@ -1398,11 +1432,69 @@ const handleContinue = async () => {
         selectedSubject: reservedClassInfo?.subject_details || preferences.selectedSubject || null,
         selectedLanguage: reservedClassInfo?.language_details || preferences.selectedLanguage || null,
         selectedClassType: CLASS_TYPES.find(ct => ct.id === 2) ?? null,
-        finalPrice: totalReservedPrice || bookingPreferences.finalPrice || 0,
+        finalPrice: isMonthlyClassType
+                ? monthlyTotal
+                : calculatePrice(),
       });
       // Not locking current slots; payment will carry nextMonthSlots via context
-      setLockedSlotIdsCtx([]);
-      setAvailabilitySlotsMapCtx(undefined as any);
+      const now = new Date();
+      const validOccurrences = selectedMonthlyOccurrences.filter(o => {
+        const slotStart = new Date(`${o.date}T${o.start}`);
+        const threshold = new Date(slotStart.getTime() - 2 * 3600 * 1000);
+        return !(now.toDateString() === slotStart.toDateString() && now >= threshold);
+      });
+
+      if (validOccurrences.length !== selectedMonthlyOccurrences.length) {
+        // prune removed
+        setSelectedMonthlyById(prev => {
+          const updated = { ...prev };
+          Object.values(prev).forEach(v => {
+            const slotStart = new Date(`${v.date}T${v.start}`);
+            const threshold = new Date(slotStart.getTime() - 2 * 3600 * 1000);
+            if (now.toDateString() === slotStart.toDateString() && now >= threshold) {
+              delete (updated as any)[v.slotId];
+            }
+          });
+          return updated;
+        });
+        setSelectedOccurrenceIds(validOccurrences.map(v => v.slotId));
+        setError("Some slots were inside 2h start window and were removed. Review then retry.");
+        setIsLoading(false);
+        return;
+      }
+
+      const slotIds = validOccurrences
+        .filter(o => o.status === "AVAILABLE")
+        .map(o => o.slotId);
+
+      if (slotIds.length === 0) {
+        setError("Select at least one available slot.");
+        setIsLoading(false);
+        return;
+      }
+      console.log("slot ids :",slotIds)
+      setLockedSlotIdsCtx(slotIds);
+      const response = await bookingAPI.reserveSlots(slotIds);
+      console.log("response :",response)
+      if (!response.success) {
+        setError(response.error || "Failed to reserve selected slots.");
+        setIsLoading(false);
+        return;
+      }
+      // setDummyBookingPrefs(prev => ({
+      //   ...prev,
+      //   finalPrice:bookingPreferences.finalPrice || 100,
+      // }));
+      //setAvailabilitySlotsMapCtx(undefined as any);
+      const groupedAvail: Record<string, number[]> = {};
+      validOccurrences.forEach(v => {
+        const rec = (selectedMonthlyById as any)[v.slotId];
+        const key = rec?.availabilityId != null ? String(rec.availabilityId) : 'default';
+        if (!groupedAvail[key]) groupedAvail[key] = [];
+        groupedAvail[key].push(v.slotId);
+      });
+      console.log("groupedAvail :",groupedAvail)
+       setAvailabilitySlotsMapCtx(groupedAvail);
       const expireAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       setRepayTimerCtx({ expiresAt: expireAt, timer: 900 });
       proceedToStepCtx("payment");
@@ -1726,14 +1818,14 @@ console.log("h5")
 
 
   // Prepare options for dropdowns
-  const subjectOptions = defaultTutor.subjects?.map((subject: any) => ({
-    value: subject.subjectId.toString(),
+  const subjectOptions = (tutor?.subjects || []).map((subject: any) => ({
+    value: 1,
     label: subject.subjectName || 'Unnamed Subject',
     sublabel: `${formatPrice(subject.hourlyRate)}/hr`,
   })) || [];
 
-const languageOptions = defaultTutor.languages?.map((language: any, index: number) => ({
-  value: language.languageId.toString(),
+const languageOptions = (tutor?.languages || []).map((language: any, index: number) => ({
+  value: 1,
   label: language.languageName || `Language ${language.languageId}`,
 })) || [];
 
@@ -1803,9 +1895,9 @@ const languageOptions = defaultTutor.languages?.map((language: any, index: numbe
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border items-center">
-            <div><p className="text-sm text-slate-500">Tutor</p><p className="font-semibold">{defaultTutor.firstName} {defaultTutor.lastName}</p></div>
-            <div><p className="text-sm text-slate-500">Subject</p><p className="font-semibold">{bookingPreferences.selectedSubject?.subjectName}</p></div>
-            <div><p className="text-sm text-slate-500">Language</p><p className="font-semibold">{bookingPreferences.selectedLanguage?.languageName}</p></div>
+            <div><p className="text-sm text-slate-500">Tutor</p><p className="font-semibold">{classMeta?.tutorName || `${tutor?.firstName ?? ''} ${tutor?.lastName ?? ''}`}</p></div>
+            <div><p className="text-sm text-slate-500">Subject</p><p className="font-semibold">{bookingPreferences.selectedSubject?.subjectName || classMeta?.subjectName}</p></div>
+            <div><p className="text-sm text-slate-500">Language</p><p className="font-semibold">{bookingPreferences.selectedLanguage?.languageName || classMeta?.languageName}</p></div>
             <div><p className="text-sm text-slate-500">Total Price</p><p className="font-bold text-lg text-blue-600">{formatPrice(totalReservedPrice)}</p></div>
           </div>
 
@@ -1851,7 +1943,7 @@ const languageOptions = defaultTutor.languages?.map((language: any, index: numbe
               </Alert>
             )}
           </div>
-          {isMonthlyClassType && (
+          {isMonthlyClassType && reservedSlotsLoading && (
                         <div className="pt-4 border-t border-gray-200/80 dark:border-gray-700/80">
               <label className="flex items-start gap-3 text-sm cursor-pointer select-none group p-3 rounded-lg hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
                 <div className="relative flex-shrink-0 mt-0.5">
@@ -1950,6 +2042,7 @@ const languageOptions = defaultTutor.languages?.map((language: any, index: numbe
                 <Button 
                   onClick={() => {
                     setTutorCtx(tutor);
+                    setPayForNextMonthFlow(true);
                     setBookingPreferencesCtx(dummyBookingPrefs)
                     setRepayTimerCtx({
                       expiresAt:new Date(Date.now() + 15 * 60 * 1000).toISOString(),
@@ -2806,6 +2899,7 @@ const languageOptions = defaultTutor.languages?.map((language: any, index: numbe
             
             <Button 
               onClick={async () => {
+                setPayForNextMonthFlow(true);
                 await handleContinue();
                 if (isMonthlyClassType) {
                   // Set next month slot IDs in context if lockNextMonth is enabled
@@ -2817,9 +2911,9 @@ const languageOptions = defaultTutor.languages?.map((language: any, index: numbe
                     // The API should return slot IDs for next month slots
                     console.log("Next month lock enabled with preview data:", nextMonthPreview);
                     // Backend does not yet provide next-month slot IDs; keep null for now (type number[])
-                    setNextMonthSlots(null);
+                    //setNextMonthSlots(null);
                   } else {
-                    setNextMonthSlots(null);
+                    //setNextMonthSlots(null);
                   }
                 }
               }}

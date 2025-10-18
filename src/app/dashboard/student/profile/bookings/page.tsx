@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -71,8 +72,6 @@ export default function BookingsPage() {
   const [activeTab, setActiveTab] = useState("upcoming")
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<BookingDetails | null>(null)
-  const [bookings, setBookings] = useState<BookingDetails[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refundLoading, setRefundLoading] = useState(false)
   const [refundSuccess, setRefundSuccess] = useState(false)
@@ -80,35 +79,22 @@ export default function BookingsPage() {
   
   const { effectiveStudentId } = useAuth()
   const { formatPrice } = useCurrency()
+  const queryClient = useQueryClient()
 
-  // Fetch booking details
-  useEffect(() => {
-    const fetchBookingDetails = async () => {
-      if (!effectiveStudentId) {
-        setError("Student ID not found")
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        const response = await bookingAPI.getStudentBookingDetails(Number(effectiveStudentId))
-        console.log("Fetched bookings:", response)
-        if (response.success) {
-          setBookings(response.data)
-        } else {
-          setError(response.error || "Failed to fetch booking details")
-        }
-      } catch (err) {
-        console.error("Error fetching booking details:", err)
-        setError("An error occurred while fetching booking details")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchBookingDetails()
-  }, [effectiveStudentId])
+  const { data: bookings = [], isPending, isFetching } = useQuery<BookingDetails[]>({
+    queryKey: ['studentBookings', effectiveStudentId],
+    enabled: !!effectiveStudentId,
+    queryFn: async () => {
+      if (!effectiveStudentId) return []
+      const response = await bookingAPI.getStudentBookingDetails(Number(effectiveStudentId))
+      if (response.success) return response.data || []
+      throw new Error(response.error || 'Failed to fetch booking details')
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+  const loading = isPending
 
   // Effect to log changes when bookings state is updated
 
@@ -133,14 +119,11 @@ export default function BookingsPage() {
       console.log("Refund response:", response)
 
       if (response.success) {
-        // Success - update the booking status to REFUNDED
-        setBookings(prevBookings => 
-          prevBookings.map(b => 
-            b.booking_id === selectedBooking.booking_id 
-              ? { ...b, booking_status: "REFUNDED" }
-              : b
-          )
-        )
+        // Success - update the booking status to REFUNDED in cache
+        queryClient.setQueryData<BookingDetails[] | undefined>(['studentBookings', effectiveStudentId], (prev) => {
+          if (!prev) return prev
+          return prev.map(b => b.booking_id === selectedBooking.booking_id ? { ...b, booking_status: 'REFUNDED' } : b)
+        })
         setRefundSuccess(true)
         
         // Switch to cancelled tab to show the refunded booking
@@ -153,14 +136,7 @@ export default function BookingsPage() {
           setRefundSuccess(false)
         }, 2000)
       } else {
-        console.log("Refund failed response:", response.data.message)
-        // Handle failure - extract message from various possible response structures
-        const errorMessage = 
-          response.data?.message || 
-          response.data?.error || 
-          response.error || 
-          "Failed to process refund"
-        
+        const errorMessage = (response as any)?.data?.message || (response as any)?.error || "Failed to process refund"
         console.log("Refund failed with message:", errorMessage)
         setRefundError(errorMessage)
       }

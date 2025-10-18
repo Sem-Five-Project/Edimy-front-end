@@ -86,6 +86,10 @@ interface BookingContextType {
   // Selected class (for pay-for-next-month flow)
   selectedClassId: number | null;
   setSelectedClassId: (id: number | null) => void;
+
+  // Flag for pay-for-next-month flow
+  payForNextMonthFlow: boolean;
+  setPayForNextMonthFlow: (isNextMonth: boolean) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -115,6 +119,7 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [nextMonth, setNextMonth] = useState<number | null>(null);
   const [nextYear, setNextYear] = useState<number | null>(null);
+  const [payForNextMonthFlow, setPayForNextMonthFlow] = useState<boolean>(false);
 
   // Timer effect for reservation
   // useEffect(() => {
@@ -246,6 +251,8 @@ const goBack = async (): Promise<void> => {
     }
     case 'payment': {
       // Always release whatever is in lockedSlotIds
+      console.log("Going back from payment, releasing slots if any.");
+      console.log("Currently locked slots:", lockedSlotIds);
       const toRelease = lockedSlotIds.length > 0 ? lockedSlotIds : [];
       if (toRelease.length > 0) {
         console.log("Releasing locked slots:", toRelease);
@@ -258,7 +265,14 @@ const goBack = async (): Promise<void> => {
       // Clear any persisted one-time slot data
 
       setCurrentStep('slot-selection');
-      router.push('/dashboard/student/find-tutor/book/slots');
+      if(payForNextMonthFlow){
+        console.log("dashboard/student/pay-for-next-month")
+        router.push('/dashboard/student/pay-for-next-month');
+      }else{
+                console.log("dashboard/student/find-tutor/book/slots")
+
+        router.push('/dashboard/student/find-tutor/book/slots');
+      }
       break;
     }
     case 'confirmation': {
@@ -292,6 +306,7 @@ useEffect(()=>{
     setAvailabilitySlotsMap({});
     setNextMonthSlots(null);
     setSelectedClassId(null);
+    setPayForNextMonthFlow(false);
   };
 
   const isBookingComplete = currentStep === 'confirmation' && bookingId !== null;
@@ -331,6 +346,8 @@ useEffect(()=>{
     setNextYear,
     selectedClassId,
     setSelectedClassId,
+    payForNextMonthFlow,
+    setPayForNextMonthFlow,
   }), [
     currentStep,
     tutor,
@@ -349,6 +366,7 @@ useEffect(()=>{
     nextYear,
     selectedClassId,
   ]);
+
 
   return (
     <BookingContext.Provider value={value}>

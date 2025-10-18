@@ -827,7 +827,7 @@ const handleBookTutor = (tutor: NormalizedTutor) => {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900">
-              {isLoading ? 'Searching...' : `${totalResults} tutors found`}
+              {isLoading ? 'Searching...' : `${(totalResults || tutors.length)} tutors found`}
             </h2>
             <p className="text-gray-600 mt-1">
               {!isLoading && totalPages > 1 && `Page ${currentPage} of ${totalPages}`}

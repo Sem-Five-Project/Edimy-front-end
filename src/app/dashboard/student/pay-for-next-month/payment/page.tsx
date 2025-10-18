@@ -43,6 +43,7 @@ export default function BookingPaymentPage() {
     monthlyBookingData,
     lockedSlotIds,
     availabilitySlotsMap,
+    setPayForNextMonthFlow,
   } = useBooking();
 
   const { formatPrice, selectedCurrency } = useCurrency();
@@ -166,6 +167,8 @@ export default function BookingPaymentPage() {
   };
 
   const handlePaymentSuccess = (bookingIdFromAPI?: number) => {
+        setPayForNextMonthFlow(false); // Reset flow on success
+
     const bookingId = bookingIdFromAPI ? String(bookingIdFromAPI) : `BK${Date.now()}`;
     setBookingId(bookingId);
     try {
@@ -180,6 +183,8 @@ export default function BookingPaymentPage() {
   };
 
   const handleCancel = () => {
+        setPayForNextMonthFlow(false); // Reset flow on cancel
+
     try {
       sessionStorage.removeItem('paymentContext-v1');
       sessionStorage.removeItem('oneTimeSlotDetail');

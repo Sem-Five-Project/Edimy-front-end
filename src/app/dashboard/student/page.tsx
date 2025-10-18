@@ -1,20 +1,35 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+/**
+ * Student Dashboard - React Query Implementation
+ * 
+ * This page uses React Query for data fetching with 5-minute caching.
+ * Benefits:
+ * - Reduces unnecessary API calls
+ * - Improves performance and user experience
+ * - Automatic background refetching
+ * - Stale-while-revalidate pattern
+ * 
+ * Cache Strategy:
+ * - staleTime: 5 minutes (data considered fresh for 5 min)
+ * - gcTime: 5 minutes (cached data persists for 5 min)
+ * - Automatic refetch on window focus (can be disabled if needed)
+ */
+
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion'; // Added for animations
-import { CalendarDays, Clock, Star, BookOpen, ChevronRight, AlertCircle, Search, CreditCard, GraduationCap, Bell, TrendingUp, Award, Target, SearchIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { CalendarDays, Clock,CheckCircle, Star, BookOpen, ChevronRight, Globe ,AlertCircle, Search, CreditCard, GraduationCap, Bell, TrendingUp, Users, Award, Play, Video, MessageCircle, X, Trash2, Calendar, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input'; // Added for search bar
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'; // Added for tooltips
-import { bookingAPI, studentAPI } from '@/lib/api';
+import { bookingAPI, studentAPI, filterAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Tutor, Subject } from '@/types';
 
-// Types remain the same
 type BookingDetails = {
   booking_id: number;
   booking_status: string;
@@ -31,55 +46,126 @@ type SuggestedTutor = { id: string; name: string; subject: string; rating: numbe
 
 export default function StudentDashboard() {
   const router = useRouter();
-  const { user, effectiveStudentId } = useAuth();
-  const [bookings, setBookings] = useState<BookingDetails[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<{ classCount: number; sessionCount: number } | null>(null);
-  const [searchQuery, setSearchQuery] = useState(''); // Added for subject search
+  const { user, effectiveStudentId, loadStudentAcademicInfo } = useAuth();
 
-  const suggestedTutors: SuggestedTutor[] = [
-    { id: '1', name: 'Dr. Sarah Johnson', subject: 'Mathematics', rating: 4.9, price: 60, image: '' },
-    { id: '2', name: 'Prof. Michael Chen', subject: 'Physics', rating: 4.8, price: 55, image: '' },
-    { id: '3', name: 'Dr. Emily Davis', subject: 'Chemistry', rating: 4.7, price: 50, image: '' },
-  ];
+  // 5-minute cache for all queries
+  const CACHE_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  // React Query: Bookings and Stats
+  const { 
+    data: bookingsData, 
+    isLoading: isLoadingBookings, 
+    error: bookingsError 
+  } = useQuery({
+    queryKey: ['studentBookings', effectiveStudentId],
+    queryFn: async () => {
+      if (!effectiveStudentId) return { bookings: [], stats: null };
+      
+      const [bookingsRes, statsRes] = await Promise.all([
+        bookingAPI.getStudentBookingDetails(Number(effectiveStudentId)),
+        studentAPI.loadStudentProfileInfo(Number(effectiveStudentId)),
+      ]);
+      
+      return {
+        bookings: bookingsRes.success ? (bookingsRes.data || []) : [],
+        stats: statsRes.success ? {
+          classCount: statsRes.data.classCount ?? 0,
+          sessionCount: statsRes.data.sessionCount ?? 0,
+        } : null,
+      };
+    },
+    enabled: !!effectiveStudentId,
+    staleTime: CACHE_TIME,
+    gcTime: CACHE_TIME,
+  });
+
+  const bookings = bookingsData?.bookings || [];
+  const stats = bookingsData?.stats || null;
+  const isLoading = isLoadingBookings;
+  const error = bookingsError ? 'Failed to load bookings' : null;
+
+  // React Query: Suggested Tutors
+  const { 
+    data: suggestedTutors = [], 
+    isLoading: loadingTutors, 
+    error: tutorQueryError 
+  } = useQuery({
+    queryKey: ['suggestedTutors', user?.educationLevel, user?.stream],
+    queryFn: async () => {
+      const edu = (user?.educationLevel ?? null) as string | null;
+      const stream = (user?.stream ?? null) as string | null;
+      const res = await filterAPI.searchTutors({ educationLevel: edu, stream }, 1, 6);
+      
+      if (res?.success) {
+        const list = Array.isArray((res.data as any)?.content)
+          ? (res.data as any).content as Tutor[]
+          : Array.isArray(res.data) ? (res.data as any as Tutor[]) : [];
+        return list;
+      }
+      throw new Error(res?.error || 'Failed to load tutors');
+    },
+    enabled: true,
+    staleTime: CACHE_TIME,
+    gcTime: CACHE_TIME,
+  });
+
+  const tutorError = tutorQueryError ? 'Failed to load tutors' : null;
+
+
+  // React Query: My Classes
+  const { 
+    data: myClasses = [], 
+    isLoading: loadingClasses, 
+    error: classesQueryError 
+  } = useQuery({
+    queryKey: ['myClasses', effectiveStudentId],
+    queryFn: async () => {
+      const res = await studentAPI.getMyClasses(Number(effectiveStudentId));
+      if (res?.success) {
+        return res.data?.classes || [];
+      }
+      throw new Error(res?.error || 'Failed to load classes');
+    },
+    enabled: !!effectiveStudentId,
+    staleTime: CACHE_TIME,
+    gcTime: CACHE_TIME,
+  });
+
+  const classesError = classesQueryError ? 'Failed to load classes' : null;
+
+  // Real-time upcoming class highlight (within next 30 minutes) - no memo, minimal caching
+  const {
+    data: upcomingData,
+    isFetching: fetchingUpcoming,
+    refetch: refetchUpcoming,
+  } = useQuery({
+    queryKey: ['upcomingClasses', effectiveStudentId],
+    queryFn: async () => {
+      if (!effectiveStudentId) return { upcoming: false, classes: [] } as any;
+      const res = await studentAPI.getUpcomingClasses(Number(effectiveStudentId));
+      if (res.success) return res.data;
+      return { upcoming: false, classes: [] };
+    },
+    enabled: !!effectiveStudentId,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
+  });
+
+  // Ensure academic info exists (educationLevel/stream) in context
+  useEffect(() => {
+    if (user?.role === 'STUDENT' && (user.educationLevel === undefined || user.stream === undefined)) {
+      // fire and forget to enrich user in context
+      loadStudentAcademicInfo().catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
 
   const displayName = useMemo(() => {
     const u = user as any;
     return u?.fullName || u?.name || u?.displayName || 'Student';
   }, [user]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      if (!effectiveStudentId) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        setIsLoading(true);
-        setError(null);
-        const [bookingsRes, statsRes] = await Promise.all([
-          bookingAPI.getStudentBookingDetails(Number(effectiveStudentId)),
-          studentAPI.loadStudentProfileInfo(Number(effectiveStudentId)),
-        ]);
-        if (!cancelled) {
-          if (bookingsRes.success) setBookings(bookingsRes.data || []);
-          else setError(bookingsRes.error || 'Failed to load bookings');
-          if (statsRes.success) setStats({
-            classCount: statsRes.data.classCount ?? 0,
-            sessionCount: statsRes.data.sessionCount ?? 0,
-          });
-        }
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'Failed to load data');
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    };
-    load();
-    return () => { cancelled = true; };
-  }, [effectiveStudentId]);
 
   const parsedUpcoming = useMemo(() => {
     const now = new Date();
@@ -94,532 +180,576 @@ export default function StudentDashboard() {
     return items.sort((a, b) => (a.nextDate!.getTime() - b.nextDate!.getTime())).slice(0, 3);
   }, [bookings]);
 
-  const formatDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US', {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
     });
-  }, []);
+  };
 
-  const formatTime = useCallback((timeString: string) => {
-    const date = new Date(`2000-01-01T${timeString}`);
-    return isNaN(date.getTime()) ? 'Invalid Time' : date.toLocaleTimeString('en-US', {
+  const formatTime = (timeString: string) => {
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     });
-  }, []);
-
-  // Filter subjects based on search query
-  const filteredSubjects = useMemo(() => {
-    const subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'IT', 'History', 'Economics'];
-    return subjects.filter((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [searchQuery]);
-
-  // Animation variants for cards
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-950 dark:via-blue-950 dark:to-slate-900">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Hero Welcome Section */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={cardVariants}
-          className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-blue-800 dark:via-blue-900 dark:to-indigo-900 rounded-2xl shadow-2xl"
-        >
-          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
-          <div className="relative px-6 sm:px-8 py-8 sm:py-12">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                  Welcome back, {displayName}! 👋
-                </h1>
-                <p className="text-blue-100 text-base sm:text-lg">
-                  Ready to unlock your potential today?
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
-                  <div className="text-xs text-blue-100">Total Classes</div>
-                  <div className="text-2xl font-bold text-white">{stats?.classCount ?? 0}</div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Enhanced Hero Section */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 shadow-2xl mb-8">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+          <div className="relative px-6 sm:px-8 lg:px-12 py-8 lg:py-12">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
+                    <span className="text-xs font-medium text-white/90">Welcome Back</span>
+                  </div>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
-                  <div className="text-xs text-blue-100">Sessions</div>
-                  <div className="text-2xl font-bold text-white">{stats?.sessionCount ?? 0}</div>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+                  Hello, <span className="bg-gradient-to-r from-blue-100 to-white bg-clip-text text-transparent">{displayName}</span>
+                </h1>
+                <p className="text-lg text-blue-100 mb-6 max-w-2xl">
+                  Your learning journey continues. Ready for today's session?
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    size="lg"
+                    className="bg-white text-blue-700 hover:bg-blue-50 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group"
+                    onClick={() => router.push('/dashboard/student/find-tutor')}
+                  >
+                    <Search className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
+                    Find a Tutor
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 border border-white/20 font-semibold"
+                    onClick={() => router.push('/dashboard/student/profile/classes')}
+                  >
+                    <GraduationCap className="h-5 w-5 mr-2" />
+                    My Classes
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-8 lg:mt-0 lg:ml-8 flex justify-center">
+                <div className="relative">
+                  <div className="w-32 h-32 lg:w-40 lg:h-40 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <div className="w-24 h-24 lg:w-32 lg:h-32 bg-white/20 rounded-full flex items-center justify-center">
+                      <GraduationCap className="w-12 h-12 lg:w-16 lg:h-16 text-white" />
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-400 rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Quick Actions */}
-        <TooltipProvider>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { icon: Search, label: 'Find Tutors', description: 'Discover expert instructors', path: '/dashboard/student/find-tutor', color: 'blue' },
-              { icon: GraduationCap, label: 'My Classes', description: 'View schedule & progress', path: '/dashboard/student/profile/classes', color: 'indigo' },
-              { icon: CreditCard, label: 'Payment', description: 'Manage your billing', path: '/dashboard/student/pay-for-next-month', color: 'emerald' },
-              { icon: CalendarDays, label: 'Bookings', description: 'Manage reservations', path: '/dashboard/student/profile/bookings', color: 'purple' },
-            ].map((action, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    initial="hidden"
-                    animate="visible"
-                    variants={cardVariants}
-                    transition={{ delay: index * 0.1 }}
-                    onClick={() => router.push(action.path)}
-                    className={`group relative overflow-hidden bg-white dark:bg-slate-900 rounded-xl p-5 shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-800 hover:border-${action.color}-300 dark:hover:border-${action.color}-700`}
-                    aria-label={action.label}
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br from-${action.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
-                    <div className="relative flex items-start gap-4">
-                      <div className={`p-3 bg-${action.color}-100 dark:bg-${action.color}-900/30 rounded-xl group-hover:scale-110 transition-transform`}>
-                        <action.icon className={`h-6 w-6 text-${action.color}-600 dark:text-${action.color}-400`} />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <div className="font-semibold text-slate-900 dark:text-white mb-1">{action.label}</div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">{action.description}</div>
-                      </div>
-                    </div>
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent>{action.description}</TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        </TooltipProvider>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Upcoming Classes */}
-            <motion.div initial="hidden" animate="visible" variants={cardVariants}>
-              <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-lg">
-                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl text-slate-900 dark:text-white flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        Upcoming Classes
-                      </CardTitle>
-                      <CardDescription className="text-slate-600 dark:text-slate-400 mt-1">
-                        Your next scheduled sessions
-                      </CardDescription>
-                    </div>
-                    <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                      {parsedUpcoming.length} Active
-                    </Badge>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Left Column - 2/3 width */}
+          <div className="xl:col-span-2 space-y-6">
+            {/* Upcoming class (30 minutes window) - always visible */}
+            <Card className="border-0 shadow-lg bg-emerald-50/70">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-emerald-700" />
                   </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {isLoading ? (
-                    <div className="space-y-4">
-                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className="flex items-center gap-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
-                          <Skeleton className="h-16 w-16 rounded-xl" />
-                          <div className="flex-1 space-y-2">
-                            <Skeleton className="h-4 w-40" />
-                            <Skeleton className="h-3 w-56" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : parsedUpcoming.length > 0 ? (
-                    <div className="space-y-3">
-                      <AnimatePresence>
-                        {parsedUpcoming.map(({ booking, nextDate }) => (
-                          <motion.div
-                            key={booking.booking_id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="group flex items-center gap-4 p-4 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-800/50 dark:to-transparent rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all cursor-pointer"
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => router.push(`/dashboard/student/profile/bookings/${booking.booking_id}`)}
-                            onKeyDown={(e) => e.key === 'Enter' && router.push(`/dashboard/student/profile/bookings/${booking.booking_id}`)}
-                          >
-                            <div className="flex-shrink-0 text-center bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200 dark:border-slate-700 min-w-[70px]">
-                              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{nextDate!.getDate()}</div>
-                              <div className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                                {nextDate!.toLocaleDateString('en-US', { month: 'short' })}
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-slate-900 dark:text-white mb-1 truncate">
-                                {booking.class_details.tutor.name}
-                              </h4>
-                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mb-2">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3.5 w-3.5" />
-                                  {formatTime(booking.class_details.class_times[0]?.start_time || '09:00')} -
-                                  {formatTime(booking.class_details.class_times[0]?.end_time || '10:00')}
-                                </span>
-                              </div>
-                              <Badge variant="secondary" className="text-xs">
-                                {booking.class_details.subject.name}
-                              </Badge>
-                            </div>
-                            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-shrink-0" />
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
-                        <CalendarDays className="h-8 w-8 text-slate-400" />
+                  <CardTitle className="text-emerald-800">Upcoming class (next 30 minutes)</CardTitle>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => refetchUpcoming()}
+                  disabled={fetchingUpcoming}
+                  className="border-emerald-300 text-emerald-700 p-2"
+                >
+                  <Clock
+                    className={`w-4 h-4 ${fetchingUpcoming ? 'animate-spin text-emerald-700' : 'text-emerald-700'}`}
+                  />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {!upcomingData ? (
+                  <div className="text-sm text-slate-600">Loading upcoming status…</div>
+                ) : upcomingData.upcoming && upcomingData.classes?.length > 0 ? (
+                  upcomingData.classes.slice(0, 1).map((c: any) => (
+                    <div
+                      key={c.classId}
+                      className="flex items-center justify-between p-4 bg-white rounded-xl border border-emerald-200"
+                    >
+                      <div>
+                        <div className="text-sm font-semibold text-slate-800">{c.subjectName || 'Class'}</div>
+                        <div className="text-xs text-slate-600">{c.tutorName} • {c.languageName}</div>
                       </div>
-                      <p className="text-slate-600 dark:text-slate-400 mb-4">No upcoming classes scheduled</p>
-                      <Button onClick={() => router.push('/dashboard/student/find-tutor')} className="bg-blue-600 hover:bg-blue-700">
-                        Find a Tutor
-                      </Button>
+                      {c.linkForMeeting ? (
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => window.open(c.linkForMeeting, '_blank')}
+                        >
+                          <Video className="w-4 h-4 mr-2" /> Join Now
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="border-emerald-300 text-emerald-700">
+                          No Link
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+                  ))
+                ) : (
+                  <div className="p-4 bg-white rounded-xl border border-emerald-200 text-sm text-slate-700">
+                    No upcoming classes in the next 30 minutes.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-gray-900">Quick Actions</CardTitle>
+                <CardDescription>Get started with your learning journey</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex-col gap-3 hover:bg-blue-50 hover:border-blue-200 group transition-all duration-200"
+                  onClick={() => router.push('/dashboard/student/find-tutor')}
+                >
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Search className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-gray-900">Find Tutor</div>
+                    <div className="text-xs text-gray-500 mt-1">Search & Book</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex-col gap-3 hover:bg-green-50 hover:border-green-200 group transition-all duration-200"
+                  onClick={() => router.push('/dashboard/student/profile/classes')}
+                >
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <GraduationCap className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-gray-900">My Classes</div>
+                    <div className="text-xs text-gray-500 mt-1">Schedule & Progress</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 group transition-all duration-200"
+                  onClick={() => router.push('/dashboard/student/pay-for-next-month')}
+                >
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <CreditCard className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-gray-900">Payment</div>
+                    <div className="text-xs text-gray-500 mt-1">Monthly Plans</div>
+                  </div>
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* Current Bookings */}
-            <motion.div initial="hidden" animate="visible" variants={cardVariants}>
-              <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-lg">
-                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl text-slate-900 dark:text-white flex items-center gap-2">
-                        <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        Current Bookings
-                      </CardTitle>
-                      <CardDescription className="text-slate-600 dark:text-slate-400 mt-1">
-                        Active and upcoming sessions
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push('/dashboard/student/profile/bookings')}
-                      className="border-slate-300 dark:border-slate-700"
-                      aria-label="View all bookings"
-                    >
-                      View All
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {isLoading ? (
-                    <div className="space-y-4">
-                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className="flex items-center gap-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
-                          <Skeleton className="h-12 w-12 rounded-full" />
-                          <div className="flex-1 space-y-2">
-                            <Skeleton className="h-4 w-40" />
-                            <Skeleton className="h-3 w-56" />
-                          </div>
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-gray-900">My Bookings</CardTitle>
+                  <CardDescription>Your scheduled learning sessions</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  onClick={() => router.push('/dashboard/student/profile/bookings')}
+                >
+                  View All
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex gap-4">
+                        <Skeleton className="h-16 w-16 rounded-xl" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-48" />
                         </div>
-                      ))}
-                    </div>
-                  ) : bookings.length > 0 ? (
-                    <div className="space-y-4">
-                      <AnimatePresence>
-                        {bookings.slice(0, 3).map((b: BookingDetails) => {
-                          const tutorInitials = b.class_details.tutor.name
-                            .split(' ')
-                            .map((n: string) => n[0])
-                            .join('')
-                            .slice(0, 2);
-                          const allSlots = (b.class_details.class_times || []).flatMap((ct) => ct.slots || []);
-                          const next = allSlots
-                            .map((d) => new Date(d))
-                            .filter((d) => !isNaN(d.getTime()) && d >= new Date())
-                            .sort((a, b) => a.getTime() - b.getTime())[0];
-                          return (
-                            <motion.div
-                              key={b.booking_id}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="group flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all"
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => router.push(`/dashboard/student/profile/bookings/${b.booking_id}`)}
-                              onKeyDown={(e) => e.key === 'Enter' && router.push(`/dashboard/student/profile/bookings/${b.booking_id}`)}
-                            >
-                              <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-700 shadow-sm">
-                                  <AvatarImage src={b.class_details.tutor.image || ''} alt={`${b.class_details.tutor.name}'s avatar`} />
-                                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-semibold">
-                                    {tutorInitials}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <h5 className="font-semibold text-sm text-slate-900 dark:text-white mb-0.5 truncate">
-                                    {b.class_details.tutor.name}
-                                  </h5>
-                                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <Badge variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                                      {b.class_details.subject.name}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs border-slate-300 dark:border-slate-600">
-                                      {b.class_details.language.name}
-                                    </Badge>
-                                  </div>
-                                  {next ? (
-                                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
-                                      <span className="flex items-center gap-1">
-                                        <CalendarDays className="h-3.5 w-3.5" />
-                                        {formatDate(next.toISOString())}
-                                      </span>
-                                      <span className="flex items-center gap-1">
-                                        <Clock className="h-3.5 w-3.5" />
-                                        {formatTime(b.class_details.class_times[0]?.start_time || '09:00')}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="text-xs text-slate-500 dark:text-slate-500">No upcoming date</div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3 flex-shrink-0">
-                                <Badge
-                                  variant={b.booking_status.toUpperCase() === 'CONFIRMED' ? 'default' : 'secondary'}
-                                  className={b.booking_status.toUpperCase() === 'CONFIRMED' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : ''}
-                                  aria-label={`Booking status: ${b.booking_status}`}
-                                >
-                                  {b.booking_status}
-                                </Badge>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => router.push('/dashboard/student/profile/bookings')}
-                                  className="hidden sm:flex"
-                                  aria-label="Manage booking"
-                                >
-                                  Manage
-                                </Button>
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </AnimatePresence>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
-                        <BookOpen className="h-8 w-8 text-slate-400" />
+                        <Skeleton className="h-8 w-8 rounded-md" />
                       </div>
-                      <p className="text-slate-600 dark:text-slate-400 mb-4">No bookings yet</p>
-                      <Button onClick={() => router.push('/dashboard/student/find-tutor')} className="bg-blue-600 hover:bg-blue-700">
-                        Find a Tutor
-                      </Button>
-                    </div>
-                  )}
-                  {error && (
-                    <div className="mt-4 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
-                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                      <span>{error}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Explore Subjects */}
-            <motion.div initial="hidden" animate="visible" variants={cardVariants}>
-              <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-lg">
-                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <CardTitle className="text-xl text-slate-900 dark:text-white flex items-center gap-2">
-                    <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    Explore Subjects
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-400 mt-1">
-                    Jump into topics that interest you
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="mb-4">
-                    <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        type="text"
-                        placeholder="Search subjects..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                        aria-label="Search subjects"
-                      />
-                    </div>
+                    ))}
                   </div>
-                  <AnimatePresence>
-                    <div className="flex flex-wrap gap-2">
-                      {filteredSubjects.map((s) => (
-                        <motion.button
-                          key={s}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          onClick={() => router.push(`/dashboard/student/find-tutor?subject=${s.toLowerCase()}`)}
-                          className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-300 rounded-full text-sm font-medium transition-all hover:scale-105"
-                          aria-label={`Explore ${s}`}
-                        >
-                          {s}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </AnimatePresence>
-                  {filteredSubjects.length === 0 && (
-                    <p className="text-slate-600 dark:text-slate-400 text-center mt-4">No subjects found</p>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+                ) : bookings.length > 0 ? (
+                  <div className="space-y-4">
+                    {bookings.slice(0, 3).map((b: BookingDetails, index) => {
+                      const tutorInitials = b.class_details.tutor.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .slice(0, 2);
+                      const allSlots = (b.class_details.class_times || []).flatMap((ct) => ct.slots || []);
+                      const next = allSlots
+                        .map((d) => new Date(d))
+                        .filter((d) => !isNaN(d.getTime()) && d >= new Date())
+                        .sort((a, c) => a.getTime() - c.getTime())[0];
+                      
+return (
+  <div
+    key={b.booking_id}
+    className="flex gap-4 group cursor-pointer"
+    onClick={() => router.push("/dashboard/student/profile/bookings")}
+  >
+    {/* 📅 Date Section */}
+    <div className="relative">
+      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex flex-col items-center justify-center text-white shadow-md group-hover:shadow-lg transition-shadow">
+        {next ? (
+          <>
+            <div className="text-lg font-bold leading-none">{next.getDate()}</div>
+            <div className="text-xs uppercase tracking-wide">
+              {next.toLocaleDateString("en-US", { month: "short" })}
+            </div>
+          </>
+        ) : (
+          <Calendar className="w-8 h-8" />
+        )}
+      </div>
+      {index < bookings.slice(0, 3).length - 1 && (
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-gray-200"></div>
+      )}
+    </div>
 
-            {/* Quick Stats Cards with Progress Tracker */}
-            <motion.div initial="hidden" animate="visible" variants={cardVariants}>
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white border-0 shadow-lg">
-                  <CardContent className="p-5 text-center">
-                    {isLoading ? (
-                      <Skeleton className="h-10 w-16 mx-auto bg-white/20" />
-                    ) : (
-                      <div className="text-3xl font-bold mb-1">{stats?.classCount ?? bookings.length}</div>
-                    )}
-                    <p className="text-sm text-blue-100 font-medium">Active Classes</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 text-white border-0 shadow-lg">
-                  <CardContent className="p-5 text-center">
-                    {isLoading ? (
-                      <Skeleton className="h-10 w-16 mx-auto bg-white/20" />
-                    ) : (
-                      <>
-                        <div className="text-3xl font-bold mb-1">{stats?.sessionCount ?? 0}</div>
-                        <div className="w-full bg-indigo-100/20 h-2 rounded-full mt-2">
-                          <div
-                            className="bg-indigo-300 h-2 rounded-full"
-                            style={{ width: `${Math.min((stats?.sessionCount ?? 0) * 10, 100)}%` }}
-                          />
-                        </div>
-                      </>
-                    )}
-                    <p className="text-sm text-indigo-100 font-medium mt-2">Completed Sessions</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </motion.div>
+    {/* 🧾 Booking Card */}
+    <div className="relative flex-1 p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-300 shadow-sm">
+      {/* ✅ Status Badge - Top Right */}
+      <div
+        className={`absolute top-3 right-3 flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border ${
+          b.booking_status.toUpperCase() === "CONFIRMED"
+            ? "bg-green-100 text-green-700 border-green-200"
+            : b.booking_status.toUpperCase() === "CANCELLED"
+            ? "bg-red-100 text-red-700 border-red-200"
+            : "bg-yellow-100 text-yellow-700 border-yellow-200"
+        }`}
+      >
+        {b.booking_status.toUpperCase() === "CONFIRMED" ? (
+          <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+        ) : b.booking_status.toUpperCase() === "CANCELLED" ? (
+          <AlertCircle className="w-3.5 h-3.5 text-red-600" />
+        ) : (
+          <Clock className="w-3.5 h-3.5 text-yellow-600" />
+        )}
+        {b.booking_status}
+      </div>
+
+      {/* Tutor Info */}
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <h4 className="font-semibold text-gray-900 text-lg group-hover:text-blue-600 transition-colors">
+            {b.class_details.tutor.name}
+          </h4>
+
+          {/* Subject + Language */}
+          <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-700">
+            <span className="flex items-center gap-1">
+              <BookOpen className="w-4 h-4 text-blue-500" />
+              <span className="font-medium text-gray-800">Subject:</span>{" "}
+              {b.class_details.subject.name}
+            </span>
+            <span className="flex items-center gap-1">
+              <Globe className="w-4 h-4 text-indigo-500" />
+              <span className="font-medium text-gray-800">Language:</span>{" "}
+              {b.class_details.language.name}
+            </span>
           </div>
 
-          {/* Right Column */}
+          {/* Date + Time */}
+          {next && (
+            <div className="flex items-center gap-4 text-sm text-gray-600 mt-3">
+              <span className="flex items-center gap-1">
+                <CalendarDays className="w-4 h-4 text-blue-500" />
+                {formatDate(next.toISOString())}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4 text-blue-500" />
+                {formatTime(b.class_details.class_times[0]?.start_time || "09:00")} -{" "}
+                {formatTime(b.class_details.class_times[0]?.end_time || "10:00")}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right Arrow */}
+        <ChevronRight className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    </div>
+  </div>
+);
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BookOpen className="w-10 h-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Bookings Yet</h3>
+                    <p className="text-gray-500 mb-4">Start your learning journey by finding a tutor</p>
+                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push('/dashboard/student/find-tutor')}>
+                      Find Your First Tutor
+                    </Button>
+                  </div>
+                )}
+                {error && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center text-sm text-red-700">
+                    <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                    {error}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+          </div>
+
+          {/* Right Column - 1/3 width */}
           <div className="space-y-6">
             {/* Announcements */}
-            <motion.div initial="hidden" animate="visible" variants={cardVariants}>
-              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-900 shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                    <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    Announcements
-                    <Badge variant="destructive" className="ml-2">2 New</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-slate-900/60 rounded-lg backdrop-blur-sm">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                      <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Keep Schedule Updated</div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                        Add preferred times for better tutor matches.
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-slate-900/60 rounded-lg backdrop-blur-sm">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
-                      <Award className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Monthly Classes</div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                        Pay early to secure sessions without interruption.
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
 
-            {/* Suggested Tutors */}
-            <motion.div initial="hidden" animate="visible" variants={cardVariants}>
-              <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-lg">
-                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <CardTitle className="text-lg text-slate-900 dark:text-white">Top Tutors</CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">Highly rated instructors</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <AnimatePresence>
-                      {suggestedTutors.map((tutor) => (
-                        <motion.div
-                          key={tutor.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="group flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => router.push(`/dashboard/student/tutor/${tutor.id}`)}
-                          onKeyDown={(e) => e.key === 'Enter' && router.push(`/dashboard/student/tutor/${tutor.id}`)}
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-700 shadow-sm">
-                              <AvatarImage src={tutor.image} alt={`${tutor.name}'s avatar`} />
-                              <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-semibold text-sm">
-                                {tutor.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h5 className="font-semibold text-sm text-slate-900 dark:text-white mb-0.5 truncate">
-                                {tutor.name}
-                              </h5>
-                              <p className="text-xs text-slate-600 dark:text-slate-400 mb-1 truncate">{tutor.subject}</p>
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{tutor.rating}</span>
-                              </div>
+
+            {/* Your Classes (from /students/me/classes) */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-indigo-600" />
+                    <span className="text-lg font-semibold text-gray-900">Your Classes</span>
+                  </div>
+                  <Link 
+                    href="/dashboard/student/profile/classes"
+                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                  >
+                    View All
+                  </Link>
+                </CardTitle>
+                <CardDescription>Access your current classes</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loadingClasses ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="w-12 h-12 rounded-full" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-3 w-1/2" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : myClasses.length > 0 ? (
+                  <div className="space-y-3">
+                    {myClasses.slice(0, 3).map((cls) => (
+                      <div 
+                        key={cls.classId} 
+                        className="group relative p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg hover:shadow-md transition-all duration-200 hover:border-indigo-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <div className="w-10 h-10 bg-indigo-100 border-2 border-indigo-200 rounded-full flex items-center justify-center shadow-sm">
+                              <BookOpen className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-gray-900 text-sm truncate">
+                                {cls.className || `Class #${cls.classId}`}
+                              </h4>
+                              <Badge variant="outline" className="text-xs px-2 py-0.5 bg-white/80 border-indigo-200 text-indigo-700">
+                                Live
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                              {cls.date && (
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {formatDate(cls.date)}
+                                </div>
+                              )}
+                              {cls.startTime && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {formatTime(cls.startTime)}{cls.endTime ? ` - ${formatTime(cls.endTime)}` : ''}
+                                </div>
+                              )}
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-2">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white mb-2">${tutor.price}<span className="text-xs font-normal text-slate-500">/hr</span></p>
+
+                          <div className="flex items-center gap-1">
+                            {cls.linkForMeeting ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 px-3 bg-green-100 hover:bg-green-200 text-green-700 hover:text-green-800 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  try { window.open(cls.linkForMeeting || '#', '_blank'); } catch {}
+                                }}
+                              >
+                                <Video className="w-4 h-4 mr-1" />
+                                Join
+                              </Button>
+                            ) : (
+                              <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-gray-200">
+                                No Link
+                              </Badge>
+                            )}
+                            
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="text-xs h-7 px-3 border-slate-300 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 dark:hover:border-blue-600"
-                              aria-label={`View ${tutor.name}'s profile`}
+                              variant="ghost"
+                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-indigo-100 hover:text-indigo-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Handle class details
+                              }}
                             >
-                              View
+                              <Calendar className="w-4 h-4" />
                             </Button>
                           </div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {myClasses.length > 3 && (
+                      <div className="text-center pt-2">
+                        <Link 
+                          href="/dashboard/student/profile/classes"
+                          className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                        >
+                          View {myClasses.length - 3} more classes
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
-                  <Button
-                    className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
-                    onClick={() => router.push('/dashboard/student/find-tutor')}
-                    aria-label="Browse all tutors"
-                  >
-                    Browse All Tutors
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-600 text-sm font-medium">No classes enrolled yet</p>
+                    <p className="text-xs text-gray-500 mt-1">Browse tutors to start learning</p>
+                    <Button className="mt-3 bg-indigo-600 hover:bg-indigo-700" onClick={() => router.push('/dashboard/student/find-tutor')}>
+                      Find a Class
+                    </Button>
+                  </div>
+                )}
+                {classesError && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md text-xs text-red-700 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    {classesError}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Suggested Tutors */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-gray-900">Suggested Tutors</CardTitle>
+                <CardDescription>Personalized for you</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loadingTutors ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-40" />
+                          <Skeleton className="h-3 w-56" />
+                        </div>
+                        <Skeleton className="h-6 w-6 rounded-md" />
+                      </div>
+                    ))}
+                  </div>
+                ) : suggestedTutors.length > 0 ? (
+                  <div className="space-y-4">
+                    {suggestedTutors.slice(0, 3).map((tutor) => {
+                      const name = [tutor.firstName, tutor.lastName].filter(Boolean).join(' ') || tutor.username || 'Tutor';
+                      const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                      const primarySubject = (Array.isArray(tutor.subjects) && tutor.subjects[0]?.subjectName) || 'Subject';
+                      const rating = typeof tutor.rating === 'number' ? tutor.rating.toFixed(1) : '4.5';
+                      const price = tutor.hourlyRate ?? tutor.subjects?.[0]?.hourlyRate ?? 0;
+                      return (
+                        <div key={tutor.tutorProfileId ?? tutor.id ?? `${tutor.username}-${tutor.email}`} className="group p-3 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200 cursor-pointer"
+                          onClick={() => router.push('/dashboard/student/find-tutor')}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-10 w-10 ring-2 ring-blue-100">
+                                <AvatarImage src={tutor.profileImage || ''} />
+                                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-sm">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h5 className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors">
+                                  {name}
+                                </h5>
+                                <p className="text-xs text-gray-500">{primarySubject}</p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs text-gray-600">{rating}</span>
+                                  <span className="text-xs text-gray-400">•</span>
+                                  <span className="text-xs text-gray-600">{price ? `Rs. ${price}/hr` : 'Rate N/A'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 mt-4" onClick={() => router.push('/dashboard/student/find-tutor')}>
+                      Browse All Tutors
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-sm">No tutor suggestions yet</p>
+                    <Button className="mt-3 bg-blue-600 hover:bg-blue-700" onClick={() => router.push('/dashboard/student/find-tutor')}>
+                      Find Tutors
+                    </Button>
+                  </div>
+                )}
+                {tutorError && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md text-xs text-red-700 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    {tutorError}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+
           </div>
         </div>
       </div>

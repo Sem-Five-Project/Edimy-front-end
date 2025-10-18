@@ -52,6 +52,7 @@ export default function BookingSlotsPage() {
     setMonthlyBookingData,
     setAvailabilitySlotsMap,
     setNextMonthSlots,
+    nextMonthSlots
   } = useBooking();
 
   const { formatPrice, selectedCurrency } = useCurrency();
@@ -581,7 +582,7 @@ const formatMonthDay = (d: string) => {
   const [Y,M,D] = d.split('-');
   return `${parseInt(M,10)}-${parseInt(D,10)}`;
 };
-  const fetchNextMonthPreview = async () => {
+const fetchNextMonthPreview = async () => {
   if (!tutor || currentPatterns.length === 0) return;
   setNextMonthError('');
   setNextMonthPatternsLoading(true);
@@ -601,7 +602,8 @@ const formatMonthDay = (d: string) => {
     // Determine next month/year based on first selected slot date or today
     const baseDateStr = selectedMonthlyOccurrences[0]?.date || dateToYMD(new Date());
     const base = new Date(baseDateStr + 'T00:00:00');
-    let nextMonth = base.getMonth() + 2; // JS month + 1 then next month => +2
+    // Using current date as of October 16, 2025. Next month is November.
+    let nextMonth = base.getMonth() + 2; // e.g., Oct(9) + 2 = 11 (Nov)
     let nextYear = base.getFullYear();
     if (nextMonth === 13) { nextMonth = 1; nextYear += 1; }
 
@@ -612,39 +614,41 @@ const formatMonthDay = (d: string) => {
       throw new Error(resp.error || 'Failed fetching next month slots');
     }
 
-    // Response shape example:
-    // [{ get_next_month_slots: [ { end_time,start_time,week_day,availability_id,available_dates:[...] }, ... ] }]
     const data = resp.data;
     console.log("Raw next-month API data:", data);
 
     let slotRecords: any[] = [];
 
+    // --- FIX START: This entire parsing block is now more robust ---
     if (Array.isArray(data)) {
-      // Case A: [{ get_next_month_slots: [...] }]
-      if (data[0]?.get_next_month_slots && Array.isArray(data[0].get_next_month_slots)) {
-        slotRecords = data[0].get_next_month_slots;
-      }
-      // Case B: direct array of slot objects
-      else if (data.length && (data[0].week_day || data[0].weekDay)) {
-        slotRecords = data;
-      }
-      // Case C: wrapper objects inside array
-      else {
-        const found = data.find(
-          (o: any) => o && Array.isArray(o.get_next_month_slots)
+      // First, check if the data is in the nested format like [{ get_next_month_slots: [...] }]
+      const nestedSlots = data[0]?.get_next_month_slots;
+      // const nestedSlots = data[0]?.get_next_month_slots;
+
+      const all_slot_ids = data[0]?.all_slot_ids;
+      setNextMonthSlots(all_slot_ids || []);
+
+      console.log("Nested slots check:", nestedSlots);
+      console.log("All slot IDs check:", all_slot_ids);
+
+      if (Array.isArray(nestedSlots)) {
+        slotRecords = nestedSlots;
+      } else {
+        // Otherwise, filter the array to get only the valid slot records,
+        // ignoring other objects like `all_slot_ids`.
+        slotRecords = data.filter(
+          (item: any) => item && (item.week_day || item.weekDay) && (item.start_time || item.startTime)
         );
-        if (found) slotRecords = found.get_next_month_slots;
       }
     } else if (data && typeof data === "object") {
-      // Case D: { get_next_month_slots: [...] }
+      // Handle cases where the response is an object wrapper
       if (Array.isArray((data as any).get_next_month_slots)) {
         slotRecords = (data as any).get_next_month_slots;
-      }
-      // Case E: { data: { get_next_month_slots: [...] } }
-      else if (Array.isArray((data as any).data?.get_next_month_slots)) {
+      } else if (Array.isArray((data as any).data?.get_next_month_slots)) {
         slotRecords = (data as any).data.get_next_month_slots;
       }
     }
+    // --- FIX END ---
 
     if (!Array.isArray(slotRecords)) slotRecords = [];
 
@@ -659,6 +663,7 @@ const formatMonthDay = (d: string) => {
 
         if (!weekDayRaw || !startRaw || !endRaw) {
           console.warn("Skipping malformed record:", r);
+
           return null;
         }
 
@@ -672,7 +677,7 @@ const formatMonthDay = (d: string) => {
         return {
           weekday: weekdayIdx,
           dayName: dayShort(weekdayIdx),
-            start: startRaw,
+          start: startRaw,
           end: endRaw,
           totalDates: dates.length,
           availableDates: dates.length,
@@ -683,12 +688,15 @@ const formatMonthDay = (d: string) => {
 
     console.log("Next month preview parsed:", preview);
 
-    if (preview.length === 0) {
+    if (preview.length === 0 && slotRecords.length > 0) {
+        // This case indicates a parsing error *after* normalization
+        console.error("Data was normalized but resulted in an empty preview. Check mapping logic.");
+        setNextMonthError("Could not parse the availability data for next month.");
+    } else if (preview.length === 0) {
       setNextMonthError("No next month availability returned for selected patterns.");
     }
 
     setNextMonthPreview(preview);
-    //setNextMonthPreview(preview);
   } catch (e: any) {
     setNextMonthError(e?.message || 'Failed to prepare next month preview');
     setNextMonthPreview([]);
@@ -697,6 +705,9 @@ const formatMonthDay = (d: string) => {
   }
 };
 
+useEffect(() => {
+  console.log("Next month slots updated:", nextMonthSlots);
+},[nextMonthSlots])
 
   // Trigger fetch when user toggles lock next month ON
   useEffect(() => {
@@ -917,6 +928,7 @@ const handleContinue = async () => {
         if (!groupedAvail[key]) groupedAvail[key] = [];
         groupedAvail[key].push(v.slotId);
       });
+      console.log("groupedAvail :",groupedAvail)
       setAvailabilitySlotsMap(groupedAvail);
 
 
@@ -1741,16 +1753,13 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                                     className={`relative flex flex-col items-center justify-center rounded-lg border px-2 py-2 min-w-[74px] text-[11px] font-medium select-none transition-all duration-200
                                       ${statusClasses(status)}
                                       ${
-                                        status === "AVAILABLE" && !groupChecked
+                                        status === "AVAILABLE"
                                           ? "cursor-pointer hover:shadow-md"
-                                          : status === "AVAILABLE" && groupChecked
-                                          ? "cursor-not-allowed opacity-80"
-                                          : "cursor-not-allowed"
+                                          : "cursor-not-allowed opacity-70"
                                       }
                                       ${chosen && status === "AVAILABLE" ? "border-green-500 ring-1 ring-green-400" : ""}
                                     `}
                                     onClick={() => {
-                                      if (groupChecked) return;
                                       if (status !== "AVAILABLE") return;
                                       if (isMonthlyClassType) {
                                         if (selectedTimeRange !== rangeKey) setSelectedTimeRange(rangeKey);
@@ -1792,6 +1801,12 @@ const languageOptions = tutor.languages?.map((language, index) => ({
                                         setError('');
                                         setSelectedMonthlyById(tempMap);
                                         setSelectedOccurrenceIds(Object.keys(tempMap).map(Number));
+                                        // Sync the Select All checkbox to reflect partial selections
+                                        const avail = (group.slots || []).filter((o: any) => o.status === 'AVAILABLE');
+                                        setRangeSelectAll(prev => ({
+                                          ...prev,
+                                          [rangeKey]: avail.every((o: any) => !!tempMap[o.slot_id])
+                                        }));
                                       } else {
                                         setSelectedTimeRange(rangeKey);
                                         setSelectedOccurrenceIds([occ.slot_id]);
@@ -2119,23 +2134,25 @@ const languageOptions = tutor.languages?.map((language, index) => ({
             
               onClick={async () => {
                 await handleContinue();
-                if (isMonthlyClassType) {
-                  // Set next month slot IDs in context if lockNextMonth is enabled
-                  // Note: The backend should provide slot IDs in the next month API response
-                  // For now, we'll store null and the backend will handle next month booking
-                  // based on the availability patterns
-                  if (lockNextMonth && nextMonthPreview.length > 0) {
-                    // TODO: Extract slot IDs from API response when available
-                    // The API should return slot IDs for next month slots
-                    console.log("Next month lock enabled with preview data:", nextMonthPreview);
-                    // For now, set empty array to indicate next month booking is requested
-                    setNextMonthSlots([]);
-                  } else {
-                    setNextMonthSlots(null);
-                  }
-                }
+                // if (isMonthlyClassType) {
+                //   // Set next month slot IDs in context if lockNextMonth is enabled
+                //   // Note: The backend should provide slot IDs in the next month API response
+                //   // For now, we'll store null and the backend will handle next month booking
+                //   // based on the availability patterns
+                //   if (lockNextMonth && nextMonthPreview.length > 0) {
+                //     // TODO: Extract slot IDs from API response when available
+                //     // The API should return slot IDs for next month slots
+                //     console.log("Next month lock enabled with preview data:", nextMonthPreview);
+                //     // For now, set empty array to indicate next month booking is requested
+                //     setNextMonthSlots([]);
+                //   } else {
+                //     setNextMonthSlots(null);
+                //   }
+                // }
               }}
-              disabled={!overrideExistingClass}
+              disabled={
+                !isValid() || (existingClassData?.exists === true && !overrideExistingClass)
+              }
               size="lg"
               className="w-full h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-bold rounded-xl border-0 relative overflow-hidden group"
             >

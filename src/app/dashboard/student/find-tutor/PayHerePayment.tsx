@@ -310,7 +310,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       }
 
       console.log("Payment window validation complete - proceeding to hash generation");
-      console.log("nextMonthSlots :",nextMonthSlots)
+      console.log("nextMonthSlots1111 :",nextMonthSlots)
       // Step 2: Generate hash for PayHere
       const amountStr = totalAmount.toFixed(2);
       const hashResponse = await bookingAPI.generatePayHereHash(orderMeta.orderId, amountStr, "LKR");
@@ -513,6 +513,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   const metadataYear = (ctxNextYear ?? (isMonthly ? metadataBaseDate.getFullYear() : null)) as number | null;
       // Build slots payload: prefer availability map, then lockedSlotIds, then nextMonthSlots as a fallback (repay case)
       const metadataSlots: Record<string, number[]> = (() => {
+        console.log("availabilitySlotsMap :",availabilitySlotsMap)
         if (availabilitySlotsMap && Object.keys(availabilitySlotsMap).length > 0) {
           return availabilitySlotsMap;
         }
@@ -526,6 +527,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         }
         return { default: [] };
       })();
+      console.log("defaulrt slots for metadataMonth:", metadataMonth);
 
       const customPayload = {
         paymentId: paymentIdForMetadata,
@@ -565,7 +567,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         merchant_id: hashResponse.data.merchantId || "1228143", // Fallback to sandbox merchant ID
         return_url: `${window.location.origin}/payment/return`,
         cancel_url: `${window.location.origin}/payment/cancel`,
-        notify_url: `https://5f977c88790c.ngrok-free.app/api/payment/payhere/notify`,
+        notify_url: `https://95b150d28080.ngrok-free.app/api/payment/payhere/notify`,
         order_id: orderMeta.orderId || orderMeta.order_id || `EDIMY-${Date.now()}`,
         items: isMonthly 
           ? `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} - Monthly (${monthlyBookingData?.totalSlots || 0} slots)`
