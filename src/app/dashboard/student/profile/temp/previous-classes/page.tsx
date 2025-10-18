@@ -1,110 +1,124 @@
 "use client";
-import React, { useState } from 'react';
-import { 
-  BookOpen, 
-  Calendar, 
-  Clock, 
-  Star, 
-  User, 
-  Search, 
+import React, { useState } from "react";
+import {
+  BookOpen,
+  Calendar,
+  Clock,
+  Star,
+  User,
+  Search,
   Filter,
   ChevronLeft,
   ChevronRight,
   CheckCircle,
-  XCircle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTheme } from '@/contexts/ThemeContext';
+  XCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Mock data for previous classes
 const mockClasses = [
   {
-    id: '1',
-    tutorName: 'Dr. Sarah Johnson',
-    subject: 'Mathematics',
-    date: '2023-05-15',
-    time: '14:00 - 16:00',
+    id: "1",
+    tutorName: "Dr. Sarah Johnson",
+    subject: "Mathematics",
+    date: "2023-05-15",
+    time: "14:00 - 16:00",
     duration: 2,
-    status: 'completed',
+    status: "completed",
     rating: 5,
-    feedback: 'Excellent session! Sarah explained complex calculus concepts very clearly.',
-    price: 60
+    feedback:
+      "Excellent session! Sarah explained complex calculus concepts very clearly.",
+    price: 60,
   },
   {
-    id: '2',
-    tutorName: 'Prof. Michael Chen',
-    subject: 'Physics',
-    date: '2023-05-10',
-    time: '10:00 - 12:00',
+    id: "2",
+    tutorName: "Prof. Michael Chen",
+    subject: "Physics",
+    date: "2023-05-10",
+    time: "10:00 - 12:00",
     duration: 2,
-    status: 'completed',
+    status: "completed",
     rating: 4,
-    feedback: 'Good session, but could have spent more time on practical examples.',
-    price: 70
+    feedback:
+      "Good session, but could have spent more time on practical examples.",
+    price: 70,
   },
   {
-    id: '3',
-    tutorName: 'Dr. Emily Wilson',
-    subject: 'Chemistry',
-    date: '2023-05-05',
-    time: '16:00 - 17:30',
+    id: "3",
+    tutorName: "Dr. Emily Wilson",
+    subject: "Chemistry",
+    date: "2023-05-05",
+    time: "16:00 - 17:30",
     duration: 1.5,
-    status: 'cancelled',
+    status: "cancelled",
     rating: null,
-    feedback: '',
-    price: 45
+    feedback: "",
+    price: 45,
   },
   {
-    id: '4',
-    tutorName: 'Dr. Robert Brown',
-    subject: 'Computer Science',
-    date: '2023-04-28',
-    time: '18:00 - 20:00',
+    id: "4",
+    tutorName: "Dr. Robert Brown",
+    subject: "Computer Science",
+    date: "2023-04-28",
+    time: "18:00 - 20:00",
     duration: 2,
-    status: 'completed',
+    status: "completed",
     rating: 5,
-    feedback: 'Robert is an amazing tutor! Helped me understand algorithms much better.',
-    price: 80
+    feedback:
+      "Robert is an amazing tutor! Helped me understand algorithms much better.",
+    price: 80,
   },
   {
-    id: '5',
-    tutorName: 'Dr. Lisa Anderson',
-    subject: 'Mathematics',
-    date: '2023-04-20',
-    time: '09:00 - 11:00',
+    id: "5",
+    tutorName: "Dr. Lisa Anderson",
+    subject: "Mathematics",
+    date: "2023-04-20",
+    time: "09:00 - 11:00",
     duration: 2,
-    status: 'completed',
+    status: "completed",
     rating: 4,
-    feedback: 'Very knowledgeable tutor, explained concepts well.',
-    price: 60
-  }
+    feedback: "Very knowledgeable tutor, explained concepts well.",
+    price: 60,
+  },
 ];
 
 const PreviousClassesPage = () => {
   const { actualTheme } = useTheme();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [subjectFilter, setSubjectFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [subjectFilter, setSubjectFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   // Filter classes based on search and filters
-  const filteredClasses = mockClasses.filter(cls => {
-    const matchesSearch = cls.tutorName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          cls.subject.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || cls.status === statusFilter;
-    const matchesSubject = subjectFilter === 'all' || cls.subject === subjectFilter;
+  const filteredClasses = mockClasses.filter((cls) => {
+    const matchesSearch =
+      cls.tutorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cls.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || cls.status === statusFilter;
+    const matchesSubject =
+      subjectFilter === "all" || cls.subject === subjectFilter;
     return matchesSearch && matchesStatus && matchesSubject;
   });
 
   // Pagination
   const totalPages = Math.ceil(filteredClasses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedClasses = filteredClasses.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedClasses = filteredClasses.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -112,9 +126,11 @@ const PreviousClassesPage = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>;
-      case 'cancelled':
+      case "completed":
+        return (
+          <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>
+        );
+      case "cancelled":
         return <Badge className="bg-red-500 hover:bg-red-600">Cancelled</Badge>;
       default:
         return <Badge className="bg-gray-500 hover:bg-gray-600">Pending</Badge>;
@@ -122,23 +138,27 @@ const PreviousClassesPage = () => {
   };
 
   const renderStars = (rating: number | null) => {
-    if (rating === null) return 'Not rated yet';
-    
+    if (rating === null) return "Not rated yet";
+
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+        className={`w-4 h-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
       />
     ));
   };
 
   return (
-    <div className={`min-h-screen ${actualTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+    <div
+      className={`min-h-screen ${actualTheme === "dark" ? "bg-gray-900" : "bg-gray-50"} p-4`}
+    >
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Previous Classes</h1>
-          <Button 
-            variant="outline" 
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+            Previous Classes
+          </h1>
+          <Button
+            variant="outline"
             onClick={() => window.history.back()}
             className="flex items-center gap-2"
           >
@@ -190,7 +210,9 @@ const PreviousClassesPage = () => {
                     <SelectItem value="Mathematics">Mathematics</SelectItem>
                     <SelectItem value="Physics">Physics</SelectItem>
                     <SelectItem value="Chemistry">Chemistry</SelectItem>
-                    <SelectItem value="Computer Science">Computer Science</SelectItem>
+                    <SelectItem value="Computer Science">
+                      Computer Science
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -204,7 +226,9 @@ const PreviousClassesPage = () => {
             <Card>
               <CardContent className="py-12 text-center">
                 <BookOpen className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">No classes found</h3>
+                <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">
+                  No classes found
+                </h3>
                 <p className="text-gray-600 dark:text-gray-400">
                   Try adjusting your search or filter criteria
                 </p>
@@ -257,7 +281,7 @@ const PreviousClassesPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {cls.status === 'completed' && cls.rating === null && (
+                      {cls.status === "completed" && cls.rating === null && (
                         <Button variant="outline" size="sm">
                           Rate Class
                         </Button>
@@ -284,7 +308,7 @@ const PreviousClassesPage = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            
+
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Button
                 key={page}
@@ -295,7 +319,7 @@ const PreviousClassesPage = () => {
                 {page}
               </Button>
             ))}
-            
+
             <Button
               variant="outline"
               size="sm"

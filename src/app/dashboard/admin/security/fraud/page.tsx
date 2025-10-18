@@ -1,24 +1,75 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, MoreHorizontal, Eye, AlertTriangle, Shield, CreditCard, Users, Activity, Ban, FileText, Hash, Calendar, User } from "lucide-react";
+import {
+  Search,
+  MoreHorizontal,
+  Eye,
+  AlertTriangle,
+  Shield,
+  CreditCard,
+  Users,
+  Activity,
+  Ban,
+  FileText,
+  Hash,
+  Calendar,
+  User,
+} from "lucide-react";
 
 interface FraudAlert {
   id: string;
-  type: 'Multiple Accounts' | 'Suspicious Payment' | 'Session Abuse' | 'Login Pattern';
+  type:
+    | "Multiple Accounts"
+    | "Suspicious Payment"
+    | "Session Abuse"
+    | "Login Pattern";
   description: string;
-  severity: 'Low' | 'Medium' | 'High' | 'Critical';
+  severity: "Low" | "Medium" | "High" | "Critical";
   detectedAt: string;
   affectedUsers: string[];
   isActive: boolean;
@@ -30,11 +81,15 @@ interface FraudCase {
   usersInvolved: Array<{
     id: string;
     name: string;
-    role: 'Student' | 'Tutor';
+    role: "Student" | "Tutor";
   }>;
-  issueType: 'Multiple Accounts' | 'Suspicious Payment' | 'Session Abuse' | 'Login Pattern';
-  severity: 'Low' | 'Medium' | 'High' | 'Critical';
-  status: 'Open' | 'Investigating' | 'Resolved' | 'Closed';
+  issueType:
+    | "Multiple Accounts"
+    | "Suspicious Payment"
+    | "Session Abuse"
+    | "Login Pattern";
+  severity: "Low" | "Medium" | "High" | "Critical";
+  status: "Open" | "Investigating" | "Resolved" | "Closed";
   openedDate: string;
   lastUpdated: string;
   investigationNotes: string;
@@ -45,133 +100,148 @@ interface FraudCase {
 
 const mockFraudAlerts: FraudAlert[] = [
   {
-    id: '1',
-    type: 'Multiple Accounts',
-    description: '3 accounts detected using the same payment method and device fingerprint',
-    severity: 'High',
-    detectedAt: '2024-03-15 14:30:00',
-    affectedUsers: ['user-001', 'user-002', 'user-003'],
-    isActive: true
+    id: "1",
+    type: "Multiple Accounts",
+    description:
+      "3 accounts detected using the same payment method and device fingerprint",
+    severity: "High",
+    detectedAt: "2024-03-15 14:30:00",
+    affectedUsers: ["user-001", "user-002", "user-003"],
+    isActive: true,
   },
   {
-    id: '2',
-    type: 'Suspicious Payment',
-    description: 'Multiple failed payment attempts followed by successful payment from different card',
-    severity: 'Medium',
-    detectedAt: '2024-03-15 13:45:00',
-    affectedUsers: ['user-004'],
-    isActive: true
+    id: "2",
+    type: "Suspicious Payment",
+    description:
+      "Multiple failed payment attempts followed by successful payment from different card",
+    severity: "Medium",
+    detectedAt: "2024-03-15 13:45:00",
+    affectedUsers: ["user-004"],
+    isActive: true,
   },
   {
-    id: '3',
-    type: 'Login Pattern',
-    description: '15 failed login attempts from different IP addresses within 5 minutes',
-    severity: 'Critical',
-    detectedAt: '2024-03-15 12:20:00',
-    affectedUsers: ['tutor-001'],
-    isActive: false
+    id: "3",
+    type: "Login Pattern",
+    description:
+      "15 failed login attempts from different IP addresses within 5 minutes",
+    severity: "Critical",
+    detectedAt: "2024-03-15 12:20:00",
+    affectedUsers: ["tutor-001"],
+    isActive: false,
   },
   {
-    id: '4',
-    type: 'Session Abuse',
-    description: 'User booking and cancelling sessions repeatedly to abuse refund policy',
-    severity: 'Medium',
-    detectedAt: '2024-03-15 11:15:00',
-    affectedUsers: ['user-005'],
-    isActive: true
-  }
+    id: "4",
+    type: "Session Abuse",
+    description:
+      "User booking and cancelling sessions repeatedly to abuse refund policy",
+    severity: "Medium",
+    detectedAt: "2024-03-15 11:15:00",
+    affectedUsers: ["user-005"],
+    isActive: true,
+  },
 ];
 
 const mockFraudCases: FraudCase[] = [
   {
-    id: '1',
-    caseId: 'FRAUD-2024-001',
+    id: "1",
+    caseId: "FRAUD-2024-001",
     usersInvolved: [
-      { id: 'user-001', name: 'Alex Chen', role: 'Student' },
-      { id: 'user-002', name: 'John Doe', role: 'Student' },
-      { id: 'user-003', name: 'Jane Smith', role: 'Student' }
+      { id: "user-001", name: "Alex Chen", role: "Student" },
+      { id: "user-002", name: "John Doe", role: "Student" },
+      { id: "user-003", name: "Jane Smith", role: "Student" },
     ],
-    issueType: 'Multiple Accounts',
-    severity: 'High',
-    status: 'Investigating',
-    openedDate: '2024-03-15',
-    lastUpdated: '2024-03-16',
-    investigationNotes: 'All three accounts created within 24 hours, same payment method, similar email patterns. Investigating if these are legitimate separate users.',
+    issueType: "Multiple Accounts",
+    severity: "High",
+    status: "Investigating",
+    openedDate: "2024-03-15",
+    lastUpdated: "2024-03-16",
+    investigationNotes:
+      "All three accounts created within 24 hours, same payment method, similar email patterns. Investigating if these are legitimate separate users.",
     evidenceItems: [
-      'Same credit card ending in 1234',
-      'IP address 192.168.1.100 used for all registrations',
-      'Similar email patterns (variations of alexchen)',
-      'Device fingerprint match across all accounts'
-    ]
+      "Same credit card ending in 1234",
+      "IP address 192.168.1.100 used for all registrations",
+      "Similar email patterns (variations of alexchen)",
+      "Device fingerprint match across all accounts",
+    ],
   },
   {
-    id: '2',
-    caseId: 'FRAUD-2024-002',
+    id: "2",
+    caseId: "FRAUD-2024-002",
     usersInvolved: [
-      { id: 'tutor-001', name: 'Dr. Sarah Johnson', role: 'Tutor' }
+      { id: "tutor-001", name: "Dr. Sarah Johnson", role: "Tutor" },
     ],
-    issueType: 'Login Pattern',
-    severity: 'Critical',
-    status: 'Resolved',
-    openedDate: '2024-03-14',
-    lastUpdated: '2024-03-15',
-    investigationNotes: 'Brute force attack detected. User confirmed account compromise. Password reset enforced and 2FA enabled.',
+    issueType: "Login Pattern",
+    severity: "Critical",
+    status: "Resolved",
+    openedDate: "2024-03-14",
+    lastUpdated: "2024-03-15",
+    investigationNotes:
+      "Brute force attack detected. User confirmed account compromise. Password reset enforced and 2FA enabled.",
     evidenceItems: [
-      '67 failed login attempts in 10 minutes',
-      'Login attempts from 15 different countries',
-      'User reported suspicious activity',
-      'Successful login from known user device after attack'
+      "67 failed login attempts in 10 minutes",
+      "Login attempts from 15 different countries",
+      "User reported suspicious activity",
+      "Successful login from known user device after attack",
     ],
-    resolution: 'Account secured, password reset, 2FA enabled',
-    resolutionActions: ['Password Reset', '2FA Enforcement', 'Security Training']
+    resolution: "Account secured, password reset, 2FA enabled",
+    resolutionActions: [
+      "Password Reset",
+      "2FA Enforcement",
+      "Security Training",
+    ],
   },
   {
-    id: '3',
-    caseId: 'FRAUD-2024-003',
-    usersInvolved: [
-      { id: 'user-005', name: 'Emma Wilson', role: 'Student' }
-    ],
-    issueType: 'Session Abuse',
-    severity: 'Medium',
-    status: 'Open',
-    openedDate: '2024-03-13',
-    lastUpdated: '2024-03-14',
-    investigationNotes: 'User has cancelled 8 sessions within 24 hours of booking, always requesting full refunds. Pattern suggests policy abuse.',
+    id: "3",
+    caseId: "FRAUD-2024-003",
+    usersInvolved: [{ id: "user-005", name: "Emma Wilson", role: "Student" }],
+    issueType: "Session Abuse",
+    severity: "Medium",
+    status: "Open",
+    openedDate: "2024-03-13",
+    lastUpdated: "2024-03-14",
+    investigationNotes:
+      "User has cancelled 8 sessions within 24 hours of booking, always requesting full refunds. Pattern suggests policy abuse.",
     evidenceItems: [
-      '12 bookings in past week',
-      '8 cancellations within refund period',
-      'Always books premium tutors',
-      'Cancellation reasons vary but timeline is consistent'
-    ]
-  }
+      "12 bookings in past week",
+      "8 cancellations within refund period",
+      "Always books premium tutors",
+      "Cancellation reasons vary but timeline is consistent",
+    ],
+  },
 ];
 
 export default function FraudMonitoring() {
   const [alerts, setAlerts] = useState<FraudAlert[]>(mockFraudAlerts);
   const [cases, setCases] = useState<FraudCase[]>(mockFraudCases);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [severityFilter, setSeverityFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
   const [isViewCaseDialogOpen, setIsViewCaseDialogOpen] = useState(false);
   const [isInvestigateDialogOpen, setIsInvestigateDialogOpen] = useState(false);
   const [currentCase, setCurrentCase] = useState<FraudCase | null>(null);
-  const [investigationNotes, setInvestigationNotes] = useState('');
+  const [investigationNotes, setInvestigationNotes] = useState("");
 
-  const filteredCases = cases.filter(fraudCase => {
-    const matchesSearch = fraudCase.caseId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         fraudCase.usersInvolved.some(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesSeverity = severityFilter === 'all' || fraudCase.severity === severityFilter;
-    const matchesStatus = statusFilter === 'all' || fraudCase.status === statusFilter;
-    const matchesType = typeFilter === 'all' || fraudCase.issueType === typeFilter;
-    
+  const filteredCases = cases.filter((fraudCase) => {
+    const matchesSearch =
+      fraudCase.caseId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fraudCase.usersInvolved.some((user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    const matchesSeverity =
+      severityFilter === "all" || fraudCase.severity === severityFilter;
+    const matchesStatus =
+      statusFilter === "all" || fraudCase.status === statusFilter;
+    const matchesType =
+      typeFilter === "all" || fraudCase.issueType === typeFilter;
+
     return matchesSearch && matchesSeverity && matchesStatus && matchesType;
   });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedCases(filteredCases.map(fraudCase => fraudCase.id));
+      setSelectedCases(filteredCases.map((fraudCase) => fraudCase.id));
     } else {
       setSelectedCases([]);
     }
@@ -181,16 +251,25 @@ export default function FraudMonitoring() {
     if (checked) {
       setSelectedCases([...selectedCases, caseId]);
     } else {
-      setSelectedCases(selectedCases.filter(id => id !== caseId));
+      setSelectedCases(selectedCases.filter((id) => id !== caseId));
     }
   };
 
-  const handleUpdateCaseStatus = (caseId: string, newStatus: 'Open' | 'Investigating' | 'Resolved' | 'Closed') => {
-    setCases(cases.map(fraudCase => 
-      fraudCase.id === caseId 
-        ? { ...fraudCase, status: newStatus, lastUpdated: new Date().toISOString().split('T')[0] }
-        : fraudCase
-    ));
+  const handleUpdateCaseStatus = (
+    caseId: string,
+    newStatus: "Open" | "Investigating" | "Resolved" | "Closed",
+  ) => {
+    setCases(
+      cases.map((fraudCase) =>
+        fraudCase.id === caseId
+          ? {
+              ...fraudCase,
+              status: newStatus,
+              lastUpdated: new Date().toISOString().split("T")[0],
+            }
+          : fraudCase,
+      ),
+    );
   };
 
   const handleSuspendUser = (userId: string) => {
@@ -211,57 +290,60 @@ export default function FraudMonitoring() {
 
   const handleSaveInvestigation = () => {
     if (!currentCase) return;
-    
-    setCases(cases.map(fraudCase => 
-      fraudCase.id === currentCase.id 
-        ? { 
-            ...fraudCase, 
-            investigationNotes, 
-            lastUpdated: new Date().toISOString().split('T')[0],
-            status: 'Investigating' as const
-          }
-        : fraudCase
-    ));
+
+    setCases(
+      cases.map((fraudCase) =>
+        fraudCase.id === currentCase.id
+          ? {
+              ...fraudCase,
+              investigationNotes,
+              lastUpdated: new Date().toISOString().split("T")[0],
+              status: "Investigating" as const,
+            }
+          : fraudCase,
+      ),
+    );
     setIsInvestigateDialogOpen(false);
     setCurrentCase(null);
-    setInvestigationNotes('');
+    setInvestigationNotes("");
   };
 
   const getSeverityBadgeVariant = (severity: string) => {
     switch (severity) {
-      case 'Critical':
-        return 'destructive';
-      case 'High':
-        return 'destructive';
-      case 'Medium':
-        return 'secondary';
-      case 'Low':
-        return 'outline';
+      case "Critical":
+        return "destructive";
+      case "High":
+        return "destructive";
+      case "Medium":
+        return "secondary";
+      case "Low":
+        return "outline";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'Open':
-        return 'destructive';
-      case 'Investigating':
-        return 'secondary';
-      case 'Resolved':
-        return 'default';
-      case 'Closed':
-        return 'outline';
+      case "Open":
+        return "destructive";
+      case "Investigating":
+        return "secondary";
+      case "Resolved":
+        return "default";
+      case "Closed":
+        return "outline";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
   const alertsStats = {
     totalAlerts: alerts.length,
-    activeAlerts: alerts.filter(alert => alert.isActive).length,
-    criticalAlerts: alerts.filter(alert => alert.severity === 'Critical').length,
-    resolvedToday: 3
+    activeAlerts: alerts.filter((alert) => alert.isActive).length,
+    criticalAlerts: alerts.filter((alert) => alert.severity === "Critical")
+      .length,
+    resolvedToday: 3,
   };
 
   return (
@@ -288,7 +370,9 @@ export default function FraudMonitoring() {
             <Activity className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{alertsStats.activeAlerts}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {alertsStats.activeAlerts}
+            </div>
             <p className="text-xs text-muted-foreground">Requires attention</p>
           </CardContent>
         </Card>
@@ -298,17 +382,23 @@ export default function FraudMonitoring() {
             <Shield className="h-4 w-4 text-red-700" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">{alertsStats.criticalAlerts}</div>
+            <div className="text-2xl font-bold text-red-700">
+              {alertsStats.criticalAlerts}
+            </div>
             <p className="text-xs text-muted-foreground">High priority</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolved Today</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Resolved Today
+            </CardTitle>
             <FileText className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{alertsStats.resolvedToday}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {alertsStats.resolvedToday}
+            </div>
             <p className="text-xs text-muted-foreground">Cases closed</p>
           </CardContent>
         </Card>
@@ -324,31 +414,50 @@ export default function FraudMonitoring() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {alerts.filter(alert => alert.isActive).map((alert) => (
-              <div key={alert.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <AlertTriangle className={`h-5 w-5 ${
-                    alert.severity === 'Critical' ? 'text-red-600' :
-                    alert.severity === 'High' ? 'text-orange-600' :
-                    alert.severity === 'Medium' ? 'text-yellow-600' : 'text-blue-600'
-                  }`} />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={getSeverityBadgeVariant(alert.severity)}>
-                        {alert.severity}
-                      </Badge>
-                      <span className="font-medium">{alert.type}</span>
+            {alerts
+              .filter((alert) => alert.isActive)
+              .map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex items-center space-x-4">
+                    <AlertTriangle
+                      className={`h-5 w-5 ${
+                        alert.severity === "Critical"
+                          ? "text-red-600"
+                          : alert.severity === "High"
+                            ? "text-orange-600"
+                            : alert.severity === "Medium"
+                              ? "text-yellow-600"
+                              : "text-blue-600"
+                      }`}
+                    />
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <Badge
+                          variant={getSeverityBadgeVariant(alert.severity)}
+                        >
+                          {alert.severity}
+                        </Badge>
+                        <span className="font-medium">{alert.type}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {alert.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Detected: {alert.detectedAt}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{alert.description}</p>
-                    <p className="text-xs text-muted-foreground">Detected: {alert.detectedAt}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline">
+                      {alert.affectedUsers.length} user(s)
+                    </Badge>
+                    <Button size="sm">Investigate</Button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline">{alert.affectedUsers.length} user(s)</Badge>
-                  <Button size="sm">Investigate</Button>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>
@@ -381,8 +490,12 @@ export default function FraudMonitoring() {
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-gray-800 border shadow-lg">
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Multiple Accounts">Multiple Accounts</SelectItem>
-                <SelectItem value="Suspicious Payment">Suspicious Payment</SelectItem>
+                <SelectItem value="Multiple Accounts">
+                  Multiple Accounts
+                </SelectItem>
+                <SelectItem value="Suspicious Payment">
+                  Suspicious Payment
+                </SelectItem>
                 <SelectItem value="Session Abuse">Session Abuse</SelectItem>
                 <SelectItem value="Login Pattern">Login Pattern</SelectItem>
               </SelectContent>
@@ -436,7 +549,10 @@ export default function FraudMonitoring() {
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
-                      checked={selectedCases.length === filteredCases.length && filteredCases.length > 0}
+                      checked={
+                        selectedCases.length === filteredCases.length &&
+                        filteredCases.length > 0
+                      }
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
@@ -455,7 +571,9 @@ export default function FraudMonitoring() {
                     <TableCell>
                       <Checkbox
                         checked={selectedCases.includes(fraudCase.id)}
-                        onCheckedChange={(checked) => handleSelectCase(fraudCase.id, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleSelectCase(fraudCase.id, checked as boolean)
+                        }
                       />
                     </TableCell>
                     <TableCell>
@@ -486,7 +604,9 @@ export default function FraudMonitoring() {
                       <Badge variant="outline">{fraudCase.issueType}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getSeverityBadgeVariant(fraudCase.severity)}>
+                      <Badge
+                        variant={getSeverityBadgeVariant(fraudCase.severity)}
+                      >
                         {fraudCase.severity}
                       </Badge>
                     </TableCell>
@@ -508,26 +628,48 @@ export default function FraudMonitoring() {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border shadow-lg">
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-white dark:bg-gray-800 border shadow-lg"
+                        >
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openViewCaseDialog(fraudCase)}>
+                          <DropdownMenuItem
+                            onClick={() => openViewCaseDialog(fraudCase)}
+                          >
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openInvestigateDialog(fraudCase)}>
+                          <DropdownMenuItem
+                            onClick={() => openInvestigateDialog(fraudCase)}
+                          >
                             <FileText className="mr-2 h-4 w-4" />
                             Investigate
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleUpdateCaseStatus(fraudCase.id, 'Investigating')}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleUpdateCaseStatus(
+                                fraudCase.id,
+                                "Investigating",
+                              )
+                            }
+                          >
                             Mark Investigating
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateCaseStatus(fraudCase.id, 'Resolved')}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleUpdateCaseStatus(fraudCase.id, "Resolved")
+                            }
+                          >
                             Mark Resolved
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => fraudCase.usersInvolved.forEach(user => handleSuspendUser(user.id))}
+                            onClick={() =>
+                              fraudCase.usersInvolved.forEach((user) =>
+                                handleSuspendUser(user.id),
+                              )
+                            }
                           >
                             <Ban className="mr-2 h-4 w-4" />
                             Suspend Users
@@ -550,7 +692,10 @@ export default function FraudMonitoring() {
       </Card>
 
       {/* View Case Details Dialog */}
-      <Dialog open={isViewCaseDialogOpen} onOpenChange={setIsViewCaseDialogOpen}>
+      <Dialog
+        open={isViewCaseDialogOpen}
+        onOpenChange={setIsViewCaseDialogOpen}
+      >
         <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Fraud Case Details</DialogTitle>
@@ -564,7 +709,10 @@ export default function FraudMonitoring() {
                 </div>
                 <div>
                   <Label className="font-semibold">Status</Label>
-                  <Badge variant={getStatusBadgeVariant(currentCase.status)} className="w-fit mt-1">
+                  <Badge
+                    variant={getStatusBadgeVariant(currentCase.status)}
+                    className="w-fit mt-1"
+                  >
                     {currentCase.status}
                   </Badge>
                 </div>
@@ -579,7 +727,10 @@ export default function FraudMonitoring() {
                 </div>
                 <div>
                   <Label className="font-semibold">Severity</Label>
-                  <Badge variant={getSeverityBadgeVariant(currentCase.severity)} className="w-fit mt-1">
+                  <Badge
+                    variant={getSeverityBadgeVariant(currentCase.severity)}
+                    className="w-fit mt-1"
+                  >
                     {currentCase.severity}
                   </Badge>
                 </div>
@@ -589,7 +740,10 @@ export default function FraudMonitoring() {
                 <Label className="font-semibold">Users Involved</Label>
                 <div className="mt-2 space-y-2">
                   {currentCase.usersInvolved.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-2 border rounded">
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-2 border rounded"
+                    >
                       <div className="flex items-center">
                         <User className="mr-2 h-4 w-4 text-muted-foreground" />
                         <span>{user.name}</span>
@@ -597,7 +751,9 @@ export default function FraudMonitoring() {
                           {user.role}
                         </Badge>
                       </div>
-                      <Button variant="link" size="sm">View Profile</Button>
+                      <Button variant="link" size="sm">
+                        View Profile
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -607,7 +763,10 @@ export default function FraudMonitoring() {
                 <Label className="font-semibold">Evidence</Label>
                 <div className="mt-2 space-y-1">
                   {currentCase.evidenceItems.map((evidence, index) => (
-                    <div key={index} className="text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                    <div
+                      key={index}
+                      className="text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                    >
                       • {evidence}
                     </div>
                   ))}
@@ -629,7 +788,11 @@ export default function FraudMonitoring() {
                     {currentCase.resolutionActions && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {currentCase.resolutionActions.map((action, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {action}
                           </Badge>
                         ))}
@@ -652,7 +815,10 @@ export default function FraudMonitoring() {
             </div>
           )}
           <DialogFooter>
-            <Button type="button" onClick={() => setIsViewCaseDialogOpen(false)}>
+            <Button
+              type="button"
+              onClick={() => setIsViewCaseDialogOpen(false)}
+            >
               Close
             </Button>
           </DialogFooter>
@@ -660,7 +826,10 @@ export default function FraudMonitoring() {
       </Dialog>
 
       {/* Investigation Dialog */}
-      <Dialog open={isInvestigateDialogOpen} onOpenChange={setIsInvestigateDialogOpen}>
+      <Dialog
+        open={isInvestigateDialogOpen}
+        onOpenChange={setIsInvestigateDialogOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Update Investigation</DialogTitle>
@@ -681,7 +850,11 @@ export default function FraudMonitoring() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsInvestigateDialogOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsInvestigateDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="button" onClick={handleSaveInvestigation}>

@@ -1,16 +1,20 @@
 "use client";
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Currency, CURRENCIES, CurrencyContextType } from '@/types';
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { Currency, CURRENCIES, CurrencyContextType } from "@/types";
 
-const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
+const CurrencyContext = createContext<CurrencyContextType | undefined>(
+  undefined,
+);
 
 interface CurrencyProviderProps {
   children: ReactNode;
 }
 
-export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
+export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
+  children,
+}) => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(
-    CURRENCIES.find(c => c.code === 'LKR') || CURRENCIES[0]
+    CURRENCIES.find((c) => c.code === "LKR") || CURRENCIES[0],
   ); // Default to LKR
 
   const setCurrency = (currency: Currency) => {
@@ -18,7 +22,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   };
 
   const convertPrice = (lkrPrice: number): number => {
-    return Math.round((lkrPrice * selectedCurrency.rate) * 100) / 100;
+    return Math.round(lkrPrice * selectedCurrency.rate * 100) / 100;
   };
 
   const formatPrice = (lkrPrice: number): string => {
@@ -43,7 +47,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 export const useCurrency = (): CurrencyContextType => {
   const context = useContext(CurrencyContext);
   if (!context) {
-    throw new Error('useCurrency must be used within a CurrencyProvider');
+    throw new Error("useCurrency must be used within a CurrencyProvider");
   }
   return context;
 };

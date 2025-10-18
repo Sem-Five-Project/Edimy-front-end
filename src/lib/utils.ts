@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,11 +11,11 @@ export function cn(...inputs: ClassValue[]) {
  * @returns Formatted date string (e.g., "Monday, January 1, 2024")
  */
 export const formatDate = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   }).format(new Date(date));
 };
 
@@ -26,17 +26,17 @@ export const formatDate = (date: Date): string => {
  */
 export const formatTime = (time: string): string => {
   try {
-    const [hours, minutes] = time.split(':');
+    const [hours, minutes] = time.split(":");
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes));
 
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
       hour12: true,
     });
   } catch (error) {
-    console.error('Error formatting time:', error);
+    console.error("Error formatting time:", error);
     return time; // Return original time if parsing fails
   }
 };

@@ -1,15 +1,21 @@
 "use client";
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { authAPI } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { LoginCredentials } from '@/types';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { authAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { LoginCredentials } from "@/types";
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -19,31 +25,31 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const router = useRouter();
   const { login } = useAuth();
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    usernameOrEmail: '',
-    password: '',
+    usernameOrEmail: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCredentials(prev => ({
+    setCredentials((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setError('');
+    setError("");
   };
 
   const validateForm = (): boolean => {
     if (!credentials.usernameOrEmail.trim()) {
-      setError('Please enter your email or username');
+      setError("Please enter your email or username");
       return false;
     }
 
     if (!credentials.password.trim()) {
-      setError('Please enter your password');
+      setError("Please enter your password");
       return false;
     }
 
@@ -52,48 +58,56 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    setError('');
-      console.log("credentials0",credentials)
+    setError("");
+    console.log("credentials0", credentials);
 
     try {
       const response = await authAPI.login(credentials);
-      console.log('Login response111:', response);
-      console.log('Login response user4555555:', response.data.user);
-      console.log('Login response success:', response.success);
+      console.log("Login response111:", response);
+      console.log("Login response user4555555:", response.data.user);
+      console.log("Login response success:", response.success);
       if (response.success && response.data.user) {
         const user = response.data.user;
 
         // Extract accessToken from response headers if available
-        const accessToken = response.headers?.['authorization']?.split(' ')[1] || 'mock-jwt-token-for-testing';
-        console.log('Login response user44:', user);
-        console.log('Extracted accessToken:', accessToken);
+        const accessToken =
+          response.headers?.["authorization"]?.split(" ")[1] ||
+          "mock-jwt-token-for-testing";
+        console.log("Login response user44:", user);
+        console.log("Extracted accessToken:", accessToken);
         // Attach token and set user in AuthContext
-        login(accessToken || 'mock-jwt-token-for-testing', user);
+        login(accessToken || "mock-jwt-token-for-testing", user);
 
         // Reset attempt count on successful login
         setAttemptCount(0);
 
         // Redirect to dashboard
-        router.push('/dashboard');
+        router.push("/dashboard");
       } else {
         // Increment attempt count on failed login
         const newAttemptCount = attemptCount + 1;
         setAttemptCount(newAttemptCount);
 
         // Generic error message to avoid revealing if email/username exists
-        setError('Invalid credentials. Please check your email/username and password.');
+        setError(
+          "Invalid credentials. Please check your email/username and password.",
+        );
       }
     } catch (error: unknown) {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
-      
-      setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +116,9 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">
+          Welcome Back
+        </CardTitle>
         <CardDescription className="text-center">
           Sign in to your account to continue
         </CardDescription>
@@ -134,7 +150,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               <Input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={credentials.password}
                 onChange={handleInputChange}
                 placeholder="Enter your password"
@@ -148,7 +164,11 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -158,7 +178,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               type="button"
               variant="link"
               className="p-0 text-sm"
-              onClick={() => router.push('/forgot-password')}
+              onClick={() => router.push("/forgot-password")}
             >
               Forgot password?
             </Button>
@@ -171,18 +191,18 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
                 Signing in...
               </>
             ) : (
-              'Sign in'
+              "Sign in"
             )}
           </Button>
 
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Button
                 type="button"
                 variant="link"
                 className="p-0 font-semibold"
-                onClick={() => router.push('/register')}
+                onClick={() => router.push("/register")}
               >
                 Sign up
               </Button>

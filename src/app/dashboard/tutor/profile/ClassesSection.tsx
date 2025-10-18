@@ -31,12 +31,12 @@ const ClassesSection: React.FC<ClassesSectionProps> = ({
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">My Classes</h2>
-        <button
+        {/* <button
           onClick={() => setShowAddClassModal(true)}
           className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl flex items-center transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
         >
           Create Class
-        </button>
+        </button> */}
       </div>
       {classes.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -57,8 +57,12 @@ const ClassesSection: React.FC<ClassesSectionProps> = ({
         </div>
       ) : (
         <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-700 mb-2">No Classes Yet</h3>
-          <p className="text-gray-500 mb-6">Create your first class to get started with teaching!</p>
+          <h3 className="text-xl font-bold text-gray-700 mb-2">
+            No Classes Yet
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Create your first class to get started with teaching!
+          </p>
           <button
             onClick={() => setShowAddClassModal(true)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl font-medium"

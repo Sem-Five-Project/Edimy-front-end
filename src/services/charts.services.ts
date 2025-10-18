@@ -40,107 +40,224 @@ export async function getDevicesUsedData(
 export async function getPaymentsOverviewData(
   timeFrame?: "monthly" | "yearly" | (string & {}),
 ) {
-  // Fake delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
+    
+    // Get cookies from the request headers for server-side authentication
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.getAll()
+      .map(cookie => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+    
+    // Try to refresh the access token first using the refresh token cookie
+    let accessToken = null;
+    try {
+      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
+        },
+        credentials: 'include',
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        accessToken = refreshData.accessToken;
+      }
+    } catch (refreshError) {
+      console.error('Failed to refresh token on server:', refreshError);
+    }
+    
+    // Now fetch the homepage data with the access token
+    const response = await fetch(`${API_BASE_URL}/admin/homepage`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(cookieHeader && { 'Cookie': cookieHeader }),
+        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+      },
+      credentials: 'include',
+      cache: 'no-store',
+    });
 
-  if (timeFrame === "yearly") {
+    if (!response.ok) {
+      throw new Error("Failed to fetch payments overview data");
+    }
+
+    const data = await response.json();
+
+    // Map month numbers to month names
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Transform data based on timeFrame
+    if (timeFrame === "yearly") {
+      // Use yearlyPayments for yearly view
+      return {
+        received: data.yearlyPayments.map((item: { monthOrYear: number; totalPayments: number }) => ({
+          x: item.monthOrYear,
+          y: Math.round(item.totalPayments / 1000), // Convert to thousands for better display
+        })),
+        due: [], // No due data in the API response, empty array
+      };
+    }
+
+    // Use monthlyPaymentsForLastYear for monthly view (default)
+    return {
+      received: data.monthlyPaymentsForLastYear.map((item: { monthOrYear: number; totalPayments: number }) => ({
+        x: monthNames[item.monthOrYear - 1],
+        y: Math.round(item.totalPayments / 1000), // Convert to thousands for better display
+      })),
+      due: [], // No due data in the API response, empty array
+    };
+  } catch (error) {
+    console.error("Error fetching payments overview data:", error);
+
+    // Fallback to mock data in case of error (optional)
+    if (timeFrame === "yearly") {
+      return {
+        received: [
+          { x: 2020, y: 450 },
+          { x: 2021, y: 620 },
+          { x: 2022, y: 780 },
+          { x: 2023, y: 920 },
+          { x: 2024, y: 1080 },
+        ],
+        due: [],
+      };
+    }
+
     return {
       received: [
-        { x: 2020, y: 450 },
-        { x: 2021, y: 620 },
-        { x: 2022, y: 780 },
-        { x: 2023, y: 920 },
-        { x: 2024, y: 1080 },
+        { x: "Jan", y: 0 },
+        { x: "Feb", y: 0 },
+        { x: "Mar", y: 0 },
+        { x: "Apr", y: 0 },
+        { x: "May", y: 0 },
+        { x: "Jun", y: 0 },
+        { x: "Jul", y: 0 },
+        { x: "Aug", y: 0 },
+        { x: "Sep", y: 0 },
+        { x: "Oct", y: 0 },
+        { x: "Nov", y: 0 },
+        { x: "Dec", y: 0 },
       ],
-      due: [
-        { x: 2020, y: 1480 },
-        { x: 2021, y: 1720 },
-        { x: 2022, y: 1950 },
-        { x: 2023, y: 2300 },
-        { x: 2024, y: 1200 },
-      ],
+      due: [],
     };
   }
-
-  return {
-    received: [
-      { x: "Jan", y: 0 },
-      { x: "Feb", y: 20 },
-      { x: "Mar", y: 35 },
-      { x: "Apr", y: 45 },
-      { x: "May", y: 35 },
-      { x: "Jun", y: 55 },
-      { x: "Jul", y: 65 },
-      { x: "Aug", y: 50 },
-      { x: "Sep", y: 65 },
-      { x: "Oct", y: 75 },
-      { x: "Nov", y: 60 },
-      { x: "Dec", y: 75 },
-    ],
-    due: [
-      { x: "Jan", y: 15 },
-      { x: "Feb", y: 9 },
-      { x: "Mar", y: 17 },
-      { x: "Apr", y: 32 },
-      { x: "May", y: 25 },
-      { x: "Jun", y: 68 },
-      { x: "Jul", y: 80 },
-      { x: "Aug", y: 68 },
-      { x: "Sep", y: 84 },
-      { x: "Oct", y: 94 },
-      { x: "Nov", y: 74 },
-      { x: "Dec", y: 62 },
-    ],
-  };
 }
 
 export async function getWeeksProfitData(timeFrame?: string) {
-  // Fake delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
+    
+    // Get cookies from the request headers for server-side authentication
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.getAll()
+      .map(cookie => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+    
+    // Try to refresh the access token first using the refresh token cookie
+    let accessToken = null;
+    try {
+      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
+        },
+        credentials: 'include',
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        accessToken = refreshData.accessToken;
+      }
+    } catch (refreshError) {
+      console.error('Failed to refresh token on server:', refreshError);
+    }
+    
+    // Now fetch the homepage data with the access token
+    const response = await fetch(`${API_BASE_URL}/admin/homepage`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(cookieHeader && { 'Cookie': cookieHeader }),
+        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+      },
+      credentials: 'include',
+      cache: 'no-store',
+    });
 
-  if (timeFrame === "last week") {
+    if (!response.ok) {
+      throw new Error("Failed to fetch weeks profit data");
+    }
+
+    const data = await response.json();
+
+    // Use sessionsThisWeek or sessionsLastWeek based on timeFrame
+    const sessionsData = timeFrame === "last week" ? data.sessionsLastWeek : data.sessionsThisWeek;
+
     return {
-      sales: [
-        { x: "Sat", y: 33 },
-        { x: "Sun", y: 44 },
-        { x: "Mon", y: 31 },
-        { x: "Tue", y: 57 },
-        { x: "Wed", y: 12 },
-        { x: "Thu", y: 33 },
-        { x: "Fri", y: 55 },
+      completed: sessionsData.map((item: { day: string; completedSessionCount: number; cancelledSessionCount: number }) => ({
+        x: item.day,
+        y: item.completedSessionCount,
+      })),
+      upcoming: sessionsData.map((item: { day: string; completedSessionCount: number; cancelledSessionCount: number }) => ({
+        x: item.day,
+        y: item.cancelledSessionCount,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching weeks profit data:", error);
+
+    // Fallback to mock data in case of error
+    if (timeFrame === "last week") {
+      return {
+        completed: [
+          { x: "Mon", y: 0 },
+          { x: "Tue", y: 0 },
+          { x: "Wed", y: 0 },
+          { x: "Thu", y: 0 },
+          { x: "Fri", y: 0 },
+          { x: "Sat", y: 0 },
+          { x: "Sun", y: 0 },
+        ],
+        upcoming: [
+          { x: "Mon", y: 0 },
+          { x: "Tue", y: 0 },
+          { x: "Wed", y: 0 },
+          { x: "Thu", y: 0 },
+          { x: "Fri", y: 0 },
+          { x: "Sat", y: 0 },
+          { x: "Sun", y: 0 },
+        ],
+      };
+    }
+
+    return {
+      completed: [
+        { x: "Mon", y: 0 },
+        { x: "Tue", y: 0 },
+        { x: "Wed", y: 0 },
+        { x: "Thu", y: 0 },
+        { x: "Fri", y: 0 },
+        { x: "Sat", y: 0 },
+        { x: "Sun", y: 0 },
       ],
-      revenue: [
-        { x: "Sat", y: 10 },
-        { x: "Sun", y: 20 },
-        { x: "Mon", y: 17 },
-        { x: "Tue", y: 7 },
-        { x: "Wed", y: 10 },
-        { x: "Thu", y: 23 },
-        { x: "Fri", y: 13 },
+      upcoming: [
+        { x: "Mon", y: 0 },
+        { x: "Tue", y: 0 },
+        { x: "Wed", y: 0 },
+        { x: "Thu", y: 0 },
+        { x: "Fri", y: 0 },
+        { x: "Sat", y: 0 },
+        { x: "Sun", y: 0 },
       ],
     };
   }
-
-  return {
-    sales: [
-      { x: "Sat", y: 44 },
-      { x: "Sun", y: 55 },
-      { x: "Mon", y: 41 },
-      { x: "Tue", y: 67 },
-      { x: "Wed", y: 22 },
-      { x: "Thu", y: 43 },
-      { x: "Fri", y: 65 },
-    ],
-    revenue: [
-      { x: "Sat", y: 13 },
-      { x: "Sun", y: 23 },
-      { x: "Mon", y: 20 },
-      { x: "Tue", y: 8 },
-      { x: "Wed", y: 13 },
-      { x: "Thu", y: 27 },
-      { x: "Fri", y: 15 },
-    ],
-  };
 }
 
 export async function getCampaignVisitorsData() {

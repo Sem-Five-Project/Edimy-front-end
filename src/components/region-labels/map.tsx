@@ -8,7 +8,9 @@ import "@/js/us-aea-en";
 export default function Map() {
   const mapRef = useRef<jsVectorMap | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [mapId] = useState(() => `map-${Math.random().toString(36).substr(2, 9)}`);
+  const [mapId] = useState(
+    () => `map-${Math.random().toString(36).substr(2, 9)}`,
+  );
 
   useEffect(() => {
     // Clean up any existing map instance

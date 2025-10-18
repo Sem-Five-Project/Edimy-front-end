@@ -567,7 +567,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         merchant_id: hashResponse.data.merchantId || "1228143", // Fallback to sandbox merchant ID
         return_url: `${window.location.origin}/payment/return`,
         cancel_url: `${window.location.origin}/payment/cancel`,
-        notify_url: `https://95b150d28080.ngrok-free.app/api/payment/payhere/notify`,
+        notify_url: `https://edimy-app-wzia3.ondigitalocean.app/api/payment/payhere/notify`,
         order_id: orderMeta.orderId || orderMeta.order_id || `EDIMY-${Date.now()}`,
         items: isMonthly 
           ? `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} - Monthly (${monthlyBookingData?.totalSlots || 0} slots)`

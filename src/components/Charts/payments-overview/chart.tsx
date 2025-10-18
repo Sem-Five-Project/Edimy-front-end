@@ -91,12 +91,8 @@ export function PaymentsOverviewChart({ data }: PropsType) {
         options={options}
         series={[
           {
-            name: "Received",
+            name: "Total Payments",
             data: data.received,
-          },
-          {
-            name: "Due",
-            data: data.due,
           },
         ]}
         type="area"

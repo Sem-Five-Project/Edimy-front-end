@@ -58,7 +58,7 @@
 //           </div>
 //         </div>
 //       </div>
-      
+
 //       <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-2">
 //         <div className="flex items-center space-x-2">
 //           <CheckCircle className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -77,7 +77,7 @@
 // const SubjectsPricing = ({ subjects, limit = 2, compact = false }) => {
 //   const [showAll, setShowAll] = useState(false);
 //   const displaySubjects = showAll ? subjects : subjects.slice(0, limit);
-  
+
 //   if (compact) {
 //     return (
 //       <div className="space-y-1">
@@ -166,12 +166,12 @@
 //                 <CheckCircle className="w-2 h-2 text-white ml-0.5 mt-0.5" />
 //               </div>
 //             </div>
-            
+
 //             <div className="flex-1 min-w-0">
 //               <h3 className="font-bold text-slate-900 dark:text-slate-100 truncate text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
 //                 {tutor.firstName} {tutor.lastName}
 //               </h3>
-              
+
 //               <div className="flex items-center space-x-1 mb-1">
 //                 <div className="flex">
 //                   {renderStars(tutor.rating)}
@@ -189,9 +189,9 @@
 //           {tutor.languages && tutor.languages.length > 0 && (
 //             <div className="flex flex-wrap gap-1 mb-3">
 //               {tutor.languages.slice(0, 3).map((language, index) => (
-//                 <Badge 
-//                   key={`lang-${index}`} 
-//                   variant="secondary" 
+//                 <Badge
+//                   key={`lang-${index}`}
+//                   variant="secondary"
 //                   className="text-xs px-2 py-0.5"
 //                 >
 //                   {language.languageName}
@@ -256,11 +256,11 @@
 //                   <CheckCircle className="w-3 h-3 text-white" />
 //                 </div>
 //               </div>
-              
+
 //               <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm lg:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
 //                 {tutor.firstName} {tutor.lastName}
 //               </h3>
-              
+
 //               <div className="flex items-center space-x-1 mb-2">
 //                 <div className="flex">
 //                   {renderStars(tutor.rating)}
@@ -286,9 +286,9 @@
 //                   </div>
 //                   <div className="flex flex-wrap gap-1">
 //                     {tutor.languages.slice(0, 3).map((language, index) => (
-//                       <Badge 
-//                         key={`lang-${index}`} 
-//                         variant="secondary" 
+//                       <Badge
+//                         key={`lang-${index}`}
+//                         variant="secondary"
 //                         className="text-xs px-2 py-0.5"
 //                       >
 //                         {language.languageName}
@@ -348,25 +348,25 @@
 
 // // ==================== RESPONSIVE TUTOR CARD WRAPPER ====================
 // const ResponsiveTutorCard = ({ tutor, onViewProfile, onBookClass }) => {
-  
+
 //   return (
 //     <>
 //       {/* Desktop/Tablet - Horizontal Layout */}
 //       <div className="hidden sm:block">
-//         <TutorCard 
-//           tutor={tutor} 
-//           onViewProfile={onViewProfile} 
-//           onBookClass={onBookClass} 
+//         <TutorCard
+//           tutor={tutor}
+//           onViewProfile={onViewProfile}
+//           onBookClass={onBookClass}
 //           layout="horizontal"
 //         />
 //       </div>
-      
+
 //       {/* Mobile - Vertical Layout */}
 //       <div className="block sm:hidden">
-//         <TutorCard 
-//           tutor={tutor} 
-//           onViewProfile={onViewProfile} 
-//           onBookClass={onBookClass} 
+//         <TutorCard
+//           tutor={tutor}
+//           onViewProfile={onViewProfile}
+//           onBookClass={onBookClass}
 //           layout="vertical"
 //         />
 //       </div>
@@ -434,29 +434,29 @@
 //           <h2 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-slate-100">
 //             Layout Examples
 //           </h2>
-          
+
 //           <div className="space-y-6">
 //             <div>
 //               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
 //                 Horizontal Layout (Desktop/Tablet)
 //               </h3>
-//               <TutorCard 
-//                 tutor={sampleTutors[0]} 
-//                 onViewProfile={handleViewProfile} 
-//                 onBookClass={handleBookClass} 
+//               <TutorCard
+//                 tutor={sampleTutors[0]}
+//                 onViewProfile={handleViewProfile}
+//                 onBookClass={handleBookClass}
 //                 layout="horizontal"
 //               />
 //             </div>
-            
+
 //             <div>
 //               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
 //                 Vertical Layout (Mobile)
 //               </h3>
 //               <div className="max-w-sm">
-//                 <TutorCard 
-//                   tutor={sampleTutors[1]} 
-//                   onViewProfile={handleViewProfile} 
-//                   onBookClass={handleBookClass} 
+//                 <TutorCard
+//                   tutor={sampleTutors[1]}
+//                   onViewProfile={handleViewProfile}
+//                   onBookClass={handleBookClass}
 //                   layout="vertical"
 //                 />
 //               </div>
@@ -471,11 +471,11 @@
 // export { TutorCard, TutorStats, SubjectsPricing, ResponsiveTutorCard };
 // export default TutorCardsDemo;
 // ...existing code...
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Star,
   Clock,
@@ -483,8 +483,8 @@ import {
   Eye,
   Calendar,
   BookOpen,
-  Globe
-} from 'lucide-react';
+  Globe,
+} from "lucide-react";
 
 // ---------- Normalization Helpers ----------
 type RawSubject = {
@@ -544,67 +544,83 @@ const normalizeTutor = (t: RawTutor): NormalizedTutor => {
     return hash;
   };
   const id = t.tutorId ?? t.id ?? Math.floor(Math.random() * 1_000_000);
-  const nameBase = [t.firstName, t.lastName].filter(Boolean).join(' ').trim();
+  const nameBase = [t.firstName, t.lastName].filter(Boolean).join(" ").trim();
   const name = nameBase || `Tutor ${id}`;
-  const initials = name.split(/\s+/).map(p => p[0]).join('').slice(0, 3).toUpperCase() || 'T';
-  const rating = typeof t.rating === 'number' ? t.rating : 0;
+  const initials =
+    name
+      .split(/\s+/)
+      .map((p) => p[0])
+      .join("")
+      .slice(0, 3)
+      .toUpperCase() || "T";
+  const rating = typeof t.rating === "number" ? t.rating : 0;
   const experienceMonths =
-    typeof t.experienceMonths === 'number'
+    typeof t.experienceMonths === "number"
       ? t.experienceMonths
-      : typeof t.experience === 'number'
-      ? t.experience
-      : 0;
+      : typeof t.experience === "number"
+        ? t.experience
+        : 0;
 
   const subjects: NormalizedSubject[] = Array.isArray(t.subjects)
     ? t.subjects.map((s, idx) => {
-        if (typeof s === 'string') {
+        if (typeof s === "string") {
           return {
-            subjectId: Math.abs(hashString(s + ':' + idx)),
+            subjectId: Math.abs(hashString(s + ":" + idx)),
             subjectName: s,
-            hourlyRate: t.hourlyRate ?? 0
+            hourlyRate: t.hourlyRate ?? 0,
           };
         }
-        const subjectName = (s as any).name || (s as any).subjectName || (s as any).subject || 'Subject';
-        const subjectId = (s as any).subjectId ?? Math.abs(hashString(subjectName + ':' + idx));
+        const subjectName =
+          (s as any).name ||
+          (s as any).subjectName ||
+          (s as any).subject ||
+          "Subject";
+        const subjectId =
+          (s as any).subjectId ?? Math.abs(hashString(subjectName + ":" + idx));
         return {
           subjectId,
           subjectName,
-          hourlyRate: (s as any).hourly_rate ?? (s as any).hourlyRate ?? (s as any).rate ?? t.hourlyRate ?? 0
+          hourlyRate:
+            (s as any).hourly_rate ??
+            (s as any).hourlyRate ??
+            (s as any).rate ??
+            t.hourlyRate ??
+            0,
         };
       })
     : [];
 
-  const languages: { languageId: number; languageName: string }[] = Array.isArray(t.languages)
-    ? t.languages.map((l: any, idx) => {
-        if (typeof l === 'string') {
+  const languages: { languageId: number; languageName: string }[] =
+    Array.isArray(t.languages)
+      ? t.languages.map((l: any, idx) => {
+          if (typeof l === "string") {
+            return {
+              languageId: Math.abs(hashString(l + ":" + idx)),
+              languageName: l,
+            };
+          }
+          const ln = l.name || l.languageName || "Unknown";
           return {
-            languageId: Math.abs(hashString(l + ':' + idx)),
-            languageName: l
+            languageId: l.languageId ?? Math.abs(hashString(ln + ":" + idx)),
+            languageName: ln,
           };
-        }
-        const ln = l.name || l.languageName || 'Unknown';
-        return {
-          languageId: l.languageId ?? Math.abs(hashString(ln + ':' + idx)),
-            languageName: ln
-        };
-      })
-    : [];
+        })
+      : [];
 
   return {
     id,
     name,
     initials,
     profileImage: t.profileImage || null,
-    bio: t.bio || 'No description provided.',
+    bio: t.bio || "No description provided.",
     rating,
     experienceMonths,
     subjects,
     hourlyRate: subjects[0]?.hourlyRate ?? 0,
     languages,
-    raw: t // If you keep raw, add raw?: RawTutor to NormalizedTutor or drop this line
+    raw: t, // If you keep raw, add raw?: RawTutor to NormalizedTutor or drop this line
   } as NormalizedTutor;
 };
-
 
 const renderStars = (rating: number) =>
   Array.from({ length: 5 }, (_, i) => (
@@ -612,8 +628,8 @@ const renderStars = (rating: number) =>
       key={i}
       className={`h-3 w-3 ${
         i < Math.floor(rating)
-          ? 'fill-yellow-400 text-yellow-400'
-          : 'text-slate-300 dark:text-slate-600'
+          ? "fill-yellow-400 text-yellow-400"
+          : "text-slate-300 dark:text-slate-600"
       }`}
     />
   ));
@@ -627,11 +643,11 @@ const formatExperience = (months: number) => {
   return `${months}m`;
 };
 
-const SubjectsPricing: React.FC<{ subjects: NormalizedSubject[]; limit?: number; compact?: boolean }> = ({
-  subjects,
-  limit = 2,
-  compact = false
-}) => {
+const SubjectsPricing: React.FC<{
+  subjects: NormalizedSubject[];
+  limit?: number;
+  compact?: boolean;
+}> = ({ subjects, limit = 2, compact = false }) => {
   const [showAll, setShowAll] = useState(false);
   const display = showAll ? subjects : subjects.slice(0, limit);
 
@@ -640,7 +656,9 @@ const SubjectsPricing: React.FC<{ subjects: NormalizedSubject[]; limit?: number;
       <div className="space-y-1">
         {display.map((s, i) => (
           <div key={i} className="flex items-center justify-between text-xs">
-            <span className="text-slate-600 dark:text-slate-400 truncate flex-1">{s.subjectName}</span>
+            <span className="text-slate-600 dark:text-slate-400 truncate flex-1">
+              {s.subjectName}
+            </span>
             <span className="text-emerald-600 dark:text-emerald-400 font-medium ml-2">
               Rs.{s.hourlyRate}/hr
             </span>
@@ -663,11 +681,13 @@ const SubjectsPricing: React.FC<{ subjects: NormalizedSubject[]; limit?: number;
       {display.map((s, i) => (
         <div
           key={i}
-            className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg"
+          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg"
         >
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             <BookOpen className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-            <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{s.subjectName}</span>
+            <span className="text-sm text-slate-800 dark:text-slate-200 truncate">
+              {s.subjectName}
+            </span>
           </div>
           <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
             Rs.{s.hourlyRate}/hr
@@ -679,14 +699,17 @@ const SubjectsPricing: React.FC<{ subjects: NormalizedSubject[]; limit?: number;
           onClick={() => setShowAll(!showAll)}
           className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
         >
-          {showAll ? 'Show less' : `+${subjects.length - limit} more`}
+          {showAll ? "Show less" : `+${subjects.length - limit} more`}
         </button>
       )}
     </div>
   );
 };
 
-const TutorStats: React.FC<{ tutor: NormalizedTutor; compact?: boolean }> = ({ tutor, compact }) => {
+const TutorStats: React.FC<{ tutor: NormalizedTutor; compact?: boolean }> = ({
+  tutor,
+  compact,
+}) => {
   if (compact) {
     return (
       <div className="flex items-center gap-4 text-xs">
@@ -719,13 +742,18 @@ interface TutorCardProps {
   tutor: RawTutor;
   onViewProfile: (t: NormalizedTutor) => void;
   onBookClass: (t: NormalizedTutor) => void;
-  layout?: 'horizontal' | 'vertical';
+  layout?: "horizontal" | "vertical";
 }
 
-const TutorCard: React.FC<TutorCardProps> = ({ tutor: raw, onViewProfile, onBookClass, layout = 'horizontal' }) => {
+const TutorCard: React.FC<TutorCardProps> = ({
+  tutor: raw,
+  onViewProfile,
+  onBookClass,
+  layout = "horizontal",
+}) => {
   const tutor = normalizeTutor(raw);
 
-  if (layout === 'vertical') {
+  if (layout === "vertical") {
     return (
       <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 hover:ring-blue-200 dark:hover:ring-blue-800">
         <CardContent className="p-4">
@@ -737,7 +765,6 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor: raw, onViewProfile, onBook
                   {tutor.initials}
                 </AvatarFallback>
               </Avatar>
-
             </div>
 
             <div className="flex-1 min-w-0">
@@ -757,14 +784,18 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor: raw, onViewProfile, onBook
           {tutor.languages.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
               {tutor.languages.slice(0, 3).map((lang, i) => (
-                <Badge key={i} variant="secondary" className="text-xs px-2 py-0.5">
+                <Badge
+                  key={i}
+                  variant="secondary"
+                  className="text-xs px-2 py-0.5"
+                >
                   {lang.languageName}
                 </Badge>
               ))}
             </div>
           )}
 
-            <div className="mb-3">
+          <div className="mb-3">
             <SubjectsPricing subjects={tutor.subjects} limit={2} compact />
           </div>
 
@@ -843,12 +874,19 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor: raw, onViewProfile, onBook
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {tutor.languages.slice(0, 3).map((lang, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs px-2 py-0.5">
+                      <Badge
+                        key={i}
+                        variant="secondary"
+                        className="text-xs px-2 py-0.5"
+                      >
                         {lang.languageName}
                       </Badge>
                     ))}
                     {tutor.languages.length > 3 && (
-                      <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs px-2 py-0.5"
+                      >
                         +{tutor.languages.length - 3}
                       </Badge>
                     )}
@@ -904,10 +942,20 @@ const ResponsiveTutorCard: React.FC<{
 }> = ({ tutor, onViewProfile, onBookClass }) => (
   <>
     <div className="hidden sm:block">
-      <TutorCard tutor={tutor} onViewProfile={onViewProfile} onBookClass={onBookClass} layout="horizontal" />
+      <TutorCard
+        tutor={tutor}
+        onViewProfile={onViewProfile}
+        onBookClass={onBookClass}
+        layout="horizontal"
+      />
     </div>
     <div className="block sm:hidden">
-      <TutorCard tutor={tutor} onViewProfile={onViewProfile} onBookClass={onBookClass} layout="vertical" />
+      <TutorCard
+        tutor={tutor}
+        onViewProfile={onViewProfile}
+        onBookClass={onBookClass}
+        layout="vertical"
+      />
     </div>
   </>
 );

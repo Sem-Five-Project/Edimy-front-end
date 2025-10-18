@@ -1,14 +1,26 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileText, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
-import { authAPI } from '@/lib/api';
+import React, { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Upload,
+  FileText,
+  CheckCircle,
+  Loader2,
+  ArrowLeft,
+} from "lucide-react";
+import { authAPI } from "@/lib/api";
 
 interface TutorRegistrationData {
   resume: File | null;
@@ -19,41 +31,46 @@ interface TutorRegistrationData {
 export default function TutorRegisterPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [formData, setFormData] = useState<TutorRegistrationData>({
     resume: null,
-    qualifications: '',
-    experience: '',
+    qualifications: "",
+    experience: "",
   });
-  
-  const [fileName, setFileName] = useState('');
+
+  const [fileName, setFileName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   // Get email from localStorage (set during registration)
-  const pendingEmail = typeof window !== 'undefined' ? localStorage.getItem('pendingEmail') : null;
+  const pendingEmail =
+    typeof window !== "undefined" ? localStorage.getItem("pendingEmail") : null;
 
   const handleFileChange = (file: File | null) => {
     if (!file) return;
-    
+
     // Validate file type
-    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const validTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
     if (!validTypes.includes(file.type)) {
-      setError('Please upload a PDF or Word document');
+      setError("Please upload a PDF or Word document");
       return;
     }
-    
+
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
+      setError("File size must be less than 5MB");
       return;
     }
-    
-    setFormData(prev => ({ ...prev, resume: file }));
+
+    setFormData((prev) => ({ ...prev, resume: file }));
     setFileName(file.name);
-    setError('');
+    setError("");
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -68,7 +85,7 @@ export default function TutorRegisterPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileChange(e.dataTransfer.files[0]);
     }
@@ -86,82 +103,87 @@ export default function TutorRegisterPage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setError('');
+    setError("");
   };
 
   const validateForm = (): boolean => {
     if (!formData.resume) {
-      setError('Please upload your resume');
+      setError("Please upload your resume");
       return false;
     }
-    
+
     if (!formData.qualifications.trim()) {
-      setError('Please enter your qualifications');
+      setError("Please enter your qualifications");
       return false;
     }
-    
+
     if (!formData.experience.trim()) {
-      setError('Please enter your teaching experience');
+      setError("Please enter your teaching experience");
       return false;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     if (!pendingEmail) {
-      setError('Registration session expired. Please register again.');
+      setError("Registration session expired. Please register again.");
       return;
     }
-    
+
     setIsLoading(true);
-    setError('');
-    
+    setError("");
+
     try {
       // Create FormData for file upload
       const uploadFormData = new FormData();
       if (formData.resume) {
-        uploadFormData.append('resume', formData.resume);
+        uploadFormData.append("resume", formData.resume);
       }
-      uploadFormData.append('qualifications', formData.qualifications);
-      uploadFormData.append('experience', formData.experience);
-      uploadFormData.append('email', pendingEmail || '');
-      
+      uploadFormData.append("qualifications", formData.qualifications);
+      uploadFormData.append("experience", formData.experience);
+      uploadFormData.append("email", pendingEmail || "");
+
       // Upload resume and other data to backend
       const response = await authAPI.uploadTutorResume(uploadFormData);
-      
+
       if (response.success) {
         // Successful submission
         setSuccess(true);
-        
+
         // Redirect to idle page after a delay
         setTimeout(() => {
-          router.push('/dashboard/tutor/idle');
+          router.push("/dashboard/tutor/idle");
         }, 3000);
       } else {
-        setError(response.error || 'Failed to submit tutor registration. Please try again.');
+        setError(
+          response.error ||
+            "Failed to submit tutor registration. Please try again.",
+        );
       }
     } catch (err) {
-      setError('Failed to submit tutor registration. Please try again.');
+      setError("Failed to submit tutor registration. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleBackToRegister = () => {
-    router.push('/register');
+    router.push("/register");
   };
 
   return (
@@ -189,35 +211,47 @@ export default function TutorRegisterPage() {
               {success ? (
                 <div className="text-center py-8">
                   <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-green-600 mb-2">Registration Submitted!</h3>
+                  <h3 className="text-2xl font-bold text-green-600 mb-2">
+                    Registration Submitted!
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    Your tutor registration has been submitted successfully. Our team will review your application and notify you via email.
+                    Your tutor registration has been submitted successfully. Our
+                    team will review your application and notify you via email.
                   </p>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
-                      You will be redirected to your account review page shortly...
+                      You will be redirected to your account review page
+                      shortly...
                     </p>
                   </div>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {error && (
-                    <Alert variant="destructive" className="animate-in slide-in-from-top-2">
-                      <AlertDescription className="text-sm">{error}</AlertDescription>
+                    <Alert
+                      variant="destructive"
+                      className="animate-in slide-in-from-top-2"
+                    >
+                      <AlertDescription className="text-sm">
+                        {error}
+                      </AlertDescription>
                     </Alert>
                   )}
-                  
+
                   {/* Resume Upload */}
                   <div className="space-y-2">
-                    <Label htmlFor="resume" className="text-sm font-medium flex items-center gap-2">
+                    <Label
+                      htmlFor="resume"
+                      className="text-sm font-medium flex items-center gap-2"
+                    >
                       <FileText className="h-4 w-4 text-gray-500" />
                       Resume/CV
                     </Label>
                     <div
                       className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                         isDragging
-                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                          : 'border-gray-300 hover:border-indigo-400 dark:border-gray-600'
+                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
+                          : "border-gray-300 hover:border-indigo-400 dark:border-gray-600"
                       }`}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
@@ -246,10 +280,13 @@ export default function TutorRegisterPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Qualifications */}
                   <div className="space-y-2">
-                    <Label htmlFor="qualifications" className="text-sm font-medium">
+                    <Label
+                      htmlFor="qualifications"
+                      className="text-sm font-medium"
+                    >
                       Qualifications
                     </Label>
                     <Input
@@ -263,7 +300,7 @@ export default function TutorRegisterPage() {
                       required
                     />
                   </div>
-                  
+
                   {/* Experience */}
                   <div className="space-y-2">
                     <Label htmlFor="experience" className="text-sm font-medium">
@@ -280,7 +317,7 @@ export default function TutorRegisterPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="flex gap-3 pt-4">
                     <Button
                       type="button"
@@ -302,7 +339,7 @@ export default function TutorRegisterPage() {
                           Submitting...
                         </>
                       ) : (
-                        'Submit for Review'
+                        "Submit for Review"
                       )}
                     </Button>
                   </div>

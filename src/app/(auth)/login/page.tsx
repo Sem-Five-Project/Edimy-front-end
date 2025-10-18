@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, Shield, ArrowRight } from "lucide-react";
 import { authAPI } from "@/lib/api";
 import { sendFCMTokenAfterLogin } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -124,7 +124,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">
+    // Light-only theme version (dark: classes removed)
+    <div className="h-screen bg-white text-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left Side - Image and Content */}
         <div className="hidden lg:block">

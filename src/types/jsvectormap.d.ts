@@ -1,4 +1,4 @@
-declare module 'jsvectormap' {
+declare module "jsvectormap" {
   interface RegionStyle {
     initial?: {
       fill?: string;

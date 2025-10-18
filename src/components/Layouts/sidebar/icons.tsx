@@ -189,13 +189,7 @@ export function ArrowLeftIcon(props: PropsType) {
 
 export function CreditCard(props: PropsType) {
   return (
-    <svg
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      fill="none"
-      {...props}
-    >
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -208,13 +202,7 @@ export function CreditCard(props: PropsType) {
 
 export function Shield(props: PropsType) {
   return (
-    <svg
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      fill="none"
-      {...props}
-    >
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -231,13 +219,7 @@ export function Shield(props: PropsType) {
 
 export function Bell(props: PropsType) {
   return (
-    <svg
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      fill="none"
-      {...props}
-    >
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -254,13 +236,7 @@ export function Bell(props: PropsType) {
 
 export function StarRating(props: PropsType) {
   return (
-    <svg
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      fill="none"
-      {...props}
-    >
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -289,13 +265,7 @@ export function StarRating(props: PropsType) {
 
 export function LockShield(props: PropsType) {
   return (
-    <svg
-      width={24}
-      height={24}
-      viewBox="0 0 24 24"
-      fill="none"
-      {...props}
-    >
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"

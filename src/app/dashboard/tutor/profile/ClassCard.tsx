@@ -1,5 +1,12 @@
 import React from "react";
-import { BookOpen, Trash2, Calendar, Clock, Activity, FileText } from "lucide-react";
+import {
+  BookOpen,
+  Trash2,
+  Calendar,
+  Clock,
+  Activity,
+  FileText,
+} from "lucide-react";
 import { Class, Subject, ClassDoc, TutorSubject } from "@/types";
 import DocumentsSection from "./DocumentsSection";
 
@@ -15,6 +22,19 @@ interface ClassCardProps {
   classDocAPI: any;
 }
 
+//dummy data for a class
+const dummyClass: Class = {
+  classId: 1,
+  className: "Math 101",
+  classTypeId: 1,
+  subjectId: 1,
+  tutorId: 1,
+  date: "2023-10-01",
+  startTime: "10:00 AM",
+  endTime: "11:00 AM",
+  comment: "This is a sample comment for the class.",
+};
+
 const ClassCard: React.FC<ClassCardProps> = ({
   cls,
   classTypes,
@@ -26,17 +46,36 @@ const ClassCard: React.FC<ClassCardProps> = ({
   setShowAddDocModal,
   classDocAPI,
 }) => {
-  const classType = classTypes.find((type) => type.id === cls.classTypeId) || classTypes[0];
+  const classType =
+    classTypes.find((type) => type.id === cls.classTypeId) || classTypes[0];
   const subject = subjects.find((s) => s.subjectId === cls.subjectId);
   const classDocs_ = classDocs[cls.classId!] || [];
 
-  // Fallback for className
-  const classNameInitial = cls.className && typeof cls.className === 'string' && cls.className.length > 0
-    ? cls.className.charAt(0).toUpperCase()
-    : <span className="text-xs">N/A</span>;
+  const classNameInitial =
+    cls.className &&
+    typeof cls.className === "string" &&
+    cls.className.length > 0 ? (
+      cls.className.charAt(0).toUpperCase()
+    ) : (
+      <span className="text-xs">N/A</span>
+    );
 
-  console.log('Rendering ClassCard for class:***************', cls);
+  const router = require("next/navigation").useRouter();
+  const jointoClass = async () => {
+    const result = await classAPI.joinClass(cls.classId, tutorId);
+    console.log("Join class result:", result);
 
+    if (result) {
+      // // Navigate to the Zoom page, passing the link and user info as query params
+      // router.push(
+      //   `/dashboard/tutor/profile/zoom?url=${encodeURIComponent(result)}&userName=${encodeURIComponent("Tutor")}&userEmail=${encodeURIComponent("tutor@example.com")}`,
+      // );
+      //open the link in a another window
+      window.open(result, "_blank");
+    } else {
+      alert("Failed to join class or Zoom link not found");
+    }
+  };
   return (
     <div
       key={cls.classId}
@@ -53,9 +92,18 @@ const ClassCard: React.FC<ClassCardProps> = ({
               {cls.className}
             </h3>
             <div className="flex items-center space-x-2 mt-1">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${classType.color}`}>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-medium ${classType.color}`}
+              >
                 {classType.icon} {classType.name}
               </span>
+              <button
+                onClick={jointoClass}
+                className="px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-medium hover:bg-blue-600 transition-colors"
+              >
+                Join Class
+              </button>
+
               {subject && (
                 <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
                   {subject.subjectName}
@@ -71,7 +119,6 @@ const ClassCard: React.FC<ClassCardProps> = ({
           <Trash2 size={16} />
         </button>
       </div>
-      {/* Time and Date */}
       <div className="bg-blue-50 rounded-xl p-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -81,7 +128,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
             </div>
             <div className="flex items-center text-blue-700">
               <Clock size={16} className="mr-2" />
-              <span className="font-medium">{cls.startTime} - {cls.endTime}</span>
+              <span className="font-medium">
+                {cls.startTime} - {cls.endTime}
+              </span>
             </div>
           </div>
           <div className="flex items-center text-blue-600">
@@ -93,7 +142,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
       {/* Comment */}
       {cls.comment && (
         <div className="bg-gray-50 rounded-xl p-4 mb-4">
-          <p className="text-gray-600 italic leading-relaxed">"{cls.comment}"</p>
+          <p className="text-gray-600 italic leading-relaxed">
+            "{cls.comment}"
+          </p>
         </div>
       )}
       {/* Documents Section */}

@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -61,13 +64,22 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@types/jest": "^29.5.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-router-dom": "^5.3.3",
     "eslint": "9.37.0",
     "eslint-config-next": "15.5.4",
+
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "tailwindcss": "^4.1.13",
-    "typescript": "^5"
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5",
+    "@playwright/test": "^1.43.0",
+    "playwright": "^1.43.0"
   }
 }

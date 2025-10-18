@@ -12,9 +12,12 @@ export default function NotFound() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 text-center">
-          <div className="text-6xl font-bold text-gray-300 dark:text-gray-600">404</div>
+          <div className="text-6xl font-bold text-gray-300 dark:text-gray-600">
+            404
+          </div>
           <p className="text-gray-600 dark:text-gray-400">
-            The page you're looking for doesn't exist or you don't have permission to access it.
+            The page you're looking for doesn't exist or you don't have
+            permission to access it.
           </p>
           <Link href="/">
             <Button className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white font-medium text-lg shadow-lg hover:shadow-xl transition-all duration-200">

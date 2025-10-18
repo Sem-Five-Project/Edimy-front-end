@@ -12,7 +12,6 @@ import type { Metadata } from "next";
 import NextTopLoader from "nextjs-toploader";
 import type { PropsWithChildren } from "react";
 
-
 export const metadata: Metadata = {
   title: {
     template: "%s | Edimy Admin - Education Platform",

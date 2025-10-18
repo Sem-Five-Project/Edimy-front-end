@@ -1,248 +1,227 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import { useState, useEffect } from "react";
+import { Plus, Search, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { PlusIcon, Search, Filter, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
-
-interface Subject {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  status: 'Active' | 'Inactive';
-  createdDate: string;
-  updatedDate: string;
-}
-
-const CATEGORIES = [
-  'Mathematics',
-  'Science',
-  'Languages',
-  'Computer Science',
-  'Arts',
-  'Social Studies',
-  'Business',
-  'Engineering',
-  'Medicine',
-  'Other'
-];
-
-const mockSubjects: Subject[] = [
-  {
-    id: '1',
-    name: 'Advanced Calculus',
-    category: 'Mathematics',
-    description: 'Advanced mathematical concepts including limits, derivatives, and integrals',
-    status: 'Active',
-    createdDate: '2024-01-15',
-    updatedDate: '2024-03-20'
-  },
-  {
-    id: '2',
-    name: 'Organic Chemistry',
-    category: 'Science',
-    description: 'Study of carbon-based compounds and their reactions',
-    status: 'Active',
-    createdDate: '2024-01-20',
-    updatedDate: '2024-02-15'
-  },
-  {
-    id: '3',
-    name: 'Spanish Grammar',
-    category: 'Languages',
-    description: 'Comprehensive Spanish grammar rules and applications',
-    status: 'Inactive',
-    createdDate: '2024-02-01',
-    updatedDate: '2024-02-28'
-  },
-  {
-    id: '4',
-    name: 'Data Structures',
-    category: 'Computer Science',
-    description: 'Fundamental data structures and algorithms',
-    status: 'Active',
-    createdDate: '2024-02-10',
-    updatedDate: '2024-03-15'
-  },
-  {
-    id: '5',
-    name: 'Digital Art',
-    category: 'Arts',
-    description: 'Creating art using digital tools and techniques',
-    status: 'Active',
-    createdDate: '2024-02-20',
-    updatedDate: '2024-03-01'
-  }
-];
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  subjectAPI,
+  Subject as BackendSubject,
+  EducationLevel,
+  HighSchoolStreamType,
+} from "@/lib/adminSubject";
 
 export default function SubjectManagement() {
-  const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState<BackendSubject[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [educationFilter, setEducationFilter] = useState<string>("");
+  const [streamFilter, setStreamFilter] = useState<string>("");
+  const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [currentSubject, setCurrentSubject] = useState<Subject | null>(null);
+  const [currentSubject, setCurrentSubject] = useState<BackendSubject | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    description: '',
-    status: true
+    name: "",
+    educationLevel: "" as EducationLevel | "",
+    stream: "none" as HighSchoolStreamType | "none" | "",
   });
 
-  const filteredSubjects = subjects.filter(subject => {
-    const matchesSearch = subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         subject.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || !categoryFilter || subject.category === categoryFilter;
-    const matchesStatus = statusFilter === 'all' || !statusFilter || subject.status === statusFilter;
-    
-    return matchesSearch && matchesCategory && matchesStatus;
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const fetchSubjects = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await subjectAPI.getAllSubjects();
+      setSubjects(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch subjects");
+      console.error("Error fetching subjects:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredSubjects = subjects.filter((subject) => {
+    const matchesSearch = subject.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesEducation =
+      educationFilter === "all" ||
+      !educationFilter ||
+      subject.educationLevel === educationFilter;
+    const matchesStream =
+      streamFilter === "all" ||
+      !streamFilter ||
+      (subject.stream && subject.stream === streamFilter);
+    return matchesSearch && matchesEducation && matchesStream;
   });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedSubjects(filteredSubjects.map(subject => subject.id));
+      setSelectedSubjects(
+        filteredSubjects.map((subject) => subject.subjectId!),
+      );
     } else {
       setSelectedSubjects([]);
     }
   };
 
-  const handleSelectSubject = (subjectId: string, checked: boolean) => {
+  const handleSelectSubject = (subjectId: number, checked: boolean) => {
     if (checked) {
       setSelectedSubjects([...selectedSubjects, subjectId]);
     } else {
-      setSelectedSubjects(selectedSubjects.filter(id => id !== subjectId));
+      setSelectedSubjects(selectedSubjects.filter((id) => id !== subjectId));
     }
   };
 
-  const handleBulkActivate = () => {
-    setSubjects(subjects.map(subject => 
-      selectedSubjects.includes(subject.id) 
-        ? { ...subject, status: 'Active' as const, updatedDate: new Date().toISOString().split('T')[0] }
-        : subject
-    ));
-    setSelectedSubjects([]);
+  const handleBulkDelete = async () => {
+    try {
+      setIsLoading(true);
+      // Delete selected subjects one by one
+      for (const subjectId of selectedSubjects) {
+        await subjectAPI.deleteSubject(subjectId);
+      }
+      // Refresh the subjects list
+      await fetchSubjects();
+      setSelectedSubjects([]);
+    } catch (err: any) {
+      setError(err.message || "Failed to delete subjects");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleBulkDeactivate = () => {
-    setSubjects(subjects.map(subject => 
-      selectedSubjects.includes(subject.id) 
-        ? { ...subject, status: 'Inactive' as const, updatedDate: new Date().toISOString().split('T')[0] }
-        : subject
-    ));
-    setSelectedSubjects([]);
+  const handleCreateSubject = async () => {
+    try {
+      if (!formData.name || !formData.educationLevel) {
+        setError("Name and education level are required");
+        return;
+      }
+
+      const newSubjectData = {
+        name: formData.name,
+        educationLevel: formData.educationLevel,
+        ...(formData.stream &&
+          formData.stream !== "none" && { stream: formData.stream }),
+      };
+
+      await subjectAPI.createSubject(newSubjectData);
+      await fetchSubjects(); // Refresh the list
+      setIsCreateDialogOpen(false);
+      resetForm();
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to create subject");
+    }
   };
 
-  const handleBulkDelete = () => {
-    setSubjects(subjects.filter(subject => !selectedSubjects.includes(subject.id)));
-    setSelectedSubjects([]);
-  };
-
-  const handleCreateSubject = () => {
-    const newSubject: Subject = {
-      id: Date.now().toString(),
-      name: formData.name,
-      category: formData.category,
-      description: formData.description,
-      status: formData.status ? 'Active' : 'Inactive',
-      createdDate: new Date().toISOString().split('T')[0],
-      updatedDate: new Date().toISOString().split('T')[0]
-    };
-    
-    setSubjects([...subjects, newSubject]);
-    setIsCreateDialogOpen(false);
-    resetForm();
-  };
-
-  const handleUpdateSubject = () => {
-    if (!currentSubject) return;
-    
-    setSubjects(subjects.map(subject => 
-      subject.id === currentSubject.id 
-        ? {
-            ...subject,
-            name: formData.name,
-            category: formData.category,
-            description: formData.description,
-            status: formData.status ? 'Active' : 'Inactive',
-            updatedDate: new Date().toISOString().split('T')[0]
-          }
-        : subject
-    ));
-    setIsEditDialogOpen(false);
-    resetForm();
-    setCurrentSubject(null);
-  };
-
-  const handleDeleteSubject = (subjectId: string) => {
-    setSubjects(subjects.filter(subject => subject.id !== subjectId));
+  const handleDeleteSubject = async (subjectId: number) => {
+    try {
+      setIsLoading(true);
+      await subjectAPI.deleteSubject(subjectId);
+      await fetchSubjects(); // Refresh the list
+    } catch (err: any) {
+      setError(err.message || "Failed to delete subject");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      category: '',
-      description: '',
-      status: true
+      name: "",
+      educationLevel: "",
+      stream: "none",
     });
   };
 
-  const openCreateDialog = () => {
-    resetForm();
-    setIsCreateDialogOpen(true);
-  };
-
-  const openEditDialog = (subject: Subject) => {
-    setCurrentSubject(subject);
-    setFormData({
-      name: subject.name,
-      category: subject.category,
-      description: subject.description,
-      status: subject.status === 'Active'
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const openViewDialog = (subject: Subject) => {
+  const openViewDialog = (subject: BackendSubject) => {
     setCurrentSubject(subject);
     setIsViewDialogOpen(true);
   };
 
-  return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Subject Management</h2>
-        <div className="flex items-center space-x-2">
-          <Button onClick={openCreateDialog}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Subject
-          </Button>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading subjects...</p>
         </div>
       </div>
+    );
+  }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchSubjects}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Subject Management</h1>
+          <p className="text-gray-600 mt-1">
+            Manage subjects across different education levels
+          </p>
+        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Subject
+        </Button>
+      </div>
+
+      {/* Search and Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle>Subjects</CardTitle>
-          <CardDescription>
-            Manage all subjects and categories for tutoring sessions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Search and Filters */}
-          <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 mb-6">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -254,249 +233,281 @@ export default function SubjectManagement() {
                 />
               </div>
             </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by Category" />
+            <Select value={educationFilter} onValueChange={setEducationFilter}>
+              <SelectTrigger className="w-full lg:w-48 bg-gray-800 border-gray-600 text-white">
+                <SelectValue placeholder="Education Level" />
               </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-gray-800 border shadow-lg">
-                <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectItem
+                  value="all"
+                  className="text-white hover:bg-gray-700"
+                >
+                  All Levels
+                </SelectItem>
+                {Object.values(EducationLevel).map((level) => (
+                  <SelectItem
+                    key={level}
+                    value={level}
+                    className="text-white hover:bg-gray-700"
+                  >
+                    {level.replace(/_/g, " ")}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Filter by Status" />
+            <Select value={streamFilter} onValueChange={setStreamFilter}>
+              <SelectTrigger className="w-full lg:w-48 bg-gray-800 border-gray-600 text-white">
+                <SelectValue placeholder="Stream" />
               </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-gray-800 border shadow-lg">
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectItem
+                  value="all"
+                  className="text-white hover:bg-gray-700"
+                >
+                  All Streams
+                </SelectItem>
+                {Object.values(HighSchoolStreamType).map((stream) => (
+                  <SelectItem
+                    key={stream}
+                    value={stream}
+                    className="text-white hover:bg-gray-700"
+                  >
+                    {stream}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Bulk Actions */}
-          {selectedSubjects.length > 0 && (
-            <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <span className="text-sm font-medium">
+      {/* Actions Bar */}
+      {selectedSubjects.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">
                 {selectedSubjects.length} subject(s) selected
               </span>
-              <Button size="sm" onClick={handleBulkActivate}>
-                Activate
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleBulkDeactivate}>
-                Deactivate
-              </Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
-                Delete
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  disabled={isLoading}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Selected
+                </Button>
+              </div>
             </div>
-          )}
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Subjects Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
+      {/* Subjects Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={
+                      selectedSubjects.length === filteredSubjects.length &&
+                      filteredSubjects.length > 0
+                    }
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Education Level</TableHead>
+                <TableHead>Stream</TableHead>
+                <TableHead className="w-24">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSubjects.length === 0 ? (
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                      checked={selectedSubjects.length === filteredSubjects.length && filteredSubjects.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Subject Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created Date</TableHead>
-                  <TableHead>Updated Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    No subjects found
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSubjects.map((subject) => (
-                  <TableRow key={subject.id}>
+              ) : (
+                filteredSubjects.map((subject) => (
+                  <TableRow key={subject.subjectId}>
                     <TableCell>
                       <Checkbox
-                        checked={selectedSubjects.includes(subject.id)}
-                        onCheckedChange={(checked) => handleSelectSubject(subject.id, checked as boolean)}
+                        checked={selectedSubjects.includes(subject.subjectId!)}
+                        onCheckedChange={(checked) =>
+                          handleSelectSubject(
+                            subject.subjectId!,
+                            checked as boolean,
+                          )
+                        }
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{subject.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{subject.category}</Badge>
+                    <TableCell className="font-medium">
+                      {subject.name}
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">{subject.description}</TableCell>
                     <TableCell>
-                      <Badge variant={subject.status === 'Active' ? 'default' : 'secondary'}>
-                        {subject.status}
+                      <Badge variant="outline">
+                        {subject.educationLevel.replace(/_/g, " ")}
                       </Badge>
                     </TableCell>
-                    <TableCell>{subject.createdDate}</TableCell>
-                    <TableCell>{subject.updatedDate}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border shadow-lg">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openViewDialog(subject)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEditDialog(subject)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteSubject(subject.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <TableCell>
+                      {subject.stream ? (
+                        <Badge variant="secondary">{subject.stream}</Badge>
+                      ) : (
+                        <span className="text-gray-400">N/A</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openViewDialog(subject)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            handleDeleteSubject(subject.subjectId!)
+                          }
+                          disabled={isLoading}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {filteredSubjects.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              No subjects found matching your criteria.
-            </div>
-          )}
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
       {/* Create Subject Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="bg-gray-900 border-gray-700">
           <DialogHeader>
-            <DialogTitle>Create New Subject</DialogTitle>
-            <DialogDescription>
-              Add a new subject to the tutoring catalog.
+            <DialogTitle className="text-white">Add New Subject</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Create a new subject for your educational platform.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Subject Name</Label>
+          <div className="space-y-4 bg-gray-800 p-4 rounded-lg">
+            {error && (
+              <div className="text-red-500 text-sm bg-red-900/20 p-2 rounded">
+                {error}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-gray-300 font-medium">
+                Subject Name
+              </Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Enter subject name"
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
+            <div className="space-y-2">
+              <Label
+                htmlFor="educationLevel"
+                className="text-gray-300 font-medium"
+              >
+                Education Level
+              </Label>
+              <Select
+                value={formData.educationLevel}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    educationLevel: value as EducationLevel,
+                  })
+                }
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectValue placeholder="Select education level" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-gray-800 border shadow-lg">
-                  {CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                <SelectContent className="bg-gray-800 border-gray-600">
+                  {Object.values(EducationLevel).map((level) => (
+                    <SelectItem
+                      key={level}
+                      value={level}
+                      className="text-white hover:bg-gray-700"
+                    >
+                      {level.replace(/_/g, " ")}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter subject description"
-                rows={3}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="status"
-                checked={formData.status}
-                onCheckedChange={(checked) => setFormData({ ...formData, status: checked })}
-              />
-              <Label htmlFor="status">Active</Label>
+            <div className="space-y-2">
+              <Label htmlFor="stream" className="text-gray-300 font-medium">
+                Stream (Optional)
+              </Label>
+              <Select
+                value={formData.stream}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    stream:
+                      value === "none"
+                        ? "none"
+                        : (value as HighSchoolStreamType),
+                  })
+                }
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectValue placeholder="Select stream (optional)" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600">
+                  <SelectItem
+                    value="none"
+                    className="text-white hover:bg-gray-700"
+                  >
+                    None
+                  </SelectItem>
+                  {Object.values(HighSchoolStreamType).map((stream) => (
+                    <SelectItem
+                      key={stream}
+                      value={stream}
+                      className="text-white hover:bg-gray-700"
+                    >
+                      {stream}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+              className="border-gray-600 text-gray-300 hover:bg-gray-800"
+            >
               Cancel
             </Button>
-            <Button type="button" onClick={handleCreateSubject}>
+            <Button
+              onClick={handleCreateSubject}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               Create Subject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Subject Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Subject</DialogTitle>
-            <DialogDescription>
-              Update the subject information.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name">Subject Name</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter subject name"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-gray-800 border shadow-lg">
-                  {CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter subject description"
-                rows={3}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="edit-status"
-                checked={formData.status}
-                onCheckedChange={(checked) => setFormData({ ...formData, status: checked })}
-              />
-              <Label htmlFor="edit-status">Active</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleUpdateSubject}>
-              Update Subject
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -504,42 +515,45 @@ export default function SubjectManagement() {
 
       {/* View Subject Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="bg-gray-900 border-gray-700">
           <DialogHeader>
-            <DialogTitle>Subject Details</DialogTitle>
+            <DialogTitle className="text-white">Subject Details</DialogTitle>
           </DialogHeader>
           {currentSubject && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label className="font-semibold">Subject Name</Label>
-                <p className="text-sm">{currentSubject.name}</p>
+            <div className="space-y-4 bg-gray-800 p-4 rounded-lg">
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">Name</Label>
+                <p className="text-white bg-gray-700 px-3 py-2 rounded">
+                  {currentSubject.name}
+                </p>
               </div>
-              <div className="grid gap-2">
-                <Label className="font-semibold">Category</Label>
-                <Badge variant="outline" className="w-fit">{currentSubject.category}</Badge>
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">
+                  Education Level
+                </Label>
+                <p className="text-white bg-gray-700 px-3 py-2 rounded">
+                  {currentSubject.educationLevel.replace(/_/g, " ")}
+                </p>
               </div>
-              <div className="grid gap-2">
-                <Label className="font-semibold">Description</Label>
-                <p className="text-sm">{currentSubject.description}</p>
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">Stream</Label>
+                <p className="text-white bg-gray-700 px-3 py-2 rounded">
+                  {currentSubject.stream || "N/A"}
+                </p>
               </div>
-              <div className="grid gap-2">
-                <Label className="font-semibold">Status</Label>
-                <Badge variant={currentSubject.status === 'Active' ? 'default' : 'secondary'} className="w-fit">
-                  {currentSubject.status}
-                </Badge>
-              </div>
-              <div className="grid gap-2">
-                <Label className="font-semibold">Created Date</Label>
-                <p className="text-sm">{currentSubject.createdDate}</p>
-              </div>
-              <div className="grid gap-2">
-                <Label className="font-semibold">Last Updated</Label>
-                <p className="text-sm">{currentSubject.updatedDate}</p>
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium">Subject ID</Label>
+                <p className="text-white bg-gray-700 px-3 py-2 rounded">
+                  {currentSubject.subjectId}
+                </p>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button type="button" onClick={() => setIsViewDialogOpen(false)}>
+            <Button
+              onClick={() => setIsViewDialogOpen(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               Close
             </Button>
           </DialogFooter>

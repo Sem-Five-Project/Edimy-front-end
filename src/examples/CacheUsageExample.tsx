@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { getBookingCache, BookingCache } from '@/utils/bookingCache';
-import { TimeSlot, BookingPreferences } from '@/types';
+import { useEffect, useState } from "react";
+import { getBookingCache, BookingCache } from "@/utils/bookingCache";
+import { TimeSlot, BookingPreferences } from "@/types";
 
 /**
  * Example usage of booking cache in a slot selection page
@@ -14,14 +14,14 @@ export const useBookingCacheExample = () => {
     const cache = getBookingCache();
     if (cache) {
       setCachedData(cache);
-      console.log('Found cached booking data:', cache);
-      
+      console.log("Found cached booking data:", cache);
+
       // You can pre-populate form fields or UI with cached data:
       // - Set selected tutor: cache.tutorId
-      // - Set selected date: new Date(cache.selectedDate)  
+      // - Set selected date: new Date(cache.selectedDate)
       // - Set selected slot: cache.selectedSlot
       // - Set booking preferences: cache.bookingPreferences
-      
+
       // Example of how you might use it:
       // setSelectedTutor(tutors.find(t => t.id === cache.tutorId));
       // setSelectedDate(new Date(cache.selectedDate));
@@ -39,20 +39,19 @@ export const useBookingCacheExample = () => {
 export const useCacheValidation = (
   tutorId: number,
   selectedDate: Date,
-  selectedSlot: TimeSlot | null
+  selectedSlot: TimeSlot | null,
 ) => {
   const [isFromCache, setIsFromCache] = useState(false);
 
   useEffect(() => {
     if (!selectedSlot) return;
-    
+
     const cache = getBookingCache();
     if (cache) {
-      const matches = (
+      const matches =
         cache.tutorId === tutorId &&
         cache.selectedDate === selectedDate.toISOString() &&
-        cache.selectedSlot.slotId === selectedSlot.slotId
-      );
+        cache.selectedSlot.slotId === selectedSlot.slotId;
       setIsFromCache(matches);
     }
   }, [tutorId, selectedDate, selectedSlot]);
@@ -65,21 +64,25 @@ export const useCacheValidation = (
  */
 const SlotSelectionExample = () => {
   const cachedData = useBookingCacheExample();
-  
+
   return (
     <div>
       {cachedData && (
         <div className="bg-blue-50 p-4 rounded-lg mb-4">
-          <h3 className="font-semibold text-blue-800">Previous Selection Restored</h3>
+          <h3 className="font-semibold text-blue-800">
+            Previous Selection Restored
+          </h3>
           <p className="text-blue-600 text-sm">
-            We found your previous booking selection from{' '}
+            We found your previous booking selection from{" "}
             {new Date(cachedData.selectedDate).toLocaleDateString()}
           </p>
           <p className="text-blue-600 text-sm">
-            Slot: {cachedData.selectedSlot.startTime} - {cachedData.selectedSlot.endTime}
+            Slot: {cachedData.selectedSlot.startTime} -{" "}
+            {cachedData.selectedSlot.endTime}
           </p>
           <p className="text-blue-600 text-sm">
-            Subject: {cachedData.bookingPreferences.selectedSubject?.subjectName}
+            Subject:{" "}
+            {cachedData.bookingPreferences.selectedSubject?.subjectName}
           </p>
         </div>
       )}
