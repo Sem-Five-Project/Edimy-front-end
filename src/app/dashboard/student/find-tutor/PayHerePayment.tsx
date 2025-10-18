@@ -31,8 +31,10 @@ import {
 } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useBooking } from "@/contexts/BookingContext";
 import { bookingAPI } from "@/lib/api";
 import { saveBookingCache, clearBookingCache } from "@/utils/bookingCache";
+import { useRouter } from "next/navigation";
 // import { MonthlyBookingData } from "@/contexts/BookingContext";
 
 interface PayHerePaymentProps {
@@ -47,12 +49,13 @@ interface PayHerePaymentProps {
   onPaymentError: (error: string) => void;
   onCancel: () => void;
   lockedSlotIds: number[]; // Array of locked slot IDs for this booking
+  availabilitySlotsMap?: Record<string, number[]>; // availability_id -> [slotIds]
 }
-
 export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   tutor,
   selectedDate,
   lockedSlotIds,
+  availabilitySlotsMap,
   selectedSlot,
   bookingPreferences,
   reservationTimer,
@@ -62,8 +65,10 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
   onPaymentError,
   onCancel,
 }) => {
+  const router = useRouter();
   const { formatPrice } = useCurrency();
   const { user, effectiveStudentId } = useAuth();
+  const { nextMonthSlots, selectedClassId, nextMonth: ctxNextMonth, nextYear: ctxNextYear } = useBooking();
   const [isProcessing, setIsProcessing] = useState(false);
   const [payHereReady, setPayHereReady] = useState(false);
   const [orderMeta, setOrderMeta] = useState<InitPayHerePendingRes | null>(
@@ -128,7 +133,12 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         bookingPreferences,
       );
     }
-
+    
+    // Log next month data from context if available (for monthly bookings)
+    if (isMonthly && nextMonthSlots && nextMonthSlots.length > 0) {
+      console.log("Next month slots loaded from context:", nextMonthSlots);
+    }
+    
     // Reset payment initiation state when coming to payment page
     // This ensures a fresh 15-minute timer every time
     console.log(
@@ -137,7 +147,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
     setPaymentInitiated(false);
     paymentInitRef.current = false; // Reset ref flag
     setOrderMeta(null);
-  }, [tutor, selectedDate, selectedSlot, bookingPreferences]);
+  }, [tutor, selectedDate, selectedSlot, bookingPreferences, isMonthly, nextMonthSlots]);
 
   // No separate internal timer effect anymore; parent component handles reservation countdown.
   // Initiate payment pending when PayHere loads - using useCallback to prevent recreation
@@ -352,10 +362,8 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         }
       }
 
-      console.log(
-        "Payment window validation complete - proceeding to hash generation",
-      );
-
+      console.log("Payment window validation complete - proceeding to hash generation");
+      console.log("nextMonthSlots1111 :",nextMonthSlots)
       // Step 2: Generate hash for PayHere
       const amountStr = totalAmount.toFixed(2);
       const hashResponse = await bookingAPI.generatePayHereHash(
@@ -436,70 +444,108 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       // };
       window.payhere.onCompleted = async (completedOrderId: string) => {
         console.log("Payment completed. OrderID:" + completedOrderId);
-        try {
-          setIsProcessing(true);
+        setIsProcessing(true);
 
+        try {
           const paymentId = orderMeta.paymentId || orderMeta.order_id;
           if (!paymentId) {
             throw new Error("Payment ID not found");
           }
 
-          if (
-            !bookingPreferences.selectedSubject ||
-            !bookingPreferences.selectedLanguage ||
-            !bookingPreferences.selectedClassType
-          ) {
-            console.error(
-              "Missing booking preference details:",
-              bookingPreferences,
-            );
-            onPaymentError(
-              "Missing booking preference details (subject/language/class type). Please re-select and try again.",
-            );
-            setIsProcessing(false);
+          if (!bookingPreferences.selectedSubject || !bookingPreferences.selectedLanguage || !bookingPreferences.selectedClassType) {
+            console.error("Missing booking preference details:", bookingPreferences);
+            onPaymentError("Missing booking preference details (subject/language/class type). Please re-select and try again.");
             return;
           }
 
-          // Build required fields
-          const nowIso = new Date().toISOString();
-          // Derive month/year for recurring from monthlyBookingData.startDate if present; fall back to selectedDate
-          const recurringBaseDate = monthlyBookingData?.startDate
-            ? new Date(monthlyBookingData.startDate)
-            : selectedDate;
+          const currentOrderId = orderMeta.orderId || orderMeta.order_id || completedOrderId;
+          if (!currentOrderId) {
+            throw new Error("Order ID not found");
+          }
 
-          const month = isMonthly ? recurringBaseDate.getMonth() + 1 : null;
-          const year = isMonthly ? recurringBaseDate.getFullYear() : null;
+          console.log("Checking payment status for order:", completedOrderId);
+          const statusResponse = await bookingAPI.getPaymentStatus(completedOrderId);
+          console.log("Payment status response:", statusResponse);
+          if (!statusResponse.success) {
+            const message = statusResponse.error || "Unable to verify payment status. Please contact support.";
+            console.error("Payment status check failed:", message, statusResponse);
+           // onPaymentError(message, "UNKNOWN");
+            return;
+          }
 
-          // Backend expects JSONB map: { availability_id: [slot_ids...] }
-          // If you later have availability IDs, replace "default" key with real ids and group accordingly.
-          const slotsPayload: Record<string, number[]> = {
-            default: Array.isArray(lockedSlotIds) ? lockedSlotIds : [],
-          };
+          const normalizedStatus = (statusResponse.data.status || "").toUpperCase();
+          console.log("Payment status received:", normalizedStatus, statusResponse.data)
+          
+          if (normalizedStatus === "SUCCESS" || normalizedStatus === "COMPLETED") {
+            clearBookingCache();
+            onPaymentSuccess(undefined); // Let the confirmation page handle it
+            return;
+          }
 
-          const confirmPayload = {
-            // required
-            paymentId: paymentId,
-            slots: slotsPayload, // JSONB map
-            tutorId: Number(
-              tutor.tutorProfileId || parseInt(String(tutor.id), 10),
-            ),
-            subjectId: bookingPreferences.selectedSubject.subjectId,
-            languageId: bookingPreferences.selectedLanguage.languageId,
-            classTypeId: bookingPreferences.selectedClassType.id,
-            studentId: Number(studentIdNum),
-            paymentTime: nowIso, // TIMESTAMP (ISO)
-            amount: Number(totalAmount), // NUMERIC
-            month: month, // SMALLINT or null
-            year: year, // SMALLINT or null
-            isMonthly: !!isMonthly, // keep if your API still uses it
-          };
+          if (normalizedStatus === "REFUNDED") {
+            clearBookingCache();
+            router.push('/dashboard/student/find-tutor/book/refunded');
+            return;
+          }
 
-          console.log("Confirming payment with payload:", confirmPayload);
-          const confirmRes =
-            await bookingAPI.confirmPayHerePayment(confirmPayload);
-          // ...existing code...
+          if (normalizedStatus === "FAILED") {
+            clearBookingCache();
+            router.push('/dashboard/student/find-tutor/book/failed');
+            return;
+          }
+
+          if (normalizedStatus === "CANCELLED" || normalizedStatus === "CANCELED") {
+            clearBookingCache();
+            router.push('/dashboard/student/find-tutor/book/cancelled');
+            return;
+          }
+
+          if (normalizedStatus !== "SUCCESS" && normalizedStatus !== "COMPLETED") {
+            onPaymentError(`Payment status is ${normalizedStatus || "unknown"}. Please reach out to support if this continues.`);
+            return;
+          }
+
+          //const nowIso = new Date().toISOString();
+          // const recurringBaseDate = monthlyBookingData?.startDate
+          //   ? new Date(monthlyBookingData.startDate)
+          //   : selectedDate;
+          // const month = isMonthly ? recurringBaseDate.getMonth() + 1 : null;
+          // const year = isMonthly ? recurringBaseDate.getFullYear() : null;
+
+          // const slotsPayload: Record<string, number[]> =
+          //   availabilitySlotsMap && Object.keys(availabilitySlotsMap).length > 0
+          //     ? availabilitySlotsMap
+          //     : { default: Array.isArray(lockedSlotIds) ? lockedSlotIds : [] };
+
+          // const confirmPayload = {
+          //   paymentId,
+          //   slots: slotsPayload,
+          //   tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
+          //   subjectId: bookingPreferences.selectedSubject.subjectId,
+          //   languageId: bookingPreferences.selectedLanguage.languageId,
+          //   classTypeId: bookingPreferences.selectedClassType.id,
+          //   studentId: Number(studentIdNum),
+          //   paymentTime: nowIso,
+          //   amount: Number(totalAmount),
+          //   month,
+          //   year,
+          //   isMonthly: !!isMonthly,
+          // };
+
+          ///console.log("Confirming payment with payload:", confirmPayload);
+          //const confirmRes = await bookingAPI.confirmPayHerePayment(confirmPayload);
+          //console.log("Payment confirmation response:", confirmRes);
+
+          // if (confirmRes?.success) {
+          //   const bookingId = (confirmRes.data as any)?.bookingId ?? (confirmRes as any)?.bookingId;
+          //   clearBookingCache();
+          //   onPaymentSuccess(bookingId);
+          // } else {
+          //   onPaymentError(confirmRes?.error || "Payment confirmation failed");
+          // }
         } catch (e: any) {
-          // ...existing code...
+          console.error("Confirm PayHere payment error:", e);
+          onPaymentError(e?.message || "Payment confirmation failed");
         } finally {
           setIsProcessing(false);
         }
@@ -515,17 +561,74 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         onPaymentError("Payment failed: " + error);
         setIsProcessing(false);
       };
-
+//////////////////////////////////////
       // Step 4: Start PayHere payment
+      const paymentIdForMetadata = orderMeta.paymentId || orderMeta.order_id || null;
+      const metadataBaseDate = monthlyBookingData?.startDate
+        ? new Date(monthlyBookingData.startDate)
+        : selectedDate;
+  // Prefer context-provided nextMonth/nextYear for repay/next-month flows; fallback to current selection month
+  const metadataMonth = (ctxNextMonth ?? (isMonthly ? metadataBaseDate.getMonth() + 1 : null)) as number | null;
+  const metadataYear = (ctxNextYear ?? (isMonthly ? metadataBaseDate.getFullYear() : null)) as number | null;
+      // Build slots payload: prefer availability map, then lockedSlotIds, then nextMonthSlots as a fallback (repay case)
+      const metadataSlots: Record<string, number[]> = (() => {
+        console.log("availabilitySlotsMap :",availabilitySlotsMap)
+        if (availabilitySlotsMap && Object.keys(availabilitySlotsMap).length > 0) {
+          return availabilitySlotsMap;
+        }
+        const locked = Array.isArray(lockedSlotIds) ? lockedSlotIds : [];
+        if (locked.length > 0) {
+          return { default: locked };
+        }
+        const nextMonth = Array.isArray(nextMonthSlots) ? nextMonthSlots : [];
+        if (nextMonth.length > 0) {
+          return { default: nextMonth };
+        }
+        return { default: [] };
+      })();
+      console.log("defaulrt slots for metadataMonth:", metadataMonth);
+
+      const customPayload = {
+        paymentId: paymentIdForMetadata,
+        slots: metadataSlots,
+        tutorId: Number(tutor.tutorProfileId || parseInt(String(tutor.id), 10)),
+        subjectId: bookingPreferences.selectedSubject?.subjectId,
+        languageId: bookingPreferences.selectedLanguage?.languageId,
+        classTypeId: bookingPreferences.selectedClassType?.id,
+        studentId: Number(studentIdNum),
+        paymentTime: new Date().toISOString(),
+        amount: Number(totalAmount),
+        month: metadataMonth,
+        year: metadataYear,
+        isMonthly: !!isMonthly,
+        nextMonthSlots: Array.isArray(nextMonthSlots) ? nextMonthSlots : []
+      };
+      // Repay-specific payload for existing class payments
+      const isRepay = !!selectedClassId;
+      const repayPayload = isRepay ? {
+        type: 'repay',
+        classId: selectedClassId,
+        studentId: Number(studentIdNum),
+        paymentTime: new Date().toISOString(),
+        amount: Number(totalAmount),
+        month: metadataMonth,
+        year: metadataYear,
+        paymentId: paymentIdForMetadata,
+        // Ensure slots/default and nextMonthSlots are populated in repay mode
+        slots: metadataSlots,
+        nextMonthSlots: Array.isArray(nextMonthSlots) ? nextMonthSlots : []
+      } : undefined;
+      console.log("custom payload:", customPayload);
+      
+
       const payment = {
         sandbox: true,
         merchant_id: hashResponse.data.merchantId || "1228143", // Fallback to sandbox merchant ID
         return_url: `${window.location.origin}/payment/return`,
         cancel_url: `${window.location.origin}/payment/cancel`,
-        notify_url: `${window.location.origin}/api/payment/notify`,
-        order_id:
-          orderMeta.orderId || orderMeta.order_id || `EDIMY-${Date.now()}`,
-        items: isMonthly
+        notify_url: `https://95b150d28080.ngrok-free.app/api/payment/payhere/notify`,
+        order_id: orderMeta.orderId || orderMeta.order_id || `EDIMY-${Date.now()}`,
+        items: isMonthly 
           ? `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} - Monthly (${monthlyBookingData?.totalSlots || 0} slots)`
           : `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} Session - ${duration}h`,
         amount: amountStr,
@@ -559,6 +662,11 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         //   classType: bookingPreferences?.selectedClassType?.name,
         // }),
         // custom_2: selectedDate.toISOString(),
+        // In repay mode, send only custom_2 and set custom_1 as null per requirement
+        ...(isRepay
+          ? { custom_1: null as any, custom_2: JSON.stringify(repayPayload) }
+          : { custom_1: JSON.stringify(customPayload) }
+        )
       };
 
       console.log("Payment object:", payment);

@@ -17,6 +17,7 @@ import { authAPI } from "@/lib/api";
 import { sendFCMTokenAfterLogin } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoginCredentials } from "@/types";
+import logo from '../../../../public/Edimy.png';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -123,15 +124,14 @@ export default function LoginPage() {
   };
 
   return (
-    // Light-only theme version (dark: classes removed)
-    <div className="h-screen bg-white text-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left Side - Image and Content */}
         <div className="hidden lg:block">
           <div className="space-y-6">
             <div className="space-y-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-900 rounded-lg">
-                <Shield className="w-6 h-6 text-white" />
+              <div className="inline-flex items-center justify-center w-20 h-20  rounded-lg">
+                <img src={logo.src} alt="Edimy Logo" className="w-20 h-20" />
               </div>
               <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                 Secure Learning Platform
@@ -143,35 +143,36 @@ export default function LoginPage() {
             </div>
 
             {/* Professional Image */}
-            <div className="relative rounded-xl overflow-hidden shadow-lg">
+            <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200">
               <img
                 src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
                 alt="Professional team collaboration"
                 className="w-full h-64 object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-900 rounded-full"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                 <span className="text-sm text-gray-700">
-                  Advanced authentication system
+                  Book your classes anytime, anywhere
                 </span>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-900 rounded-full"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                 <span className="text-sm text-gray-700">
-                  Role-based access control
+                  Find tutors who truly understand your learning needs
                 </span>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-900 rounded-full"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                 <span className="text-sm text-gray-700">
-                  24/7 secure cloud infrastructure
+                  Your learning journey made simple and flexible
                 </span>
               </div>
             </div>
+
           </div>
         </div>
 
@@ -179,13 +180,13 @@ export default function LoginPage() {
         <div className="w-full max-w-md mx-auto lg:mx-0">
           {/* Logo/Brand for mobile */}
           <div className="text-center mb-8 lg:hidden">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-900 rounded-xl mb-4">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-xl mb-4">
+              <img src={logo.src} alt="Edimy Logo" className="w-20 h-20" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">EduPlatform</h2>
           </div>
 
-          <Card className="shadow-lg border border-gray-200 bg-white">
+          <Card className="shadow-xl border border-gray-200 bg-white">
             <CardHeader className="space-y-2 pb-6">
               <CardTitle className="text-2xl font-semibold text-center text-gray-900">
                 Sign In
@@ -220,7 +221,7 @@ export default function LoginPage() {
                       value={credentials.usernameOrEmail}
                       onChange={handleInputChange}
                       placeholder="Enter your email or username"
-                      className="h-11 border-gray-300 focus:border-gray-900 focus:ring-gray-900"
+                      className="h-11 border-gray-300 focus:border-blue-600 focus:ring-blue-600"
                       required
                     />
                   </div>
@@ -240,7 +241,7 @@ export default function LoginPage() {
                         value={credentials.password}
                         onChange={handleInputChange}
                         placeholder="Enter your password"
-                        className="h-11 pr-11 border-gray-300 focus:border-gray-900 focus:ring-gray-900"
+                        className="h-11 pr-11 border-gray-300 focus:border-blue-600 focus:ring-blue-600"
                         required
                       />
                       <Button
@@ -264,7 +265,7 @@ export default function LoginPage() {
                   <Button
                     type="button"
                     variant="link"
-                    className="p-0 h-auto text-sm text-gray-600 hover:text-gray-900"
+                    className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800"
                     onClick={() => router.push("/forgot-password")}
                   >
                     Forgot password?
@@ -273,7 +274,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white font-medium transition-colors"
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -295,7 +296,7 @@ export default function LoginPage() {
                     <Button
                       type="button"
                       variant="link"
-                      className="p-0 h-auto font-medium text-gray-900 hover:text-gray-700"
+                      className="p-0 h-auto font-medium text-blue-600 hover:text-blue-800"
                       onClick={() => router.push("/register")}
                     >
                       Create account
@@ -303,17 +304,7 @@ export default function LoginPage() {
                   </p>
                 </div>
 
-                {/* Demo credentials */}
-                <div className="mt-6 p-3 bg-gray-50 rounded-md border border-gray-200">
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-gray-500 mb-1">
-                      Demo Account
-                    </p>
-                    <p className="text-xs text-gray-700">
-                      test@example.com / password
-                    </p>
-                  </div>
-                </div>
+
               </form>
             </CardContent>
           </Card>

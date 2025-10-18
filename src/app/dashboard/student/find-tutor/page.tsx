@@ -875,7 +875,7 @@ const MainTutorSearchComponent: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900">
-              {isLoading ? "Searching..." : `${totalResults} tutors found`}
+              {isLoading ? 'Searching...' : `${(totalResults || tutors.length)} tutors found`}
             </h2>
             <p className="text-gray-600 mt-1">
               {!isLoading &&
@@ -883,15 +883,8 @@ const MainTutorSearchComponent: React.FC = () => {
                 `Page ${currentPage} of ${totalPages}`}
             </p>
           </div>
-
-          {!isLoading && tutors.length > 0 && (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                Sorted by {filters.sortBy} (
-                {filters.sortOrder === "desc" ? "high to low" : "low to high"})
-              </span>
-            </div>
-          )}
+          
+         
         </div>
 
         {/* Loading State */}

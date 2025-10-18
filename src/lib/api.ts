@@ -554,21 +554,13 @@ export const filterAPI = {
       }
 
       // Extract data from Axios response
-      const data = response.data; // response.data is the full Axios response, data.data is actual array
-      console.log("subjects data in api:", data);
-      //if (!Array.isArray(data)) return { success: true, data: [] } as ApiResponse<Subject[]>;
+      const data = response.data;
+      console.log('subjects data in api:', data);
 
-      // const subjects: Subject[] = data
-      //   .filter(
-      //     (s: any) => s && typeof s.subjectId === 'number' && typeof s.subjectName === 'string'
-      //   )
-      //   .map((s: any) => ({
-      //     subjectId: s.subjectId,
-      //     subjectName: s.subjectName,
-      //     //hourlyRate: typeof s.hourlyRate === 'number' ? s.hourlyRate : 0,
-      //   }));
-
-      console.log("subjects in api:", data);
+      // Defensive: ensure data is an array of subjects
+      if (!data || !Array.isArray(data) || !data.every((s: any) => s && typeof s.subjectId === 'number' && typeof s.subjectName === 'string')) {
+        return { success: false, data: [], error: 'Invalid subject data from server' } as ApiResponse<Subject[]>;
+      }
 
       return { success: true, data: data } as ApiResponse<Subject[]>;
     } catch (error: any) {
@@ -791,54 +783,50 @@ export const tutorAPI = {
   //     };
   //   }
   // },
-  // searchTutors: async (
-  //   filters: FilterOptions,
-  //   page: number = 1,
-  //   limit: number = 12
-  // ): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
+// searchTutors: async (
+//   filters: FilterOptions,
+//   page: number = 1,
+//   limit: number = 12
+// ): Promise<ApiResponse<{ tutors: Tutor[]; total: number; totalPages: number }>> => {
 
-  //   // Always generate mock tutors
-  //   const mockTutors: Tutor[] = Array.from({ length: limit }, (_, i) => ({
-  //     id: `tutor-${page}-${i}`,
-  //     firstName: `Tutor`,
-  //     lastName: `${page}-${i + 1}`,
-  //     username: `tutor${page}${i}`,
-  //     email: `tutor${page}${i}@example.com`,
-  //     role: 'TUTOR',
-  //     isVerified: true,
-  //     createdAt: new Date().toISOString(),
-  //     subjects: ['Mathematics', 'Physics', 'Chemistry'].slice(0, Math.floor(Math.random() * 3) + 1),
-  //     experience: Math.floor(Math.random() * 10) + 1,
-  //     rating: 4 + Math.random(),
-  //     classCompletionRate: 85 + Math.random() * 15,
-  //     bio: 'Experienced tutor with excellent teaching skills.',
-  //     hourlyRate: 25 + Math.floor(Math.random() * 75),
-  //     totalClasses: Math.floor(Math.random() * 1000) + 100,
-  //     completedClasses: Math.floor(Math.random() * 800) + 80,
-  //   }));
+//   // Always generate mock tutors
+//   const mockTutors: Tutor[] = Array.from({ length: limit }, (_, i) => ({
+//     id: `tutor-${page}-${i}`,
+//     firstName: `Tutor`,
+//     lastName: `${page}-${i + 1}`,
+//     username: `tutor${page}${i}`,
+//     email: `tutor${page}${i}@example.com`,
+//     role: 'TUTOR',
+//     isVerified: true,
+//     createdAt: new Date().toISOString(),
+//     subjects: ['Mathematics', 'Physics', 'Chemistry'].slice(0, Math.floor(Math.random() * 3) + 1),
+//     experience: Math.floor(Math.random() * 10) + 1,
+//     rating: 4 + Math.random(),
+//     classCompletionRate: 85 + Math.random() * 15,
+//     bio: 'Experienced tutor with excellent teaching skills.',
+//     hourlyRate: 25 + Math.floor(Math.random() * 75),
+//     totalClasses: Math.floor(Math.random() * 1000) + 100,
+//     completedClasses: Math.floor(Math.random() * 800) + 80,
+//   }));
 
-  //   return {
-  //     success: true,
-  //     data: {
-  //       tutors: mockTutors,
-  //       total: 150,
-  //       totalPages: Math.ceil(150 / limit),
-  //     },
-  //   };
-  // },
-  getNextMonthSlots: async (
-    availabilityIds: number[],
-    month: number,
-    year: number,
-  ): Promise<ApiResponse<any>> => {
-    try {
-      if (!Array.isArray(availabilityIds) || availabilityIds.length === 0) {
-        return {
-          success: false,
-          error: "No availability ids supplied",
-          data: [],
-        };
-      }
+//   return {
+//     success: true,
+//     data: {
+//       tutors: mockTutors,
+//       total: 150,
+//       totalPages: Math.ceil(150 / limit),
+//     },
+//   };
+// },
+getNextMonthSlots: async (
+  availabilityIds: number[],
+  month: number|null,
+  year: number|null
+): Promise<ApiResponse<any>> => {
+  try {
+    if (!Array.isArray(availabilityIds) || availabilityIds.length === 0) {
+      return { success: false, error: 'No availability ids supplied', data: [] };
+    }
 
       // Deduplicate & build comma list
       const idsParam = Array.from(new Set(availabilityIds)).join(",");
@@ -1067,7 +1055,7 @@ export const studentAPI = {
     try {
       console.log("studentId in loadStudentAcademicInfo :", studentId);
       const response = await api.get(
-        `/student/profile/${studentId}/academic-info`,
+        `/students/${studentId}/academic-info`
       );
       console.log("response of loadStudentAcademicInfo :", response);
 
@@ -1099,7 +1087,7 @@ export const studentAPI = {
   > => {
     try {
       const response = await api.get(
-        `/student/profile/${studentId}/profile-info`,
+        `/students/${studentId}/profile-info`
       );
       console.log("response of loadStudentProfileInfo :", response);
 
@@ -1134,8 +1122,8 @@ export const studentAPI = {
     }>
   > => {
     try {
-      const response = await api.get(
-        `/student/profile/${studentId}/profile-payment`,
+     const response = await api.get(
+        `/students/${studentId}/profile-payment`
       );
       console.log("response of loadStudentProfilePayment :", response);
 
@@ -1155,6 +1143,235 @@ export const studentAPI = {
           status: null,
           paymentTime: null,
         },
+      };
+    }
+  },
+  // Fetch classes for current authenticated student
+  getMyClasses: async (studentId: number): Promise<ApiResponse<{ classes: Array<{
+    classId: number;
+    className: string | null;
+    tutorId: number;
+    subjectId: number;
+    tutorName?: string | null;
+    subjectName?: string | null;
+    languageName?: string | null;
+    classType?: 'ONE_TIME' | 'MONTHLY' | string | null;
+    monthlySlots?: Array<{ date: string; status: string }>;
+    date: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    comment: string | null;
+    linkForMeeting: string | null;
+    docs: any[];
+  }> }>> => {
+    try {
+          console.log("getMyClasses")
+
+      console.log("Fetching classes for student:", studentId);
+      if (!studentId && studentId !== 0) {
+        return { success: true, data: { classes: [] } } as ApiResponse<any>;
+      }
+      const response = await api.get(`/students/${studentId}/get-all-class-details`, { timeout: 20000 });
+      console.log("response of getMyClasses :", response);
+      const raw = response.data                                                     ;
+
+      // Normalize various possible backend shapes into UI-consumable classes[]
+      const normalize = (input: any): any[] => {
+        if (!input) return [];
+        // If already in our ApiResponse shape
+        if (typeof input === 'object' && 'success' in input && (input as any).success) {
+          const payload = (input as any).data;
+          const dataArr = Array.isArray(payload?.classes)
+            ? payload.classes
+            : Array.isArray(payload) ? payload : [];
+          return normalize(dataArr);
+        }
+        // If array already, try to detect if it's raw class items or normalized
+        if (Array.isArray(input)) {
+          return input.map((it: any) => it);
+        }
+        // Handle custom shape: data.get_student_classes_with_details
+        const maybe = (input?.data ?? input)?.get_student_classes_with_details;
+        if (Array.isArray(maybe)) return maybe.map((it: any) => it);
+        // Handle shape: { classes: [...] }
+        if (Array.isArray(input?.classes)) return input.classes;
+        return [];
+      };
+
+      const rawItems = normalize(raw);
+      // Map raw backend items to the UI's expected fields
+      const classes = rawItems.map((item: any) => {
+        // Flatten all slot dates from nested structure, if present
+        const monthlySlots = Array.isArray(item?.class_slots)
+          ? item.class_slots.flatMap((grp: any) =>
+              Array.isArray(grp?.slots)
+                ? grp.slots.map((s: any) => ({
+                    date: String(s?.date ?? ''),
+                    status: String((s?.status ?? '')).toUpperCase() === 'UPCOMMING' ? 'UPCOMING' : String(s?.status ?? ''),
+                  }))
+                : []
+            )
+          : [];
+
+        // Decide class type: treat multi-slot as MONTHLY otherwise ONE_TIME, fallback to trimmed backend value
+        const backendType = String(item?.class_type ?? '').trim();
+        const inferredType = monthlySlots.length > 1 ? 'MONTHLY' : (backendType ? backendType.toUpperCase() : 'ONE_TIME');
+
+        // Compute a next date hint from slots if not provided
+  const nextSlot = monthlySlots.find((s: { date: string; status: string }) => String(s.status).toUpperCase() === 'UPCOMING') || monthlySlots[0];
+
+        return {
+          classId: Number(item?.class_id ?? item?.id ?? 0),
+          className: item?.class_name ?? null,
+          tutorId: Number(item?.tutor_id ?? 0),
+          subjectId: Number(item?.subject_id ?? 0),
+          tutorName: item?.tutor_name ?? null,
+          subjectName: item?.subject ?? null,
+          languageName: item?.language ?? null,
+          classType: inferredType,
+          monthlySlots,
+          date: item?.date ?? nextSlot?.date ?? null,
+          startTime: item?.start_time ?? null,
+          endTime: item?.end_time ?? null,
+          comment: item?.comment ?? null,
+          linkForMeeting: item?.class_link ?? item?.linkForMeeting ?? null,
+          docs: Array.isArray(item?.class_docs) ? item.class_docs : [],
+        };
+      });
+
+      return { success: true, data: { classes } } as ApiResponse<any>;
+    } catch (error: any) {
+      console.error('getMyClasses failed:', error?.response?.data || error?.message || error);
+      return { success: false, data: { classes: [] }, error: error?.message || 'Failed to load classes' };
+    }
+  },
+  // Fetch enriched class details for a specific student (tutor/subject names, language, class type, monthly slots)
+  getAllClassDetails: async (studentId: number): Promise<ApiResponse<{ classes: any[] }>> => {
+    try {
+                console.log("getAllClassDetails")
+
+      // Exact endpoint requested: /students/{studentId}/get-all-class-details
+      const resp = await api.get(`/students/${studentId}/get-all-class-details`, { timeout: 20000 });
+      const raw = resp.data;
+
+      // Reuse the same normalization as getMyClasses so both paths are consistent
+      const extractItems = (input: any): any[] => {
+        if (!input) return [];
+        if (typeof input === 'object' && 'success' in input && (input as any).success) {
+          const payload = (input as any).data;
+          const dataArr = Array.isArray(payload?.classes)
+            ? payload.classes
+            : Array.isArray(payload) ? payload : [];
+          return extractItems(dataArr);
+        }
+        if (Array.isArray(input)) return input;
+        const maybe = (input?.data ?? input)?.get_student_classes_with_details;
+        if (Array.isArray(maybe)) return maybe;
+        if (Array.isArray(input?.classes)) return input.classes;
+        return [];
+      };
+
+      const rawItems = extractItems(raw);
+      const classes = rawItems.map((item: any) => {
+        const monthlySlots = Array.isArray(item?.class_slots)
+          ? item.class_slots.flatMap((grp: any) =>
+              Array.isArray(grp?.slots)
+                ? grp.slots.map((s: any) => ({
+                    date: String(s?.date ?? ''),
+                    status: String((s?.status ?? '')).toUpperCase() === 'UPCOMMING' ? 'UPCOMING' : String(s?.status ?? ''),
+                  }))
+                : []
+            )
+          : [];
+        const backendType = String(item?.class_type ?? '').trim();
+        const inferredType = monthlySlots.length > 1 ? 'MONTHLY' : (backendType ? backendType.toUpperCase() : 'ONE_TIME');
+  const nextSlot = monthlySlots.find((s: { date: string; status: string }) => String(s.status).toUpperCase() === 'UPCOMING') || monthlySlots[0];
+        return {
+          classId: Number(item?.class_id ?? item?.id ?? 0),
+          className: item?.class_name ?? null,
+          tutorId: Number(item?.tutor_id ?? 0),
+          subjectId: Number(item?.subject_id ?? 0),
+          languageId: Number(item?.language_id ?? 0),
+          hourlyRate: Number(item?.hourly_rate ?? 0),
+          tutorName: item?.tutor_name ?? null,
+          subjectName: item?.subject ?? null,
+          languageName: item?.language ?? null,
+          classType: inferredType,
+          monthlySlots,
+          date: item?.date ?? nextSlot?.date ?? null,
+          startTime: item?.start_time ?? null,
+          endTime: item?.end_time ?? null,
+          comment: item?.comment ?? null,
+          linkForMeeting: item?.class_link ?? item?.linkForMeeting ?? null,
+          docs: Array.isArray(item?.class_docs) ? item.class_docs : [],
+          rating: item?.rating ?? null,
+        };
+      });
+
+      return { success: true, data: { classes } };
+    } catch (e) {
+      console.warn('getAllClassDetails failed, falling back to getMyClasses:', (e as any)?.message || e);
+      // Fallback to basic classes
+      try {
+        const fallback = await studentAPI.getMyClasses(studentId);
+        if (fallback.success) return fallback as ApiResponse<{ classes: any[] }>;
+        return { success: true, data: { classes: [] } };
+      } catch (e2) {
+        return { success: true, data: { classes: [] } };
+      }
+    }
+  },
+  // Fetch upcoming classes within next 30 minutes for a specific student
+  getUpcomingClasses: async (
+    studentId: number
+  ): Promise<ApiResponse<{ upcoming: boolean; classes: Array<{
+    classId: number;
+    tutorName?: string | null;
+    subjectName?: string | null;
+    languageName?: string | null;
+    classType?: string | null;
+    linkForMeeting?: string | null;
+    docs: Array<{ link?: string; class_doc_id?: number; doc_type?: string }>; 
+  }> }>> => {
+    try {
+      if (!studentId && studentId !== 0) {
+        return { success: true, data: { upcoming: false, classes: [] } } as ApiResponse<any>;
+      }
+      const resp = await api.get(`/students/${studentId}/upcoming-classes`, { timeout: 15000 });
+      const raw = resp.data;
+      const upcoming = !!(raw?.upcoming);
+      const list = Array.isArray(raw?.get_student_upcoming_classes)
+        ? raw.get_student_upcoming_classes
+        : [];
+      const classes = list.map((item: any) => ({
+        classId: Number(item?.class_id ?? 0),
+        tutorName: item?.tutor_name ?? null,
+        subjectName: item?.subject ?? null,
+        languageName: item?.language ?? null,
+        classType: String(item?.class_type ?? '').trim().toUpperCase() || null,
+        linkForMeeting: item?.class_link ?? null,
+        docs: Array.isArray(item?.class_docs) ? item.class_docs : [],
+      }));
+      return { success: true, data: { upcoming, classes } };
+    } catch (error: any) {
+      console.error('getUpcomingClasses failed:', error?.response?.data || error?.message || error);
+      return { success: false, data: { upcoming: false, classes: [] }, error: error?.message || 'Failed to load upcoming classes' };
+    }
+  },
+  // Set rating for a class
+  setRating: async (studentId: number, ratingData: { ratingValue: number; tutorId: number; class_id: number; feedback: string }): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post(`/students/${studentId}/set-rating`, ratingData);
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error: any) {
+      console.error('setRating failed:', error?.response?.data || error?.message || error);
+      return {
+        success: false,
+        data: { message: '' },
+        error: error?.response?.data?.message || error?.message || 'Failed to set rating',
       };
     }
   },
@@ -1218,6 +1435,38 @@ export const bookingAPI = {
           e?.response?.data?.message ||
           e.message ||
           "Failed to check class existence",
+      };
+    }
+  },
+
+  // Check if payment is already made for a specific class/month/year
+  checkPaymentStatus: async (params: {
+    studentId: number | string;
+    classId: number | string;
+    month: number;
+    year: number;
+  }): Promise<ApiResponse<{ isPaid: boolean }>> => {
+    try {
+      const query = {
+        studentId: params.studentId,
+        classId: params.classId,
+        month: params.month,
+        year: params.year,
+      };
+      console.log('Checking payment status with params:', query);
+      const res = await api.get('/student/bookings/is-paid', { params: query });
+      const data = res?.data || {};
+      // Expect response like { isPaid: true/false }
+      if (typeof data.isPaid === 'boolean') {
+        return { success: true, data: { isPaid: data.isPaid } };
+      }
+      return { success: true, data: { isPaid: false } };
+    } catch (e: any) {
+      console.error('checkPaymentStatus error:', e?.response?.data || e.message);
+      return {
+        success: false,
+        data: { isPaid: false },
+        error: e?.response?.data?.message || e.message || 'Failed to check payment status',
       };
     }
   },
@@ -1346,19 +1595,51 @@ export const bookingAPI = {
     }
   },
 
-  updateBookingDetails: async (
-    data: BookingUpdateData,
-  ): Promise<{ success: boolean; bookingId: string }> => {
+  getPaymentStatus: async (
+    orderId: string
+  ): Promise<ApiResponse<{ orderId: string; status: string; payherePaymentId?: string }>> => {
     try {
-      // Using axios; body is passed as data, not nested with JSON.stringify
-      const response = await api.post("/bookings/confirm", data);
-      if (response?.data) {
-        return response.data;
+      console.log('API: getPaymentStatus called with orderId:', orderId);
+
+      const response = await api.get('/payment/status', {
+        params: { orderId },
+      });
+      console.log('API: getPaymentStatus response:', response);
+      const payload = response?.data ?? {};
+      const order = payload?.data ?? payload;
+
+      if (order?.orderId || order?.order_id) {
+        return {
+          success: true,
+          data: {
+            orderId: order.orderId ?? order.order_id,
+            status: order.status,
+            payherePaymentId: order.payherePaymentId ?? order.paymentId ?? order.payhere_payment_id,
+          },
+        };
       }
-      throw new Error("Failed to update booking details");
-    } catch (error) {
-      console.error("Error updating booking details:", error);
-      throw error;
+
+      return {
+        success: false,
+        data: { orderId, status: 'UNKNOWN', payherePaymentId: undefined },
+        error: 'Unexpected payment status response',
+      };
+    } catch (error: any) {
+      console.error('API: getPaymentStatus error:', error?.response?.data || error);
+      return {
+        success: false,
+        data: { orderId, status: 'ERROR', payherePaymentId: undefined },
+        error: error?.response?.data?.message || error.message || 'Failed to fetch payment status',
+      };
+    }
+  },
+
+updateBookingDetails: async (data: BookingUpdateData): Promise<{ success: boolean; bookingId: string }> => {
+  try {
+    // Using axios; body is passed as data, not nested with JSON.stringify
+    const response = await api.post('/bookings/confirm', data);
+    if (response?.data) {
+      return response.data;
     }
   },
   validateSlotAvailability: async (slotId: string): Promise<boolean> => {
@@ -1776,90 +2057,82 @@ export const bookingAPI = {
   },
 
   // Confirm PayHere payment and finalize booking, updating all related tables
-  confirmPayHerePayment: async (payload: {
-    paymentId: string;
-    slots: Record<string, number[]>; // JSONB map: { availability_id: [slot_ids...] }
-    tutorId: number;
-    subjectId: number;
-    languageId: number;
-    classTypeId: number;
-    studentId: number;
-    paymentTime: string; // ISO timestamp
-    amount: number;
-    month: number | null;
-    year: number | null;
-    isMonthly?: boolean;
-  }): Promise<
-    ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>
-  > => {
-    try {
-      console.log("Confirming PayHere payment with payload:", payload);
-      const response = await api.post("/payment/bookings/confirm", payload);
-      const paymentRaw = response.data;
-      console.log("Confirm PayHere payment response (raw):", paymentRaw);
+confirmPayHerePayment: async (payload: {
+  paymentId: string;
+  slots: Record<string, number[]>; // JSONB map: { availability_id: [slot_ids...] }
+  tutorId: number;
+  subjectId: number;
+  languageId: number;
+  classTypeId: number;
+  studentId: number;
+  paymentTime: string; // ISO timestamp
+  amount: number;
+  month: number | null;
+  year: number | null;
+  isMonthly?: boolean;
+}): Promise<ApiResponse<{ success: boolean; paymentId?: number; bookingId?: number }>> => {
+  try {
+    console.log('Confirming PayHere payment with payload:', payload);
+  const response = await api.post('/payment/bookings/confirm', payload);
+  const paymentRaw = response.data;
+  console.log('Confirm PayHere payment response (raw):', paymentRaw);
+  return paymentRaw;
 
-      // const paymentSuccess =
-      //   paymentRaw?.success === true ||
-      //   response.status === 200;
+    // const paymentSuccess =
+    //   paymentRaw?.success === true ||
+    //   response.status === 200;
 
-      // if (!paymentSuccess) {
-      //   return {
-      //     success: false,
-      //     data: { success: false },
-      //     error: paymentRaw?.error || 'Payment confirmation failed',
-      //   };
-      // }
+    // if (!paymentSuccess) {
+    //   return {
+    //     success: false,
+    //     data: { success: false },
+    //     error: paymentRaw?.error || 'Payment confirmation failed',
+    //   };
+    // }
 
-      // // If there is no slot to book (edge case)
-      // if (!payload.slotIds) {
-      //   return {
-      //     success: true,
-      //     data: {
-      //       success: true,
-      //       paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
-      //     },
-      //   };
-      // }
+    // // If there is no slot to book (edge case)
+    // if (!payload.slotIds) {
+    //   return {
+    //     success: true,
+    //     data: {
+    //       success: true,
+    //       paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
+    //     },
+    //   };
+    // }
 
-      // // Proceed to book slot
-      // console.log('Attempting to book slot after payment:', payload.slotIds);
-      // const bookingResponse = await bookingAPI.bookSlot(payload.slotIds);
-      // console.log('Slot booking response (normalized):', bookingResponse);
+    // // Proceed to book slot
+    // console.log('Attempting to book slot after payment:', payload.slotIds);
+    // const bookingResponse = await bookingAPI.bookSlot(payload.slotIds);
+    // console.log('Slot booking response (normalized):', bookingResponse);
 
-      // const bookingId =
-      //   bookingResponse?.data?.bookingId ??
-      //   (bookingResponse as any)?.bookingId ??
-      //   0;
+    // const bookingId =
+    //   bookingResponse?.data?.bookingId ??
+    //   (bookingResponse as any)?.bookingId ??
+    //   0;
 
-      // const bookingOk = bookingResponse.success === true && bookingResponse.data?.status === 'BOOKED';
+    // const bookingOk = bookingResponse.success === true && bookingResponse.data?.status === 'BOOKED';
 
-      // if (bookingOk) {
-      //   return {
-      //     success: true,
-      //     data: {
-      //       success: true,
-      //       paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
-      //       bookingId,
-      //     },
-      //   };
-      // }
-      //commented booking response 10-08
-      return {
-        success: false,
-        data: { success: false },
-        error:
-          //  bookingResponse.error ||
-          "Payment confirmed but slot booking failed",
-      };
-    } catch (error) {
-      console.error("Confirm PayHere payment failed (exception):", error);
-      return {
-        success: false,
-        data: { success: false },
-        error: "Failed to confirm payment",
-      };
-    }
-  },
+    // if (bookingOk) {
+    //   return {
+    //     success: true,
+    //     data: {
+    //       success: true,
+    //       paymentId: paymentRaw.paymentId ?? paymentRaw.data?.paymentId,
+    //       bookingId,
+    //     },
+    //   };
+    // }
+//commented booking response 10-08
+  } catch (error) {
+    console.error('Confirm PayHere payment failed (exception):', error);
+    return {
+      success: false,
+      data: { success: false },
+      error: 'Failed to confirm payment',
+    };
+  }
+},
 
   // confirmPayHerePayment: async (payload: {
   //   paymentId: string; // Only paymentId received from initiatePaymentPending
@@ -1941,6 +2214,80 @@ export const bookingAPI = {
         data: { payment: {} },
         error: "Failed to initialize PayHere",
       } as unknown as ApiResponse<{ payment: Record<string, unknown> }>;
+    }
+  },
+
+  // Get student booking details with class information
+  getStudentBookingDetails: async (studentId: number): Promise<ApiResponse<any[]>> => {
+    try {
+      const response = await api.get(`/student/bookings/booking-details?studentId=${studentId}`);
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('Get student booking details failed:', error);
+      return {
+        success: false,
+        data: [],
+        error: 'Failed to fetch booking details',
+      };
+    }
+  },
+
+  // Cancel booking and request refund
+  cancelBooking: async (paymentId: string, shouldRefund: boolean = false): Promise<ApiResponse<{ 
+    success: boolean; 
+    refund_reference?: string; 
+    message: string; 
+    status?: number 
+  }>> => {
+    try {
+      console.log('Cancelling booking with paymentId:', paymentId, 'shouldRefund:', shouldRefund);
+      const response = await api.post('/payment/refund', { 
+        paymentId,
+        should_refund: shouldRefund 
+      });
+      console.log('Cancel booking response:', response.data);
+      
+      return {
+        success: response.data.success || false,
+        data: response.data.process_refund,
+      };
+    } catch (error: any) {
+      console.error('Cancel booking failed:', error);
+      return {
+        success: false,
+        data: {
+          success: false,
+          message: error?.response?.data?.message || 'Failed to cancel booking',
+        },
+        error: error?.response?.data?.message || 'Failed to cancel booking',
+      };
+    }
+  },
+
+  getReservedSlotsForClass: async (studentId: number, classId: number): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get(`/student/bookings/getreservedslots`, {
+        params: { studentId, classId }
+      });
+      console.log("Reserved slots response:", response.data.get_student_class_slots_with_rate);
+      // The actual data is nested inside "get_student_class_slots_with_rate"
+      if (response.data && response.data.get_student_class_slots_with_rate) {
+        return {
+          success: true,
+          data: response.data.get_student_class_slots_with_rate,
+        };
+      }
+      return { success: false, error: "Invalid data structure from server", data: null };
+    } catch (error: any) {
+      console.error('Get reserved slots failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error?.response?.data?.message || 'Failed to fetch reserved slots',
+      };
     }
   },
 

@@ -1,0 +1,75 @@
+[33mff09c63[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mkrishmal-10-11[m[33m, [m[1;31morigin/krishmal-10-11-clone[m[33m, [m[1;31morigin/krishmal-10-11[m[33m, [m[1;32mkrishmal-10-11-clone[m[33m)[m HEAD@{0}: checkout: moving from backup-18-10 to krishmal-10-11
+[33me74fc4e[m[33m ([m[1;31morigin/mainClone10/18/2025[m[33m, [m[1;31morigin/krishmal-10-18[m[33m, [m[1;32mmainClone10/18/2025[m[33m, [m[1;32mkrishmal-10-18[m[33m, [m[1;32mbackup-18-10[m[33m)[m HEAD@{1}: checkout: moving from mainClone10/18/2025 to backup-18-10
+[33me74fc4e[m[33m ([m[1;31morigin/mainClone10/18/2025[m[33m, [m[1;31morigin/krishmal-10-18[m[33m, [m[1;32mmainClone10/18/2025[m[33m, [m[1;32mkrishmal-10-18[m[33m, [m[1;32mbackup-18-10[m[33m)[m HEAD@{2}: checkout: moving from krishmal-10-11 to mainClone10/18/2025
+[33mff09c63[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mkrishmal-10-11[m[33m, [m[1;31morigin/krishmal-10-11-clone[m[33m, [m[1;31morigin/krishmal-10-11[m[33m, [m[1;32mkrishmal-10-11-clone[m[33m)[m HEAD@{3}: checkout: moving from krishmal-10-11-clone to krishmal-10-11
+[33mff09c63[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mkrishmal-10-11[m[33m, [m[1;31morigin/krishmal-10-11-clone[m[33m, [m[1;31morigin/krishmal-10-11[m[33m, [m[1;32mkrishmal-10-11-clone[m[33m)[m HEAD@{4}: checkout: moving from krishmal-10-11 to krishmal-10-11-clone
+[33mff09c63[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mkrishmal-10-11[m[33m, [m[1;31morigin/krishmal-10-11-clone[m[33m, [m[1;31morigin/krishmal-10-11[m[33m, [m[1;32mkrishmal-10-11-clone[m[33m)[m HEAD@{5}: reset: moving to HEAD
+[33mff09c63[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mkrishmal-10-11[m[33m, [m[1;31morigin/krishmal-10-11-clone[m[33m, [m[1;31morigin/krishmal-10-11[m[33m, [m[1;32mkrishmal-10-11-clone[m[33m)[m HEAD@{6}: checkout: moving from krishmal-10-11-clone to krishmal-10-11
+[33mff09c63[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mkrishmal-10-11[m[33m, [m[1;31morigin/krishmal-10-11-clone[m[33m, [m[1;31morigin/krishmal-10-11[m[33m, [m[1;32mkrishmal-10-11-clone[m[33m)[m HEAD@{7}: merge krishmal-10-11: Fast-forward
+[33m8462359[m HEAD@{8}: checkout: moving from krishmal-10-11 to krishmal-10-11-clone
+[33m8462359[m HEAD@{9}: checkout: moving from krishmal-10-18 to krishmal-10-11
+[33me74fc4e[m[33m ([m[1;31morigin/mainClone10/18/2025[m[33m, [m[1;31morigin/krishmal-10-18[m[33m, [m[1;32mmainClone10/18/2025[m[33m, [m[1;32mkrishmal-10-18[m[33m, [m[1;32mbackup-18-10[m[33m)[m HEAD@{10}: merge origin/mainClone10/18/2025: Fast-forward
+[33m8462359[m HEAD@{11}: reset: moving to HEAD
+[33m8462359[m HEAD@{12}: checkout: moving from krishmal-10-11 to krishmal-10-18
+[33m8462359[m HEAD@{13}: commit: feat: Implement React Query for data fetching and caching in Student Dashboard
+[33m0a9e116[m HEAD@{14}: checkout: moving from main to krishmal-10-11
+[33m86f4777[m HEAD@{15}: pull --tags origin main: Fast-forward
+[33m7bc6d59[m HEAD@{16}: checkout: moving from krishmal-10-11 to main
+[33m0a9e116[m HEAD@{17}: commit: feat: add framer-motion for animations, enhance student dashboard with search and improved UI
+[33mb2c8f3f[m HEAD@{18}: checkout: moving from main to krishmal-10-11
+[33m7bc6d59[m HEAD@{19}: pull --tags origin main: Fast-forward
+[33m04b3968[m HEAD@{20}: checkout: moving from krishmal-10-11 to main
+[33mb2c8f3f[m HEAD@{21}: checkout: moving from krishmal-8-28 to krishmal-10-11
+[33m526e5c7[m[33m ([m[1;31morigin/krishmal-8-28[m[33m, [m[1;32mkrishmal-8-28[m[33m)[m HEAD@{22}: reset: moving to HEAD
+[33m526e5c7[m[33m ([m[1;31morigin/krishmal-8-28[m[33m, [m[1;32mkrishmal-8-28[m[33m)[m HEAD@{23}: checkout: moving from krishmal-10-06 to krishmal-8-28
+[33m01629d6[m[33m ([m[1;31morigin/krishmal-10-06[m[33m, [m[1;32mkrishmal-10-06[m[33m)[m HEAD@{24}: checkout: moving from krishmal-10-11 to krishmal-10-06
+[33mb2c8f3f[m HEAD@{25}: commit: refactor: reorganize imports and improve code readability in StudentDashboard
+[33m4e64fa6[m HEAD@{26}: commit: made home page
+[33m01629d6[m[33m ([m[1;31morigin/krishmal-10-06[m[33m, [m[1;32mkrishmal-10-06[m[33m)[m HEAD@{27}: checkout: moving from krishmal-10-06 to krishmal-10-11
+[33m01629d6[m[33m ([m[1;31morigin/krishmal-10-06[m[33m, [m[1;32mkrishmal-10-06[m[33m)[m HEAD@{28}: commit: made refund
+[33md30048c[m HEAD@{29}: checkout: moving from develop to krishmal-10-06
+[33m1caceea[m HEAD@{30}: commit (merge): Merge branch 'develop' of https://github.com/Sem-Five-Project/Edimy-front-end into develop
+[33ma45e4bb[m HEAD@{31}: checkout: moving from krishmal-10-06 to develop
+[33md30048c[m HEAD@{32}: commit: payment
+[33m4ca1343[m HEAD@{33}: commit: final check toggle
+[33m43525f3[m HEAD@{34}: commit: check class esist
+[33m526e5c7[m[33m ([m[1;31morigin/krishmal-8-28[m[33m, [m[1;32mkrishmal-8-28[m[33m)[m HEAD@{35}: checkout: moving from krishmal-8-28 to krishmal-10-06
+[33m526e5c7[m[33m ([m[1;31morigin/krishmal-8-28[m[33m, [m[1;32mkrishmal-8-28[m[33m)[m HEAD@{36}: commit: Refactor Tutor Info Card and Tutor Card components for improved data handling and UI consistency
+[33m770380c[m HEAD@{37}: pull --ff --recurse-submodules --progress origin: Merge made by the 'ort' strategy.
+[33m76bec5b[m HEAD@{38}: commit: maked profile page front end
+[33mb9fe020[m HEAD@{39}: commit: filtering done
+[33m51cf92d[m HEAD@{40}: commit: feat: add utility functions and services for data handling
+[33me32a76f[m HEAD@{41}: commit: payment done
+[33me096fed[m HEAD@{42}: commit (merge): Merge branch 'krishmal-8-28' of https://github.com/Sem-Five-Project/Edimy-front-end into krishmal-8-28
+[33m52c083e[m HEAD@{43}: commit: Refactor code structure for improved readability and maintainabilityi
+[33m9de6f08[m HEAD@{44}: commit: refactor: enhance login and registration pages with improved UI and error handling
+[33me1b10e8[m HEAD@{45}: checkout: moving from develop to krishmal-8-28
+[33ma45e4bb[m HEAD@{46}: commit: Remove redundant export and clean up layout component
+[33mf9e755b[m HEAD@{47}: checkout: moving from krishmal-8-28 to develop
+[33me1b10e8[m HEAD@{48}: checkout: moving from develop to krishmal-8-28
+[33mf9e755b[m HEAD@{49}: pull --tags origin develop: Fast-forward
+[33m6df3feb[m HEAD@{50}: checkout: moving from krishmal-8-28 to develop
+[33me1b10e8[m HEAD@{51}: commit: sdd
+[33mf2b408e[m[33m ([m[1;31morigin/host_dev[m[33m, [m[1;32mhost_dev[m[33m)[m HEAD@{52}: checkout: moving from host_dev to krishmal-8-28
+[33mf2b408e[m[33m ([m[1;31morigin/host_dev[m[33m, [m[1;32mhost_dev[m[33m)[m HEAD@{53}: merge krishmal-8-28: Fast-forward
+[33mbc538d0[m HEAD@{54}: checkout: moving from krishmal-8-28 to host_dev
+[33mf2b408e[m[33m ([m[1;31morigin/host_dev[m[33m, [m[1;32mhost_dev[m[33m)[m HEAD@{55}: commit: 9/4
+[33m01a846b[m HEAD@{56}: commit: made ux
+[33m7bd90d9[m HEAD@{57}: commit: token refreshing ok now
+[33m1202c12[m HEAD@{58}: commit: 9/2
+[33ma97393d[m HEAD@{59}: pull --ff --recurse-submodules --progress origin: Merge made by the 'ort' strategy.
+[33m73e2cf7[m HEAD@{60}: commit: front end work for tutor search
+[33mcd2eff3[m HEAD@{61}: reset: moving to cd2eff38ba5129cad505ebcba2a8bbeb6c1381dd
+[33md82ce49[m HEAD@{62}: commit: front end work for tutor search
+[33mcd2eff3[m HEAD@{63}: reset: moving to cd2eff38ba5129cad505ebcba2a8bbeb6c1381dd
+[33me3b4b5c[m HEAD@{64}: commit: front end work for tutor search
+[33mcd2eff3[m HEAD@{65}: checkout: moving from develop to krishmal-8-28
+[33m13ed483[m HEAD@{66}: checkout: moving from krishmal-8-28 to develop
+[33mcd2eff3[m HEAD@{67}: checkout: moving from develop to krishmal-8-28
+[33m13ed483[m HEAD@{68}: commit: new front end
+[33mbc538d0[m HEAD@{69}: checkout: moving from krishmal-8-28 to develop
+[33mcd2eff3[m HEAD@{70}: reset: moving to HEAD
+[33mcd2eff3[m HEAD@{71}: checkout: moving from develop to krishmal-8-28
+[33mbc538d0[m HEAD@{72}: checkout: moving from krishmal-8-28 to develop
+[33mcd2eff3[m HEAD@{73}: commit: new folder structure
+[33mbc538d0[m HEAD@{74}: 
