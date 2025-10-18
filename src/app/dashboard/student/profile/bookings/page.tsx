@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -13,13 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Calendar,
   Clock,
@@ -191,7 +186,7 @@ export default function BookingsPage() {
         </Badge>
       )
     }
-  }
+  };
 
   const filterBookings = (status: string) => {
     return bookings.filter(b => {
@@ -207,8 +202,8 @@ export default function BookingsPage() {
     })
   }
 
-  const totalUpcoming = filterBookings("upcoming").length
-  const totalCompleted = filterBookings("completed").length
+  const totalUpcoming = filterBookings("upcoming").length;
+  const totalCompleted = filterBookings("completed").length;
 
   const formatTime = (time: string) => {
     try {
@@ -429,13 +424,20 @@ export default function BookingsPage() {
         {/* Header */}
         <div className="mb-8">
           <Link href="/dashboard/student/profile">
-            <Button variant="ghost" className="mb-4 text-slate-700 hover:text-slate-900 hover:bg-slate-200">
+            <Button
+              variant="ghost"
+              className="mb-4 text-slate-700 hover:text-slate-900 hover:bg-slate-200"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Profile
             </Button>
           </Link>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">My Bookings</h1>
-          <p className="text-slate-600">Manage your scheduled online tutoring sessions</p>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">
+            My Bookings
+          </h1>
+          <p className="text-slate-600">
+            Manage your scheduled online tutoring sessions
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -461,7 +463,9 @@ export default function BookingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-slate-900">{totalCompleted}</p>
+              <p className="text-4xl font-bold text-slate-900">
+                {totalCompleted}
+              </p>
               <p className="text-slate-600 text-sm mt-1">Finished sessions</p>
             </CardContent>
           </Card>
@@ -470,20 +474,20 @@ export default function BookingsPage() {
         {/* Bookings Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white border border-slate-200 shadow-sm mb-6">
-            <TabsTrigger 
-              value="upcoming" 
+            <TabsTrigger
+              value="upcoming"
               className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
             >
               Upcoming
             </TabsTrigger>
-            <TabsTrigger 
-              value="completed" 
+            <TabsTrigger
+              value="completed"
               className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
             >
               Completed
             </TabsTrigger>
-            <TabsTrigger 
-              value="cancelled" 
+            <TabsTrigger
+              value="cancelled"
               className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700"
             >
               Cancelled
@@ -499,8 +503,12 @@ export default function BookingsPage() {
               <Card className="border-slate-200 bg-white shadow-lg">
                 <CardContent className="py-12 text-center">
                   <Calendar className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                  <p className="text-slate-600 text-lg font-medium">No upcoming bookings</p>
-                  <p className="text-slate-500 text-sm mt-2">Book a session to get started</p>
+                  <p className="text-slate-600 text-lg font-medium">
+                    No upcoming bookings
+                  </p>
+                  <p className="text-slate-500 text-sm mt-2">
+                    Book a session to get started
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -515,8 +523,12 @@ export default function BookingsPage() {
               <Card className="border-slate-200 bg-white shadow-lg">
                 <CardContent className="py-12 text-center">
                   <CheckCircle2 className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                  <p className="text-slate-600 text-lg font-medium">No completed sessions yet</p>
-                  <p className="text-slate-500 text-sm mt-2">Your finished sessions will appear here</p>
+                  <p className="text-slate-600 text-lg font-medium">
+                    No completed sessions yet
+                  </p>
+                  <p className="text-slate-500 text-sm mt-2">
+                    Your finished sessions will appear here
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -645,5 +657,5 @@ export default function BookingsPage() {
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

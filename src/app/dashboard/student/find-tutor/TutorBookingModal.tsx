@@ -507,13 +507,14 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
   const [bookingStep, setBookingStep] = useState<BookingStep>("slots");
   const [error, setError] = useState("");
   const [reservationTimer, setReservationTimer] = useState(0);
-  const [bookingPreferences, setBookingPreferences] = useState<BookingPreferences | null>(null);
+  const [bookingPreferences, setBookingPreferences] =
+    useState<BookingPreferences | null>(null);
 
   // Load available slots when date or tutor changes
   useEffect(() => {
-    console.log("here 1",selectedDate)
+    console.log("here 1", selectedDate);
     if (selectedDate) {
-      console.log("here 2",selectedDate)
+      console.log("here 2", selectedDate);
       loadAvailableSlots(selectedDate);
     }
   }, [selectedDate, tutor.id]);
@@ -544,7 +545,10 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
     try {
       const dateString = date.toISOString().split("T")[0];
       console.log("Loading slots for tutor:", tutor);
-      const response = await tutorAPI.getTutorSlots(tutor.id.toString(), dateString);
+      const response = await tutorAPI.getTutorSlots(
+        tutor.id.toString(),
+        dateString,
+      );
       console.log("Response from API:", response);
       if (response.success) {
         console.log("Available slots:", response.data);
@@ -560,16 +564,19 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
     }
   };
 
-  const handleSlotSelection = (slot: TimeSlot, preferences: BookingPreferences) => {
+  const handleSlotSelection = (
+    slot: TimeSlot,
+    preferences: BookingPreferences,
+  ) => {
     if (slot.status !== "AVAILABLE") return;
-    
+
     // Map slotId to id for compatibility with existing components
     const mappedSlot: TimeSlot = {
       ...slot,
       id: slot.slotId?.toString() || slot.id,
-      price: preferences.finalPrice || slot.hourlyRate || slot.price || 0
+      price: preferences.finalPrice || slot.hourlyRate || slot.price || 0,
     };
-    
+
     setSelectedSlot(mappedSlot);
     setBookingPreferences(preferences);
     setBookingStep("payment");
@@ -660,9 +667,10 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
               onCancel={handleCancel}
+              lockedSlotIds={[selectedSlot.slotId]} // Add the current slot ID to lockedSlotIds
             />
           )}
-{/* 
+          {/* 
           {bookingStep === "payment" && selectedSlot && bookingPreferences && (
             <PaymentStep
               tutor={tutor}
@@ -676,15 +684,17 @@ export const TutorBookingModal: React.FC<TutorBookingModalProps> = ({
             />
           )} */}
 
-          {bookingStep === "confirmation" && selectedSlot && bookingPreferences && (
-            <ConfirmationStep
-              tutor={tutor}
-              selectedDate={selectedDate}
-              selectedSlot={selectedSlot}
-              onClose={onClose}
-              bookingPreferences={bookingPreferences}
-            />
-          )}
+          {bookingStep === "confirmation" &&
+            selectedSlot &&
+            bookingPreferences && (
+              <ConfirmationStep
+                tutor={tutor}
+                selectedDate={selectedDate}
+                selectedSlot={selectedSlot}
+                onClose={onClose}
+                bookingPreferences={bookingPreferences}
+              />
+            )}
         </div>
       </DialogContent>
     </Dialog>

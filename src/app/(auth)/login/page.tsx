@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, Shield, ArrowRight } from "lucide-react";
 import { authAPI } from "@/lib/api";
 import { sendFCMTokenAfterLogin } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";

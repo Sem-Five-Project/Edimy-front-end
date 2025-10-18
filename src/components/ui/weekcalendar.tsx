@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Utility function for class name concatenation
-const cn = (...classes: Array<string | false | null | undefined>): string => classes.filter(Boolean).join(' ');
+const cn = (...classes: Array<string | false | null | undefined>): string =>
+  classes.filter(Boolean).join(" ");
 
 export interface CalendarProps {
-  mode?: 'single' | 'multiple' | 'range' | 'weekday';
+  mode?: "single" | "multiple" | "range" | "weekday";
   selected?: Date | Date[] | { from: Date; to?: Date } | number;
   onSelect?: (dates: Date[]) => void;
   onClickDate?: (date: Date) => void;
@@ -36,7 +37,7 @@ export interface CalendarProps {
 }
 
 function Calendar({
-  mode = 'weekday',
+  mode = "weekday",
   selected,
   onSelect,
   onClickDate,
@@ -54,15 +55,25 @@ function Calendar({
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
   const months: string[] = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
-  const weekdays: string[] = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const weekdays: string[] = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
   // Function to get all future dates of the same weekday within the SELECTED DATE'S MONTH
 
-    const getMonthWeekdayDates = (selectedDate: Date): Date[] => {
+  const getMonthWeekdayDates = (selectedDate: Date): Date[] => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -90,8 +101,8 @@ function Calendar({
   };
 
   const isDateSelected = (date: Date): boolean => {
-    return selectedDates.some(selectedDate => 
-      date.toDateString() === selectedDate.toDateString()
+    return selectedDates.some(
+      (selectedDate) => date.toDateString() === selectedDate.toDateString(),
     );
   };
 
@@ -99,7 +110,9 @@ function Calendar({
   const isSameWeekdayAsSelected = (date: Date): boolean => {
     if (selectedDates.length === 0) return false;
     const dayOfWeek = date.getDay();
-    return selectedDates.some(selectedDate => selectedDate.getDay() === dayOfWeek);
+    return selectedDates.some(
+      (selectedDate) => selectedDate.getDay() === dayOfWeek,
+    );
   };
 
   interface DayCell {
@@ -112,7 +125,7 @@ function Calendar({
     isSameWeekday: boolean;
   }
 
-   const getDaysInMonth = (date: Date): DayCell[] => {
+  const getDaysInMonth = (date: Date): DayCell[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -137,7 +150,7 @@ function Calendar({
           isSelected: isDateSelected(d),
           isDisabled: disabled(d),
           isEmpty: false,
-          isSameWeekday: isSameWeekdayAsSelected(d)
+          isSameWeekday: isSameWeekdayAsSelected(d),
         });
       }
     } else {
@@ -150,7 +163,7 @@ function Calendar({
           isSelected: false,
           isDisabled: true,
           isEmpty: true,
-          isSameWeekday: false
+          isSameWeekday: false,
         });
       }
     }
@@ -168,7 +181,7 @@ function Calendar({
         isSelected: isDateSelected(d),
         isDisabled: disabled(d),
         isEmpty: false,
-        isSameWeekday: isSameWeekdayAsSelected(d)
+        isSameWeekday: isSameWeekdayAsSelected(d),
       });
     }
 
@@ -187,7 +200,7 @@ function Calendar({
           isSelected: isDateSelected(d),
           isDisabled: disabled(d),
           isEmpty: false,
-          isSameWeekday: isSameWeekdayAsSelected(d)
+          isSameWeekday: isSameWeekdayAsSelected(d),
         });
       }
     } else {
@@ -200,7 +213,7 @@ function Calendar({
           isSelected: false,
           isDisabled: true,
           isEmpty: true,
-          isSameWeekday: false
+          isSameWeekday: false,
         });
       }
     }
@@ -214,18 +227,17 @@ function Calendar({
     setCurrentMonth(newMonth);
     // Clear selections when changing months
     setSelectedDates([]);
-  // Notify parent about month change
-  if (onMonthChange) onMonthChange(newMonth);
+    // Notify parent about month change
+    if (onMonthChange) onMonthChange(newMonth);
   };
 
- 
-    const handleDateClick = (date: Date, isDisabled: boolean) => {
+  const handleDateClick = (date: Date, isDisabled: boolean) => {
     if (isDisabled || !date) return;
 
     // Select ALL weekday occurrences within that month, excluding past dates
     const weekdayDates = getMonthWeekdayDates(date);
     setSelectedDates(weekdayDates);
-    
+
     if (onSelect) {
       onSelect(weekdayDates);
     }
@@ -240,26 +252,36 @@ function Calendar({
       <div className={cn("space-y-4", classNames.months)}>
         <div className={cn("space-y-4", classNames.month)}>
           {/* Caption */}
-          <div className={cn("relative w-full flex items-center justify-center px-2 py-1", classNames.caption)}>
+          <div
+            className={cn(
+              "relative w-full flex items-center justify-center px-2 py-1",
+              classNames.caption,
+            )}
+          >
             <button
               onClick={() => navigateMonth(-1)}
               className={cn(
                 "absolute left-0 h-8 w-8 flex items-center justify-center bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400",
-                classNames.nav_button
+                classNames.nav_button,
               )}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            
-            <div className={cn("text-sm sm:text-base md:text-base font-medium text-center", classNames.caption_label)}>
+
+            <div
+              className={cn(
+                "text-sm sm:text-base md:text-base font-medium text-center",
+                classNames.caption_label,
+              )}
+            >
               {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </div>
-            
+
             <button
               onClick={() => navigateMonth(1)}
               className={cn(
                 "absolute right-0 h-8 w-8 flex items-center justify-center bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400",
-                classNames.nav_button
+                classNames.nav_button,
               )}
             >
               <ChevronRight className="h-4 w-4" />
@@ -270,13 +292,18 @@ function Calendar({
           <table className={cn("w-full border-collapse", classNames.table)}>
             {/* Header */}
             <thead>
-              <tr className={cn("flex justify-center w-full", classNames.head_row)}>
+              <tr
+                className={cn(
+                  "flex justify-center w-full",
+                  classNames.head_row,
+                )}
+              >
                 {weekdays.map((day) => (
                   <th
                     key={day}
                     className={cn(
                       "text-muted-foreground rounded-md w-7 sm:w-8 md:w-9 font-normal text-[0.65rem] sm:text-[0.8rem] md:text-xs text-center py-1 sm:py-2",
-                      classNames.head_cell
+                      classNames.head_cell,
                     )}
                   >
                     {day}
@@ -287,54 +314,76 @@ function Calendar({
 
             {/* Body */}
             <tbody>
-              {Array.from({ length: Math.ceil(days.length / 7) }, (_, weekIndex) => (
-                <tr key={weekIndex} className={cn("flex justify-center w-full mt-1 sm:mt-2", classNames.row)}>
-                  {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => (
-                    <td
-                      key={dayIndex}
-                      className={cn(
-                        "relative h-7 sm:h-8 md:h-9 w-7 sm:w-8 md:w-9 p-0 text-center text-xs sm:text-sm md:text-base transition-all duration-200",
-                        classNames.cell,
-                        day.isEmpty ? "invisible" : "hover:scale-105"
-                      )}
-                    >
-                      {!day.isEmpty && day.date && (
-                        <button
-                          onClick={() => day.date && handleDateClick(day.date, day.isDisabled)}
-                          disabled={day.isDisabled}
-                          aria-selected={day.isSelected}
+              {Array.from(
+                { length: Math.ceil(days.length / 7) },
+                (_, weekIndex) => (
+                  <tr
+                    key={weekIndex}
+                    className={cn(
+                      "flex justify-center w-full mt-1 sm:mt-2",
+                      classNames.row,
+                    )}
+                  >
+                    {days
+                      .slice(weekIndex * 7, (weekIndex + 1) * 7)
+                      .map((day, dayIndex) => (
+                        <td
+                          key={dayIndex}
                           className={cn(
-                            "h-7 sm:h-8 md:h-9 w-7 sm:w-8 md:w-9 p-0 font-normal rounded-md transition-all duration-200 hover:bg-blue-100 dark:hover:bg-blue-900/20 focus:bg-blue-100 dark:focus:bg-blue-900/20",
-                            classNames.day,
-                            !day.isCurrentMonth && cn(
-                              "opacity-80", // style for outside days
-                              classNames.day_outside
-                            ),
-                            day.isSelected && cn(
-                              "bg-blue-600 text-white hover:bg-blue-700 focus:bg-blue-700 focus:text-white rounded-full font-medium ring-2 ring-blue-500 ring-offset-1 ring-offset-background shadow-md",
-                              classNames.day_selected
-                            ),
-                            day.isSameWeekday && !day.isSelected && !day.isDisabled && cn(
-                              "bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50 font-medium",
-                              "hover:bg-blue-200 dark:hover:bg-blue-900/50"
-                            ),
-                            day.isToday && !day.isSelected && cn(
-                              "bg-blue-100 text-blue-900 dark:bg-blue-900/20 dark:text-blue-300 font-semibold border-2 border-blue-500 rounded-full ring-1 ring-blue-500 ring-offset-1 ring-offset-background shadow-sm",
-                              classNames.day_today
-                            ),
-                            day.isDisabled && cn(
-                              "text-muted-foreground opacity-50 cursor-not-allowed",
-                              classNames.day_disabled
-                            )
+                            "relative h-7 sm:h-8 md:h-9 w-7 sm:w-8 md:w-9 p-0 text-center text-xs sm:text-sm md:text-base transition-all duration-200",
+                            classNames.cell,
+                            day.isEmpty ? "invisible" : "hover:scale-105",
                           )}
                         >
-                          {day.date.getDate()}
-                        </button>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+                          {!day.isEmpty && day.date && (
+                            <button
+                              onClick={() =>
+                                day.date &&
+                                handleDateClick(day.date, day.isDisabled)
+                              }
+                              disabled={day.isDisabled}
+                              aria-selected={day.isSelected}
+                              className={cn(
+                                "h-7 sm:h-8 md:h-9 w-7 sm:w-8 md:w-9 p-0 font-normal rounded-md transition-all duration-200 hover:bg-blue-100 dark:hover:bg-blue-900/20 focus:bg-blue-100 dark:focus:bg-blue-900/20",
+                                classNames.day,
+                                !day.isCurrentMonth &&
+                                  cn(
+                                    "opacity-80", // style for outside days
+                                    classNames.day_outside,
+                                  ),
+                                day.isSelected &&
+                                  cn(
+                                    "bg-blue-600 text-white hover:bg-blue-700 focus:bg-blue-700 focus:text-white rounded-full font-medium ring-2 ring-blue-500 ring-offset-1 ring-offset-background shadow-md",
+                                    classNames.day_selected,
+                                  ),
+                                day.isSameWeekday &&
+                                  !day.isSelected &&
+                                  !day.isDisabled &&
+                                  cn(
+                                    "bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50 font-medium",
+                                    "hover:bg-blue-200 dark:hover:bg-blue-900/50",
+                                  ),
+                                day.isToday &&
+                                  !day.isSelected &&
+                                  cn(
+                                    "bg-blue-100 text-blue-900 dark:bg-blue-900/20 dark:text-blue-300 font-semibold border-2 border-blue-500 rounded-full ring-1 ring-blue-500 ring-offset-1 ring-offset-background shadow-sm",
+                                    classNames.day_today,
+                                  ),
+                                day.isDisabled &&
+                                  cn(
+                                    "text-muted-foreground opacity-50 cursor-not-allowed",
+                                    classNames.day_disabled,
+                                  ),
+                              )}
+                            >
+                              {day.date.getDate()}
+                            </button>
+                          )}
+                        </td>
+                      ))}
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         </div>
@@ -349,10 +398,13 @@ function Calendar({
                 key={index}
                 className="px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full shadow-sm"
               >
-                {date.toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric',
-                  year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                {date.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year:
+                    date.getFullYear() !== new Date().getFullYear()
+                      ? "numeric"
+                      : undefined,
                 })}
               </span>
             ))}
@@ -361,7 +413,6 @@ function Calendar({
       )}
     </div>
   );
-
 }
 
 Calendar.displayName = "Calendar";

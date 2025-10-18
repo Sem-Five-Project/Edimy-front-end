@@ -1,7 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
-import { Tutor, TimeSlot, BookingPreferences, type MonthlyClassBooking as MonthlyBookingData } from '@/types';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useMemo,
+  useEffect,
+} from "react";
+import {
+  Tutor,
+  TimeSlot,
+  BookingPreferences,
+  type MonthlyClassBooking as MonthlyBookingData,
+} from "@/types";
 
 // Type for monthly booking summary stored after reserving multiple slots
 // export interface MonthlyBookingData {
@@ -16,8 +28,8 @@ import { Tutor, TimeSlot, BookingPreferences, type MonthlyClassBooking as Monthl
 //   startDate: string; // first occurrence date YYYY-MM-DD
 //   endDate: string;   // last occurrence date YYYY-MM-DD
 // }
-import { useRouter } from 'next/navigation';
-import { bookingAPI } from '@/lib/api';
+import { useRouter } from "next/navigation";
+import { bookingAPI } from "@/lib/api";
 
 interface ReservationDetails {
   reservationSlotId: string;
@@ -29,13 +41,17 @@ interface RepayTimer {
   timer: number;
 }
 
-export type BookingStep = 'tutor-selection' | 'slot-selection' | 'payment' | 'confirmation';
+export type BookingStep =
+  | "tutor-selection"
+  | "slot-selection"
+  | "payment"
+  | "confirmation";
 
 interface BookingContextType {
   // Current step
   currentStep: BookingStep;
   setCurrentStep: (step: BookingStep) => void;
-  
+
   // Booking data
   tutor: Tutor | null;
   setTutor: (tutor: Tutor | null) => void;
@@ -44,7 +60,7 @@ interface BookingContextType {
   // (single one-time slot details not stored here anymore)
   bookingPreferences: BookingPreferences;
   setBookingPreferences: (prefs: BookingPreferences) => void;
-  
+
   // Reservation management
   reservationDetails: ReservationDetails | null;
   setReservationDetails: (details: ReservationDetails | null) => void;
@@ -55,7 +71,7 @@ interface BookingContextType {
   canProceedToStep: (step: BookingStep) => boolean;
   proceedToStep: (step: BookingStep) => void;
   goBack: () => Promise<void>;
-  
+
   // State management
   resetBookingState: () => void;
   isBookingComplete: boolean;
@@ -94,11 +110,14 @@ interface BookingContextType {
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
-export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const BookingProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const router = useRouter();
-  
+
   // State
-  const [currentStep, setCurrentStep] = useState<BookingStep>('tutor-selection');
+  const [currentStep, setCurrentStep] =
+    useState<BookingStep>("tutor-selection");
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   // removed singleSlotSnapshot state
@@ -112,7 +131,8 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [repayTimer, setRepayTimer] = useState<RepayTimer | null>(null);
 
   const [bookingId, setBookingId] = useState<string | null>(null);
-  const [monthlyBookingData, setMonthlyBookingData] = useState<MonthlyBookingData | null>(null);
+  const [monthlyBookingData, setMonthlyBookingData] =
+    useState<MonthlyBookingData | null>(null);
   const [lockedSlotIds, setLockedSlotIds] = useState<number[]>([]);
   const [availabilitySlotsMap, setAvailabilitySlotsMap] = useState<Record<string, number[]>>({});
   const [nextMonthSlots, setNextMonthSlots] = useState<number[] | null>(null);
@@ -202,16 +222,21 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // Validation functions
   const canProceedToStep = (step: BookingStep): boolean => {
     switch (step) {
-      case 'slot-selection':
+      case "slot-selection":
         return tutor !== null;
-      case 'payment': {
+      case "payment": {
         if (!tutor || !selectedDate) return false;
-        if (!bookingPreferences.selectedSubject || !bookingPreferences.selectedClassType) return false;
-        if (tutor.languages.length > 1 && !bookingPreferences.selectedLanguage) return false;
+        if (
+          !bookingPreferences.selectedSubject ||
+          !bookingPreferences.selectedClassType
+        )
+          return false;
+        if (tutor.languages.length > 1 && !bookingPreferences.selectedLanguage)
+          return false;
         if (monthlyBookingData) return lockedSlotIds.length > 0; // monthly flow
         return lockedSlotIds.length === 1; // one-time flow
       }
-      case 'confirmation':
+      case "confirmation":
         return bookingId !== null;
       default:
         return true;
@@ -222,20 +247,20 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const proceedToStep = (step: BookingStep) => {
     if (canProceedToStep(step)) {
       setCurrentStep(step);
-      
+
       // Navigate to appropriate route
       switch (step) {
-        case 'tutor-selection':
-          router.push('/dashboard/student/find-tutor');
+        case "tutor-selection":
+          router.push("/dashboard/student/find-tutor");
           break;
-        case 'slot-selection':
-          router.push('/dashboard/student/find-tutor/book/slots');
+        case "slot-selection":
+          router.push("/dashboard/student/find-tutor/book/slots");
           break;
-        case 'payment':
-          router.push('/dashboard/student/find-tutor/book/payment');
+        case "payment":
+          router.push("/dashboard/student/find-tutor/book/payment");
           break;
-        case 'confirmation':
-          router.push('/dashboard/student/find-tutor/book/confirmation');
+        case "confirmation":
+          router.push("/dashboard/student/find-tutor/book/confirmation");
           break;
       }
     }
@@ -280,15 +305,14 @@ const goBack = async (): Promise<void> => {
       router.push('/dashboard/student/find-tutor/book/payment');
       break;
     }
-  }
-};
+  };
 
-useEffect(()=>{
-  console.log("Locked slot IDs changed:", lockedSlotIds);
-}, [lockedSlotIds]);
+  useEffect(() => {
+    console.log("Locked slot IDs changed:", lockedSlotIds);
+  }, [lockedSlotIds]);
 
   const resetBookingState = () => {
-    setCurrentStep('tutor-selection');
+    setCurrentStep("tutor-selection");
     setTutor(null);
     setSelectedDate(new Date());
     setLockedSlotIds([]);
@@ -309,7 +333,8 @@ useEffect(()=>{
     setPayForNextMonthFlow(false);
   };
 
-  const isBookingComplete = currentStep === 'confirmation' && bookingId !== null;
+  const isBookingComplete =
+    currentStep === "confirmation" && bookingId !== null;
 
   const value = useMemo(() => ({
     currentStep,
@@ -369,16 +394,14 @@ useEffect(()=>{
 
 
   return (
-    <BookingContext.Provider value={value}>
-      {children}
-    </BookingContext.Provider>
+    <BookingContext.Provider value={value}>{children}</BookingContext.Provider>
   );
 };
 
 export const useBooking = (): BookingContextType => {
   const context = useContext(BookingContext);
   if (context === undefined) {
-    throw new Error('useBooking must be used within a BookingProvider');
+    throw new Error("useBooking must be used within a BookingProvider");
   }
   return context;
 };

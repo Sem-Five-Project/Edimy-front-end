@@ -59,7 +59,10 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
           </span>{" "}
           has been successfully booked.
         </p>
-        <Badge variant="secondary" className="text-sm px-3 py-1 bg-green-100 text-green-800">
+        <Badge
+          variant="secondary"
+          className="text-sm px-3 py-1 bg-green-100 text-green-800"
+        >
           Booking ID: #BK{Date.now().toString().slice(-6)}
         </Badge>
       </div>
@@ -77,7 +80,9 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Tutor</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Tutor
+                </span>
               </div>
               <span className="font-semibold text-gray-900 dark:text-white">
                 {tutor.firstName} {tutor.lastName}
@@ -87,7 +92,9 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Date</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Date
+                </span>
               </div>
               <span className="font-semibold text-gray-900 dark:text-white">
                 {selectedDate.toLocaleDateString("en-US", {
@@ -101,11 +108,13 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Time</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Time
+                </span>
               </div>
               <span className="font-semibold text-gray-900 dark:text-white">
                 {`${formatTime(selectedSlot.startTime)} - ${formatTime(
-                  selectedSlot.endTime
+                  selectedSlot.endTime,
                 )}`}
               </span>
             </div>
@@ -113,7 +122,9 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             {selectedSlot.subjectName && (
               <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Subject</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Subject
+                  </span>
                 </div>
                 <span className="font-semibold text-gray-900 dark:text-white">
                   {selectedSlot.subjectName}
@@ -124,7 +135,9 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             {selectedSlot.isRecurring && (
               <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Type</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Type
+                  </span>
                 </div>
                 <span className="font-semibold text-gray-900 dark:text-white">
                   Recurring Session
@@ -146,7 +159,9 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             <div className="flex items-start gap-3">
               <Mail className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
               <div className="text-left">
-                <p className="font-medium text-gray-900 dark:text-white">Confirmation Email</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Confirmation Email
+                </p>
                 <p className="text-gray-600 dark:text-gray-400 text-xs">
                   You'll receive a detailed confirmation email shortly
                 </p>
@@ -155,7 +170,9 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             <div className="flex items-start gap-3">
               <Bell className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
               <div className="text-left">
-                <p className="font-medium text-gray-900 dark:text-white">Tutor Notification</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Tutor Notification
+                </p>
                 <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Your tutor has been notified about the booking
                 </p>
@@ -164,7 +181,9 @@ export const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
             <div className="flex items-start gap-3">
               <Calendar className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
               <div className="text-left">
-                <p className="font-medium text-gray-900 dark:text-white">Calendar Reminder</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Calendar Reminder
+                </p>
                 <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Add this session to your calendar for reminders
                 </p>

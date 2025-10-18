@@ -1,18 +1,27 @@
 "use client";
 
-import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Globe } from 'lucide-react';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { CURRENCIES } from '@/types';
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Globe } from "lucide-react";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { CURRENCIES } from "@/types";
 
 interface CurrencySelectorProps {
   className?: string;
   compact?: boolean;
 }
 
-export function CurrencySelector({ className = '', compact = false }: CurrencySelectorProps) {
+export function CurrencySelector({
+  className = "",
+  compact = false,
+}: CurrencySelectorProps) {
   const { selectedCurrency, setCurrency } = useCurrency();
 
   return (
@@ -26,11 +35,11 @@ export function CurrencySelector({ className = '', compact = false }: CurrencySe
       <Select
         value={selectedCurrency.code}
         onValueChange={(value) => {
-          const currency = CURRENCIES.find(c => c.code === value);
+          const currency = CURRENCIES.find((c) => c.code === value);
           if (currency) setCurrency(currency);
         }}
       >
-        <SelectTrigger className={`${compact ? 'w-20' : 'w-32'} h-8`}>
+        <SelectTrigger className={`${compact ? "w-20" : "w-32"} h-8`}>
           <SelectValue>
             <div className="flex items-center gap-1">
               <span className="font-medium">{selectedCurrency.symbol}</span>
@@ -46,8 +55,10 @@ export function CurrencySelector({ className = '', compact = false }: CurrencySe
                   <span className="font-medium">{currency.symbol}</span>
                   <span className="text-sm">{currency.code}</span>
                 </div>
-                <span className="text-xs text-gray-500 ml-2">{currency.name}</span>
-                {currency.code === 'LKR' && (
+                <span className="text-xs text-gray-500 ml-2">
+                  {currency.name}
+                </span>
+                {currency.code === "LKR" && (
                   <Badge variant="secondary" className="ml-2 text-xs">
                     Default
                   </Badge>

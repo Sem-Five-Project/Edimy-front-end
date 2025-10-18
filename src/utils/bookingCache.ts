@@ -1,4 +1,4 @@
-import { TimeSlot, BookingPreferences } from '@/types';
+import { TimeSlot, BookingPreferences } from "@/types";
 
 export interface BookingCache {
   tutorId: number;
@@ -15,7 +15,7 @@ export const saveBookingCache = (
   tutorId: number,
   selectedDate: Date,
   selectedSlot: TimeSlot,
-  bookingPreferences: BookingPreferences
+  bookingPreferences: BookingPreferences,
 ): void => {
   const cacheData: BookingCache = {
     tutorId,
@@ -24,7 +24,7 @@ export const saveBookingCache = (
     bookingPreferences,
     timestamp: Date.now(),
   };
-  localStorage.setItem('booking_cache', JSON.stringify(cacheData));
+  localStorage.setItem("booking_cache", JSON.stringify(cacheData));
 };
 
 /**
@@ -32,18 +32,18 @@ export const saveBookingCache = (
  */
 export const getBookingCache = (): BookingCache | null => {
   try {
-    const cached = localStorage.getItem('booking_cache');
+    const cached = localStorage.getItem("booking_cache");
     if (!cached) return null;
-    
+
     const cacheData: BookingCache = JSON.parse(cached);
     const thirtyMinutes = 30 * 60 * 1000;
-    
+
     // Check if cache is still valid (30 minutes)
     if (Date.now() - cacheData.timestamp > thirtyMinutes) {
-      localStorage.removeItem('booking_cache');
+      localStorage.removeItem("booking_cache");
       return null;
     }
-    
+
     return cacheData;
   } catch {
     return null;
@@ -54,7 +54,7 @@ export const getBookingCache = (): BookingCache | null => {
  * Clear booking cache
  */
 export const clearBookingCache = (): void => {
-  localStorage.removeItem('booking_cache');
+  localStorage.removeItem("booking_cache");
 };
 
 /**
@@ -63,11 +63,11 @@ export const clearBookingCache = (): void => {
 export const isCacheValid = (
   tutorId: number,
   selectedDate: Date,
-  selectedSlot: TimeSlot
+  selectedSlot: TimeSlot,
 ): boolean => {
   const cache = getBookingCache();
   if (!cache) return false;
-  
+
   return (
     cache.tutorId === tutorId &&
     cache.selectedDate === selectedDate.toISOString() &&

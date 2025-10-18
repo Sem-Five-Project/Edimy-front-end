@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { 
-  getPricingPolicies, 
+import { useState, useEffect } from "react";
+import {
+  getPricingPolicies,
   updatePricingPolicy,
-  type PricingPolicy 
-} from '@/lib/paymentsData';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+  type PricingPolicy,
+} from "@/lib/paymentsData";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Settings,
   Edit3,
@@ -46,17 +46,19 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
-  Info
-} from 'lucide-react';
+  Info,
+} from "lucide-react";
 
 export default function PricingPoliciesPage() {
   const [policies, setPolicies] = useState<PricingPolicy[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPolicy, setSelectedPolicy] = useState<PricingPolicy | null>(null);
+  const [selectedPolicy, setSelectedPolicy] = useState<PricingPolicy | null>(
+    null,
+  );
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  
+
   // Edit form state
   const [editForm, setEditForm] = useState<Partial<PricingPolicy>>({});
 
@@ -70,7 +72,7 @@ export default function PricingPoliciesPage() {
       const response = await getPricingPolicies();
       setPolicies(response);
     } catch (error) {
-      console.error('Error fetching pricing policies:', error);
+      console.error("Error fetching pricing policies:", error);
     } finally {
       setLoading(false);
     }
@@ -84,14 +86,14 @@ export default function PricingPoliciesPage() {
 
   const handleSavePolicy = async () => {
     if (!selectedPolicy || !editForm) return;
-    
+
     setIsActionLoading(true);
     try {
       await updatePricingPolicy(selectedPolicy.id, editForm);
       setShowEditDialog(false);
       fetchPolicies();
     } catch (error) {
-      console.error('Error updating policy:', error);
+      console.error("Error updating policy:", error);
     } finally {
       setIsActionLoading(false);
     }
@@ -105,42 +107,48 @@ export default function PricingPoliciesPage() {
 
   const confirmTogglePolicy = async () => {
     if (!selectedPolicy || editForm.isActive === undefined) return;
-    
+
     setIsActionLoading(true);
     try {
-      await updatePricingPolicy(selectedPolicy.id, { isActive: editForm.isActive });
+      await updatePricingPolicy(selectedPolicy.id, {
+        isActive: editForm.isActive,
+      });
       setShowConfirmDialog(false);
       fetchPolicies();
     } catch (error) {
-      console.error('Error updating policy status:', error);
+      console.error("Error updating policy status:", error);
     } finally {
       setIsActionLoading(false);
     }
   };
 
   const getStatusBadgeColor = (isActive: boolean) => {
-    return isActive 
-      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    return isActive
+      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
   };
 
-  const getRateTypeIcon = (rateType: PricingPolicy['rateType']) => {
+  const getRateTypeIcon = (rateType: PricingPolicy["rateType"]) => {
     switch (rateType) {
-      case 'percentage': return <Percent className="w-4 h-4" />;
-      case 'fixed': return <DollarSign className="w-4 h-4" />;
-      case 'tiered': return <TrendingUp className="w-4 h-4" />;
-      default: return <DollarSign className="w-4 h-4" />;
+      case "percentage":
+        return <Percent className="w-4 h-4" />;
+      case "fixed":
+        return <DollarSign className="w-4 h-4" />;
+      case "tiered":
+        return <TrendingUp className="w-4 h-4" />;
+      default:
+        return <DollarSign className="w-4 h-4" />;
     }
   };
 
   const formatRate = (policy: PricingPolicy) => {
     switch (policy.rateType) {
-      case 'percentage':
+      case "percentage":
         return `${policy.rate}%`;
-      case 'fixed':
+      case "fixed":
         return `$${policy.rate}`;
-      case 'tiered':
-        return 'Tiered';
+      case "tiered":
+        return "Tiered";
       default:
         return `${policy.rate}`;
     }
@@ -148,17 +156,21 @@ export default function PricingPoliciesPage() {
 
   const getTotalRevenue = () => {
     return policies
-      .filter(p => p.category === 'commission' && p.isActive)
+      .filter((p) => p.category === "commission" && p.isActive)
       .reduce((sum, p) => sum + (p.monthlyRevenue || 0), 0);
   };
 
   const getActiveCommissionRate = () => {
-    const commissionPolicy = policies.find(p => p.category === 'commission' && p.isActive);
+    const commissionPolicy = policies.find(
+      (p) => p.category === "commission" && p.isActive,
+    );
     return commissionPolicy ? commissionPolicy.rate : 0;
   };
 
   const getActivePlatformFee = () => {
-    const feePolicy = policies.find(p => p.category === 'platform_fee' && p.isActive);
+    const feePolicy = policies.find(
+      (p) => p.category === "platform_fee" && p.isActive,
+    );
     return feePolicy ? feePolicy.rate : 0;
   };
 
@@ -201,20 +213,28 @@ export default function PricingPoliciesPage() {
             <div className="flex items-center">
               <DollarSign className="w-8 h-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
-                <p className="text-2xl font-bold">${getTotalRevenue().toLocaleString()}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Monthly Revenue
+                </p>
+                <p className="text-2xl font-bold">
+                  ${getTotalRevenue().toLocaleString()}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
               <Percent className="w-8 h-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Commission Rate</p>
-                <p className="text-2xl font-bold">{getActiveCommissionRate()}%</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Commission Rate
+                </p>
+                <p className="text-2xl font-bold">
+                  {getActiveCommissionRate()}%
+                </p>
               </div>
             </div>
           </CardContent>
@@ -225,7 +245,9 @@ export default function PricingPoliciesPage() {
             <div className="flex items-center">
               <Settings className="w-8 h-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Platform Fee</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Platform Fee
+                </p>
                 <p className="text-2xl font-bold">${getActivePlatformFee()}</p>
               </div>
             </div>
@@ -237,8 +259,12 @@ export default function PricingPoliciesPage() {
             <div className="flex items-center">
               <CheckCircle className="w-8 h-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Active Policies</p>
-                <p className="text-2xl font-bold">{policies.filter(p => p.isActive).length}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Policies
+                </p>
+                <p className="text-2xl font-bold">
+                  {policies.filter((p) => p.isActive).length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -258,24 +284,31 @@ export default function PricingPoliciesPage() {
           <CardContent>
             <div className="grid gap-4">
               {policies
-                .filter(policy => policy.category === 'commission')
+                .filter((policy) => policy.category === "commission")
                 .map((policy) => (
-                  <div key={policy.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={policy.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         {getRateTypeIcon(policy.rateType)}
                         <div>
                           <h3 className="font-medium">{policy.name}</h3>
-                          <p className="text-sm text-muted-foreground">{policy.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {policy.description}
+                          </p>
                         </div>
                       </div>
                       <Badge className={getStatusBadgeColor(policy.isActive)}>
-                        {policy.isActive ? 'Active' : 'Inactive'}
+                        {policy.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-lg">{formatRate(policy)}</p>
+                        <p className="font-bold text-lg">
+                          {formatRate(policy)}
+                        </p>
                         {policy.monthlyRevenue && (
                           <p className="text-sm text-muted-foreground">
                             ${policy.monthlyRevenue.toLocaleString()}/month
@@ -283,8 +316,8 @@ export default function PricingPoliciesPage() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleEditPolicy(policy)}
                         >
@@ -313,24 +346,31 @@ export default function PricingPoliciesPage() {
           <CardContent>
             <div className="grid gap-4">
               {policies
-                .filter(policy => policy.category === 'platform_fee')
+                .filter((policy) => policy.category === "platform_fee")
                 .map((policy) => (
-                  <div key={policy.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={policy.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         {getRateTypeIcon(policy.rateType)}
                         <div>
                           <h3 className="font-medium">{policy.name}</h3>
-                          <p className="text-sm text-muted-foreground">{policy.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {policy.description}
+                          </p>
                         </div>
                       </div>
                       <Badge className={getStatusBadgeColor(policy.isActive)}>
-                        {policy.isActive ? 'Active' : 'Inactive'}
+                        {policy.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-lg">{formatRate(policy)}</p>
+                        <p className="font-bold text-lg">
+                          {formatRate(policy)}
+                        </p>
                         {policy.monthlyRevenue && (
                           <p className="text-sm text-muted-foreground">
                             ${policy.monthlyRevenue.toLocaleString()}/month
@@ -338,8 +378,8 @@ export default function PricingPoliciesPage() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleEditPolicy(policy)}
                         >
@@ -368,33 +408,41 @@ export default function PricingPoliciesPage() {
           <CardContent>
             <div className="grid gap-4">
               {policies
-                .filter(policy => policy.category === 'discount')
+                .filter((policy) => policy.category === "discount")
                 .map((policy) => (
-                  <div key={policy.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={policy.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         {getRateTypeIcon(policy.rateType)}
                         <div>
                           <h3 className="font-medium">{policy.name}</h3>
-                          <p className="text-sm text-muted-foreground">{policy.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {policy.description}
+                          </p>
                         </div>
                       </div>
                       <Badge className={getStatusBadgeColor(policy.isActive)}>
-                        {policy.isActive ? 'Active' : 'Inactive'}
+                        {policy.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-lg">{formatRate(policy)}</p>
+                        <p className="font-bold text-lg">
+                          {formatRate(policy)}
+                        </p>
                         {policy.validUntil && (
                           <p className="text-sm text-muted-foreground">
-                            Until {new Date(policy.validUntil).toLocaleDateString()}
+                            Until{" "}
+                            {new Date(policy.validUntil).toLocaleDateString()}
                           </p>
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleEditPolicy(policy)}
                         >
@@ -423,24 +471,31 @@ export default function PricingPoliciesPage() {
           <CardContent>
             <div className="grid gap-4">
               {policies
-                .filter(policy => policy.category === 'transaction_fee')
+                .filter((policy) => policy.category === "transaction_fee")
                 .map((policy) => (
-                  <div key={policy.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={policy.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         {getRateTypeIcon(policy.rateType)}
                         <div>
                           <h3 className="font-medium">{policy.name}</h3>
-                          <p className="text-sm text-muted-foreground">{policy.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {policy.description}
+                          </p>
                         </div>
                       </div>
                       <Badge className={getStatusBadgeColor(policy.isActive)}>
-                        {policy.isActive ? 'Active' : 'Inactive'}
+                        {policy.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-lg">{formatRate(policy)}</p>
+                        <p className="font-bold text-lg">
+                          {formatRate(policy)}
+                        </p>
                         {policy.monthlyRevenue && (
                           <p className="text-sm text-muted-foreground">
                             ${policy.monthlyRevenue.toLocaleString()}/month
@@ -448,8 +503,8 @@ export default function PricingPoliciesPage() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleEditPolicy(policy)}
                         >
@@ -481,16 +536,23 @@ export default function PricingPoliciesPage() {
             <div>
               <Label>Policy Name</Label>
               <Input
-                value={editForm.name || ''}
-                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                value={editForm.name || ""}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                }
               />
             </div>
 
             <div>
               <Label>Description</Label>
               <Textarea
-                value={editForm.description || ''}
-                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                value={editForm.description || ""}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 rows={3}
               />
             </div>
@@ -501,27 +563,43 @@ export default function PricingPoliciesPage() {
                 <Input
                   type="number"
                   step="0.01"
-                  value={editForm.rate || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))}
+                  value={editForm.rate || ""}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      rate: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </div>
               <div>
                 <Label>Rate Type</Label>
                 <Input
-                  value={editForm.rateType || ''}
+                  value={editForm.rateType || ""}
                   disabled
                   className="bg-muted"
                 />
               </div>
             </div>
 
-            {editForm.category === 'discount' && (
+            {editForm.category === "discount" && (
               <div>
                 <Label>Valid Until</Label>
                 <Input
                   type="date"
-                  value={editForm.validUntil ? new Date(editForm.validUntil).toISOString().split('T')[0] : ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, validUntil: e.target.value }))}
+                  value={
+                    editForm.validUntil
+                      ? new Date(editForm.validUntil)
+                          .toISOString()
+                          .split("T")[0]
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      validUntil: e.target.value,
+                    }))
+                  }
                 />
               </div>
             )}
@@ -530,7 +608,9 @@ export default function PricingPoliciesPage() {
               <Switch
                 id="active"
                 checked={editForm.isActive || false}
-                onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, isActive: checked }))}
+                onCheckedChange={(checked) =>
+                  setEditForm((prev) => ({ ...prev, isActive: checked }))
+                }
               />
               <Label htmlFor="active">Active</Label>
             </div>
@@ -540,7 +620,7 @@ export default function PricingPoliciesPage() {
               Cancel
             </Button>
             <Button onClick={handleSavePolicy} disabled={isActionLoading}>
-              {isActionLoading ? 'Saving...' : 'Save Changes'}
+              {isActionLoading ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -551,15 +631,19 @@ export default function PricingPoliciesPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {editForm.isActive ? 'Activate' : 'Deactivate'} Policy
+              {editForm.isActive ? "Activate" : "Deactivate"} Policy
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {editForm.isActive ? 'activate' : 'deactivate'} the policy "{selectedPolicy?.name}"?
+              Are you sure you want to{" "}
+              {editForm.isActive ? "activate" : "deactivate"} the policy "
+              {selectedPolicy?.name}"?
               {editForm.isActive === false && (
                 <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
                   <div className="flex items-center gap-2 text-yellow-800">
                     <AlertCircle className="w-4 h-4" />
-                    <span className="text-sm">This will stop charging this fee/commission immediately.</span>
+                    <span className="text-sm">
+                      This will stop charging this fee/commission immediately.
+                    </span>
                   </div>
                 </div>
               )}
@@ -570,9 +654,17 @@ export default function PricingPoliciesPage() {
             <AlertDialogAction
               onClick={confirmTogglePolicy}
               disabled={isActionLoading}
-              className={editForm.isActive ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+              className={
+                editForm.isActive
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
             >
-              {isActionLoading ? 'Updating...' : (editForm.isActive ? 'Activate' : 'Deactivate')}
+              {isActionLoading
+                ? "Updating..."
+                : editForm.isActive
+                  ? "Activate"
+                  : "Deactivate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

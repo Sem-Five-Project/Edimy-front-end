@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -15,13 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   GraduationCap,
   BookOpen,
@@ -52,18 +47,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface ClassMaterial {
-  id: string
-  title: string
-  type: "video" | "document" | "assignment"
-  uploadDate: string
-  size?: string
-  duration?: string
+  id: string;
+  title: string;
+  type: "video" | "document" | "assignment";
+  uploadDate: string;
+  size?: string;
+  duration?: string;
 }
 
 interface Review {
-  rating: number
-  comment: string
-  date: string
+  rating: number;
+  comment: string;
+  date: string;
 }
 
 interface MyClassInfo {
@@ -327,33 +322,45 @@ const handleSubmitRating = async () => {
   const getMaterialIcon = (type: ClassMaterial["type"]) => {
     switch (type) {
       case "video":
-        return <Video className="h-4 w-4 text-red-600" />
+        return <Video className="h-4 w-4 text-red-600" />;
       case "document":
-        return <FileText className="h-4 w-4 text-blue-600" />
+        return <FileText className="h-4 w-4 text-blue-600" />;
       case "assignment":
-        return <BookOpen className="h-4 w-4 text-purple-600" />
+        return <BookOpen className="h-4 w-4 text-purple-600" />;
     }
-  }
+  };
 
   const getMaterialBadge = (type: ClassMaterial["type"]) => {
     switch (type) {
       case "video":
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-300">Video</Badge>
+        return (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-300">
+            Video
+          </Badge>
+        );
       case "document":
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300">Document</Badge>
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300">
+            Document
+          </Badge>
+        );
       case "assignment":
-        return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300">Assignment</Badge>
+        return (
+          <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300">
+            Assignment
+          </Badge>
+        );
     }
-  }
+  };
 
-  const StarRating = ({ 
-    rating: currentRating, 
-    onRate, 
-    readonly = false 
-  }: { 
-    rating: number
-    onRate?: (rating: number) => void
-    readonly?: boolean 
+  const StarRating = ({
+    rating: currentRating,
+    onRate,
+    readonly = false,
+  }: {
+    rating: number;
+    onRate?: (rating: number) => void;
+    readonly?: boolean;
   }) => {
     return (
       <div className="flex gap-1">
@@ -365,20 +372,20 @@ const handleSubmitRating = async () => {
             onClick={() => !readonly && onRate?.(star)}
             onMouseEnter={() => !readonly && setHoveredRating(star)}
             onMouseLeave={() => !readonly && setHoveredRating(0)}
-            className={`transition-all ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
+            className={`transition-all ${readonly ? "cursor-default" : "cursor-pointer hover:scale-110"}`}
           >
             <Star
               className={`h-6 w-6 ${
                 star <= (hoveredRating || currentRating)
-                  ? 'fill-yellow-400 text-yellow-400'
-                  : 'text-slate-300'
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "text-slate-300"
               }`}
             />
           </button>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -386,7 +393,10 @@ const handleSubmitRating = async () => {
         {/* Header */}
         <div className="mb-8">
           <Link href="/dashboard/student/profile">
-            <Button variant="ghost" className="mb-4 text-slate-700 hover:text-slate-900 hover:bg-slate-200">
+            <Button
+              variant="ghost"
+              className="mb-4 text-slate-700 hover:text-slate-900 hover:bg-slate-200"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Profile
             </Button>
@@ -499,8 +509,12 @@ const handleSubmitRating = async () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-slate-900">{totalSessions}</p>
-              <p className="text-slate-600 text-sm mt-1">Learning hours accumulated</p>
+              <p className="text-4xl font-bold text-slate-900">
+                {totalSessions}
+              </p>
+              <p className="text-slate-600 text-sm mt-1">
+                Learning hours accumulated
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -508,10 +522,16 @@ const handleSubmitRating = async () => {
         {/* Classes List */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white border border-slate-200 shadow-sm mb-6">
-            <TabsTrigger value="ongoing" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
+            <TabsTrigger
+              value="ongoing"
+              className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+            >
               Ongoing Classes
             </TabsTrigger>
-            <TabsTrigger value="completed" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+            <TabsTrigger
+              value="completed"
+              className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
+            >
               Completed
             </TabsTrigger>
           </TabsList>
@@ -1015,5 +1035,5 @@ return (
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

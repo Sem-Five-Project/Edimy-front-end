@@ -11,6 +11,8 @@ type SidebarContextType = {
   setIsOpen: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
 };
 
 const SidebarContext = createContext<SidebarContextType | null>(null);
@@ -31,6 +33,7 @@ export function SidebarProvider({
   defaultOpen?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [searchTerm, setSearchTerm] = useState("");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -53,6 +56,8 @@ export function SidebarProvider({
         setIsOpen,
         isMobile,
         toggleSidebar,
+        searchTerm,
+        setSearchTerm,
       }}
     >
       {children}

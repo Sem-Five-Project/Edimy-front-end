@@ -1,6 +1,6 @@
 // Authentication utilities
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 // Types based on your backend
 export interface LoginRequest {
@@ -21,7 +21,7 @@ export interface AuthResponse {
 }
 
 // Token management
-export const AUTH_TOKEN_KEY = 'auth_token';
+export const AUTH_TOKEN_KEY = "auth_token";
 
 export function setAuthToken(token: string): void {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
@@ -42,16 +42,16 @@ export function isAuthenticated(): boolean {
 // API calls
 export async function login(credentials: LoginRequest): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(credentials),
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || 'Login failed');
+    throw new Error(errorData.message || "Login failed");
   }
 
   return response.json();
@@ -59,16 +59,16 @@ export async function login(credentials: LoginRequest): Promise<AuthResponse> {
 
 export async function register(userData: RegisterRequest): Promise<string> {
   const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(userData),
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || 'Registration failed');
+    throw new Error(errorData.message || "Registration failed");
   }
 
   return response.text(); // Backend returns string message
@@ -78,11 +78,11 @@ export async function register(userData: RegisterRequest): Promise<string> {
 export function getAuthHeaders(): Record<string, string> {
   const token = getAuthToken();
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
-  
+
   return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
   };
 }

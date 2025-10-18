@@ -23,7 +23,21 @@ import HeaderTabs from "./HeaderTabs";
 import ClassesSection from "./ClassesSection";
 import AnalyticsSection from "./AnalyticsSection";
 import LoadingScreen from "./LoadingScreen";
-import { BookOpen, Clock, Award, FileText, Calendar, ChevronLeft, ChevronRight, Edit, Trash2, Activity, Eye, Download, Plus } from "lucide-react";
+import {
+  BookOpen,
+  Clock,
+  Award,
+  FileText,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Trash2,
+  Activity,
+  Eye,
+  Download,
+  Plus,
+} from "lucide-react";
 
 export default function TutorProfilePage() {
   // State for selected file in document upload
@@ -36,7 +50,9 @@ export default function TutorProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [availableTimeSlots, setAvailableTimeSlots] = useState<TutorAvailability[]>([]);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<
+    TutorAvailability[]
+  >([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [classDocs, setClassDocs] = useState<Record<number, ClassDoc[]>>({});
   const [subjects, setSubjects] = useState<TutorSubject[]>([]);
@@ -45,8 +61,8 @@ export default function TutorProfilePage() {
   const [selectedDocClass, setSelectedDocClass] = useState<number | null>(null);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('schedule');
-  
+  const [activeTab, setActiveTab] = useState("schedule");
+
   const [newTimeSlot, setNewTimeSlot] = useState<{
     dayOfWeek: string;
     startTime: string;
@@ -58,7 +74,9 @@ export default function TutorProfilePage() {
     endTime: "",
     recurring: false,
   });
-  const [editTimeSlot, setEditTimeSlot] = useState<TutorAvailability | null>(null);
+  const [editTimeSlot, setEditTimeSlot] = useState<TutorAvailability | null>(
+    null,
+  );
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddClassModal, setShowAddClassModal] = useState(false);
   const [newClass, setNewClass] = useState<Class>({
@@ -73,20 +91,71 @@ export default function TutorProfilePage() {
   });
 
   const classTypes = [
-    { id: 1, name: "Single Lesson", icon: "📝", color: "bg-blue-100 text-blue-800" },
-    { id: 2, name: "Regular Classes", icon: "🔄", color: "bg-green-100 text-green-800" },
-    { id: 3, name: "Monthly Recurring", icon: "📅", color: "bg-purple-100 text-purple-800" },
+    {
+      id: 1,
+      name: "Single Lesson",
+      icon: "📝",
+      color: "bg-blue-100 text-blue-800",
+    },
+    {
+      id: 2,
+      name: "Regular Classes",
+      icon: "🔄",
+      color: "bg-green-100 text-green-800",
+    },
+    {
+      id: 3,
+      name: "Monthly Recurring",
+      icon: "📅",
+      color: "bg-purple-100 text-purple-800",
+    },
   ];
 
-  const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
-  const fullDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const daysOfWeek = [
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+    "SUNDAY",
+  ];
+  const fullDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   // Mock stats for beautiful dashboard
   const stats = [
-    { label: "Total Classes", value: classes.length, icon: BookOpen, color: "bg-blue-500" },
-    { label: "Available Slots", value: availableTimeSlots.length, icon: Clock, color: "bg-green-500" },
-    { label: "Subjects", value: subjects.length, icon: Award, color: "bg-purple-500" },
-    { label: "Documents", value: Object.values(classDocs).flat().length, icon: FileText, color: "bg-orange-500" },
+    {
+      label: "Total Classes",
+      value: classes.length,
+      icon: BookOpen,
+      color: "bg-blue-500",
+    },
+    {
+      label: "Available Slots",
+      value: availableTimeSlots.length,
+      icon: Clock,
+      color: "bg-green-500",
+    },
+    {
+      label: "Subjects",
+      value: subjects.length,
+      icon: Award,
+      color: "bg-purple-500",
+    },
+    {
+      label: "Documents",
+      value: Object.values(classDocs).flat().length,
+      icon: FileText,
+      color: "bg-orange-500",
+    },
   ];
 
   useEffect(() => {
@@ -104,7 +173,7 @@ export default function TutorProfilePage() {
 
         setAvailableTimeSlots(slotsRes);
         setClasses(classesRes);
-        console.log('Classes data:*************', classesRes);
+        console.log("Classes data:*************", classesRes);
         setSubjects(subjectsRes);
 
         // Fetch docs for each class
@@ -127,7 +196,12 @@ export default function TutorProfilePage() {
     loadData();
   }, [tutorId]);
 
-  const addTimeSlot = async (startTime: string, endTime: string, dayOfWeek: string, recurring: boolean) => {
+  const addTimeSlot = async (
+    startTime: string,
+    endTime: string,
+    dayOfWeek: string,
+    recurring: boolean,
+  ) => {
     if (!tutorId) return;
     const newSlot: TutorAvailability = {
       tutorId,
@@ -140,7 +214,12 @@ export default function TutorProfilePage() {
       await tutorAvailabilityAPI.createAvailability(newSlot);
       setAvailableTimeSlots((prev) => [...prev, newSlot]);
       setShowAddTimeSlotModal(false);
-      setNewTimeSlot({ dayOfWeek: "", startTime: "", endTime: "", recurring: false });
+      setNewTimeSlot({
+        dayOfWeek: "",
+        startTime: "",
+        endTime: "",
+        recurring: false,
+      });
     } catch (err) {
       setError("Error adding time slot. Please try again.");
       console.error("Error adding time slot:", err);
@@ -197,9 +276,10 @@ export default function TutorProfilePage() {
   const getWeekDates = (date: Date) => {
     const week = [];
     const start = new Date(date);
-    const diff = start.getDate() - start.getDay() + (start.getDay() === 0 ? -6 : 1);
+    const diff =
+      start.getDate() - start.getDay() + (start.getDay() === 0 ? -6 : 1);
     start.setDate(diff);
-    
+
     for (let i = 0; i < 7; i++) {
       const day = new Date(start);
       day.setDate(start.getDate() + i);
@@ -209,67 +289,62 @@ export default function TutorProfilePage() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
+  const navigateWeek = (direction: "prev" | "next") => {
     const newDate = new Date(currentWeek);
-    newDate.setDate(currentWeek.getDate() + (direction === 'next' ? 7 : -7));
+    newDate.setDate(currentWeek.getDate() + (direction === "next" ? 7 : -7));
     setCurrentWeek(newDate);
   };
-  
+
   // Document upload handler
-const handleUploadDocument = async () => {
-  if (!selectedFile || !selectedDocClass) {
-    setError("Please select a class and a file before uploading.");
-    return;
-  }
-
-  try {
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("classId", String(selectedDocClass));
-    formData.append("docType", "Lesson Notes"); // you can make this dynamic from form
-
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) {
-      throw new Error("Failed to upload document");
+  const handleUploadDocument = async () => {
+    if (!selectedFile || !selectedDocClass) {
+      setError("Please select a class and a file before uploading.");
+      return;
     }
 
-    const data = await res.json();
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("classId", String(selectedDocClass));
+      formData.append("docType", "Lesson Notes"); // you can make this dynamic from form
 
-   
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-    // Save document info to backend
-    await classDocAPI.addClassDoc({
-      classId: selectedDocClass,
-      docType: "PDF",
-      link: data.url,
-    });
+      if (!res.ok) {
+        throw new Error("Failed to upload document");
+      }
 
-    // Update state with uploaded document
-    setClassDocs((prev) => ({
-      ...prev,
-      [selectedDocClass]: [
-        ...(prev[selectedDocClass] || []),
-        data, // assuming your API returns the new document object
-      ],
-    }));
+      const data = await res.json();
 
-    setShowAddDocModal(false);
-    setSelectedFile(null);
-  } catch (err) {
-    console.error("Error uploading document:", err);
-    setError("Error uploading document. Please try again.");
-  }
-};
+      // Save document info to backend
+      await classDocAPI.addClassDoc({
+        classId: selectedDocClass,
+        docType: "PDF",
+        link: data.url,
+      });
 
+      // Update state with uploaded document
+      setClassDocs((prev) => ({
+        ...prev,
+        [selectedDocClass]: [
+          ...(prev[selectedDocClass] || []),
+          data, // assuming your API returns the new document object
+        ],
+      }));
 
-
+      setShowAddDocModal(false);
+      setSelectedFile(null);
+    } catch (err) {
+      console.error("Error uploading document:", err);
+      setError("Error uploading document. Please try again.");
+    }
+  };
 
   if (loading) {
     return <LoadingScreen />;
@@ -296,7 +371,9 @@ const handleUploadDocument = async () => {
         {activeTab === "schedule" && (
           <div className="space-y-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Schedule Management</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Schedule Management
+              </h2>
               <button
                 onClick={() => setShowAddTimeSlotModal(true)}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl flex items-center transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
@@ -334,7 +411,10 @@ const handleUploadDocument = async () => {
         )}
         {activeTab === "analytics" && <AnalyticsSection subjects={subjects} />}
         {/* Modals (unchanged, keep inline for now) */}
-        {(showAddTimeSlotModal || showEditModal || showAddClassModal || showAddDocModal) && (
+        {(showAddTimeSlotModal ||
+          showEditModal ||
+          showAddClassModal ||
+          showAddDocModal) && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200">
               {/* ...existing code for modals... */}
@@ -343,49 +423,90 @@ const handleUploadDocument = async () => {
                 <div className="p-8">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-800">Add Time Slot</h2>
-                      <p className="text-gray-500 mt-1">Create a new availability window</p>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        Add Time Slot
+                      </h2>
+                      <p className="text-gray-500 mt-1">
+                        Create a new availability window
+                      </p>
                     </div>
-                    <button 
+                    <button
                       type="button"
-                      onClick={closeModal} 
+                      onClick={closeModal}
                       className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x text-gray-400"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-x text-gray-400"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
                     </button>
                   </div>
                   <form onSubmit={handleAddTimeSlot} className="space-y-6">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Day of Week</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Day of Week
+                      </label>
                       <select
                         value={newTimeSlot.dayOfWeek}
-                        onChange={(e) => setNewTimeSlot({ ...newTimeSlot, dayOfWeek: e.target.value })}
+                        onChange={(e) =>
+                          setNewTimeSlot({
+                            ...newTimeSlot,
+                            dayOfWeek: e.target.value,
+                          })
+                        }
                         className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required
                       >
                         <option value="">Select a day</option>
                         {daysOfWeek.map((day, idx) => (
-                          <option key={day} value={day}>{fullDays[idx]}</option>
+                          <option key={day} value={day}>
+                            {fullDays[idx]}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Start Time
+                        </label>
                         <input
                           type="time"
                           value={newTimeSlot.startTime}
-                          onChange={(e) => setNewTimeSlot({ ...newTimeSlot, startTime: e.target.value })}
+                          onChange={(e) =>
+                            setNewTimeSlot({
+                              ...newTimeSlot,
+                              startTime: e.target.value,
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">End Time</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          End Time
+                        </label>
                         <input
                           type="time"
                           value={newTimeSlot.endTime}
-                          onChange={(e) => setNewTimeSlot({ ...newTimeSlot, endTime: e.target.value })}
+                          onChange={(e) =>
+                            setNewTimeSlot({
+                              ...newTimeSlot,
+                              endTime: e.target.value,
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           required
                         />
@@ -396,12 +517,24 @@ const handleUploadDocument = async () => {
                         type="checkbox"
                         id="recurring"
                         checked={newTimeSlot.recurring}
-                        onChange={(e) => setNewTimeSlot({ ...newTimeSlot, recurring: e.target.checked })}
+                        onChange={(e) =>
+                          setNewTimeSlot({
+                            ...newTimeSlot,
+                            recurring: e.target.checked,
+                          })
+                        }
                         className="w-5 h-5 text-blue-600 rounded-lg mr-3"
                       />
                       <div>
-                        <label htmlFor="recurring" className="text-sm font-semibold text-gray-800">Recurring weekly</label>
-                        <p className="text-xs text-gray-600">This time slot will repeat every week</p>
+                        <label
+                          htmlFor="recurring"
+                          className="text-sm font-semibold text-gray-800"
+                        >
+                          Recurring weekly
+                        </label>
+                        <p className="text-xs text-gray-600">
+                          This time slot will repeat every week
+                        </p>
                       </div>
                     </div>
                     <button
@@ -418,22 +551,41 @@ const handleUploadDocument = async () => {
                 <div className="p-8">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-800">Edit Time Slot</h2>
-                      <p className="text-gray-500 mt-1">Modify your availability</p>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        Edit Time Slot
+                      </h2>
+                      <p className="text-gray-500 mt-1">
+                        Modify your availability
+                      </p>
                     </div>
-                    <button 
+                    <button
                       type="button"
-                      onClick={closeModal} 
+                      onClick={closeModal}
                       className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x text-gray-400"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-x text-gray-400"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
                     </button>
                   </div>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
                       if (editTimeSlot.availabilityId) {
-                        tutorAvailabilityAPI.updateAvailability(editTimeSlot)
+                        tutorAvailabilityAPI
+                          .updateAvailability(editTimeSlot)
                           .then(() => {
                             setShowEditModal(false);
                             setEditTimeSlot(null);
@@ -447,20 +599,34 @@ const handleUploadDocument = async () => {
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Start Time
+                        </label>
                         <input
                           type="time"
                           value={editTimeSlot.startTime}
-                          onChange={(e) => setEditTimeSlot({ ...editTimeSlot, startTime: e.target.value })}
+                          onChange={(e) =>
+                            setEditTimeSlot({
+                              ...editTimeSlot,
+                              startTime: e.target.value,
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">End Time</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          End Time
+                        </label>
                         <input
                           type="time"
                           value={editTimeSlot.endTime}
-                          onChange={(e) => setEditTimeSlot({ ...editTimeSlot, endTime: e.target.value })}
+                          onChange={(e) =>
+                            setEditTimeSlot({
+                              ...editTimeSlot,
+                              endTime: e.target.value,
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         />
                       </div>
@@ -469,12 +635,21 @@ const handleUploadDocument = async () => {
                       <input
                         type="checkbox"
                         checked={editTimeSlot.recurring}
-                        onChange={(e) => setEditTimeSlot({ ...editTimeSlot, recurring: e.target.checked })}
+                        onChange={(e) =>
+                          setEditTimeSlot({
+                            ...editTimeSlot,
+                            recurring: e.target.checked,
+                          })
+                        }
                         className="w-5 h-5 text-blue-600 rounded-lg mr-3"
                       />
                       <div>
-                        <label className="text-sm font-semibold text-gray-800">Recurring weekly</label>
-                        <p className="text-xs text-gray-600">This time slot will repeat every week</p>
+                        <label className="text-sm font-semibold text-gray-800">
+                          Recurring weekly
+                        </label>
+                        <p className="text-xs text-gray-600">
+                          This time slot will repeat every week
+                        </p>
                       </div>
                     </div>
                     <button
@@ -491,56 +666,99 @@ const handleUploadDocument = async () => {
                 <div className="p-8">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-800">Create New Class</h2>
-                      <p className="text-gray-500 mt-1">Add a new class to your schedule</p>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        Create New Class
+                      </h2>
+                      <p className="text-gray-500 mt-1">
+                        Add a new class to your schedule
+                      </p>
                     </div>
-                    <button 
+                    <button
                       type="button"
-                      onClick={closeModal} 
+                      onClick={closeModal}
                       className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x text-gray-400"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-x text-gray-400"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
                     </button>
                   </div>
                   <form onSubmit={handleAddClass} className="space-y-6">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Class Name</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Class Name
+                      </label>
                       <input
                         type="text"
                         value={newClass.className}
-                        onChange={(e) => setNewClass({ ...newClass, className: e.target.value })}
+                        onChange={(e) =>
+                          setNewClass({
+                            ...newClass,
+                            className: e.target.value,
+                          })
+                        }
                         className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         placeholder="e.g., Advanced Mathematics"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Date
+                      </label>
                       <input
                         type="date"
                         value={newClass.date}
-                        onChange={(e) => setNewClass({ ...newClass, date: e.target.value })}
+                        onChange={(e) =>
+                          setNewClass({ ...newClass, date: e.target.value })
+                        }
                         className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Start Time
+                        </label>
                         <input
                           type="time"
                           value={newClass.startTime}
-                          onChange={(e) => setNewClass({ ...newClass, startTime: e.target.value })}
+                          onChange={(e) =>
+                            setNewClass({
+                              ...newClass,
+                              startTime: e.target.value,
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">End Time</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          End Time
+                        </label>
                         <input
                           type="time"
                           value={newClass.endTime}
-                          onChange={(e) => setNewClass({ ...newClass, endTime: e.target.value })}
+                          onChange={(e) =>
+                            setNewClass({
+                              ...newClass,
+                              endTime: e.target.value,
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           required
                         />
@@ -548,26 +766,43 @@ const handleUploadDocument = async () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Subject
+                        </label>
                         <select
                           value={newClass.subjectId}
-                          onChange={(e) => setNewClass({ ...newClass, subjectId: Number(e.target.value) })}
+                          onChange={(e) =>
+                            setNewClass({
+                              ...newClass,
+                              subjectId: Number(e.target.value),
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           required
                         >
                           <option value="">Select subject</option>
                           {subjects.map((subject) => (
-                            <option key={subject.subjectId} value={subject.subjectId}>
+                            <option
+                              key={subject.subjectId}
+                              value={subject.subjectId}
+                            >
                               {subject.subjectId}
                             </option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Class Type</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Class Type
+                        </label>
                         <select
                           value={newClass.classTypeId}
-                          onChange={(e) => setNewClass({ ...newClass, classTypeId: Number(e.target.value) })}
+                          onChange={(e) =>
+                            setNewClass({
+                              ...newClass,
+                              classTypeId: Number(e.target.value),
+                            })
+                          }
                           className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           required
                         >
@@ -581,10 +816,14 @@ const handleUploadDocument = async () => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Comment (Optional)</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Comment (Optional)
+                      </label>
                       <textarea
                         value={newClass.comment}
-                        onChange={(e) => setNewClass({ ...newClass, comment: e.target.value })}
+                        onChange={(e) =>
+                          setNewClass({ ...newClass, comment: e.target.value })
+                        }
                         className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         rows={3}
                         placeholder="Add any additional notes about this class..."
@@ -604,20 +843,40 @@ const handleUploadDocument = async () => {
                 <div className="p-8">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-800">Upload Document</h2>
-                      <p className="text-gray-500 mt-1">Add learning materials to your class</p>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        Upload Document
+                      </h2>
+                      <p className="text-gray-500 mt-1">
+                        Add learning materials to your class
+                      </p>
                     </div>
-                    <button 
+                    <button
                       type="button"
-                      onClick={closeModal} 
+                      onClick={closeModal}
                       className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x text-gray-400"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-x text-gray-400"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
                     </button>
                   </div>
                   <form className="space-y-6">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Document Type</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Document Type
+                      </label>
                       <input
                         type="text"
                         name="docType"
@@ -627,12 +886,16 @@ const handleUploadDocument = async () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Upload Document</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Upload Document
+                      </label>
                       <input
                         type="file"
                         name="file"
                         accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                        onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                        onChange={(e) =>
+                          setSelectedFile(e.target.files?.[0] || null)
+                        }
                         className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       />
@@ -642,7 +905,7 @@ const handleUploadDocument = async () => {
                         </div>
                       )}
                     </div>
-                    <button            
+                    <button
                       type="button"
                       onClick={handleUploadDocument}
                       className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"

@@ -1,19 +1,64 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Search, Filter, MoreHorizontal, Eye, Check, X, Edit, Star, MessageSquare, User, Calendar } from "lucide-react";
+import {
+  Search,
+  Filter,
+  MoreHorizontal,
+  Eye,
+  Check,
+  X,
+  Edit,
+  Star,
+  MessageSquare,
+  User,
+  Calendar,
+} from "lucide-react";
 
 interface Review {
   id: string;
@@ -24,88 +69,93 @@ interface Review {
   rating: number;
   reviewText: string;
   dateSubmitted: string;
-  status: 'Visible' | 'Hidden' | 'Pending';
+  status: "Visible" | "Hidden" | "Pending";
   adminNotes?: string;
 }
 
 const mockReviews: Review[] = [
   {
-    id: '1',
-    tutorName: 'Dr. Sarah Johnson',
-    tutorId: 'tutor-001',
-    studentName: 'Alex Chen',
-    studentId: 'student-001',
+    id: "1",
+    tutorName: "Dr. Sarah Johnson",
+    tutorId: "tutor-001",
+    studentName: "Alex Chen",
+    studentId: "student-001",
     rating: 5,
-    reviewText: 'Excellent tutor! Very knowledgeable and patient. Helped me understand calculus concepts clearly.',
-    dateSubmitted: '2024-03-15',
-    status: 'Visible'
+    reviewText:
+      "Excellent tutor! Very knowledgeable and patient. Helped me understand calculus concepts clearly.",
+    dateSubmitted: "2024-03-15",
+    status: "Visible",
   },
   {
-    id: '2',
-    tutorName: 'Prof. Michael Brown',
-    tutorId: 'tutor-002',
-    studentName: 'Emma Wilson',
-    studentId: 'student-002',
+    id: "2",
+    tutorName: "Prof. Michael Brown",
+    tutorId: "tutor-002",
+    studentName: "Emma Wilson",
+    studentId: "student-002",
     rating: 2,
-    reviewText: 'The tutor was often late and seemed unprepared. Not worth the money.',
-    dateSubmitted: '2024-03-14',
-    status: 'Pending',
-    adminNotes: 'Investigating timing issues with this tutor'
+    reviewText:
+      "The tutor was often late and seemed unprepared. Not worth the money.",
+    dateSubmitted: "2024-03-14",
+    status: "Pending",
+    adminNotes: "Investigating timing issues with this tutor",
   },
   {
-    id: '3',
-    tutorName: 'Dr. Lisa Garcia',
-    tutorId: 'tutor-003',
-    studentName: 'James Smith',
-    studentId: 'student-003',
+    id: "3",
+    tutorName: "Dr. Lisa Garcia",
+    tutorId: "tutor-003",
+    studentName: "James Smith",
+    studentId: "student-003",
     rating: 4,
-    reviewText: 'Good teacher, but the sessions could be more interactive.',
-    dateSubmitted: '2024-03-13',
-    status: 'Visible'
+    reviewText: "Good teacher, but the sessions could be more interactive.",
+    dateSubmitted: "2024-03-13",
+    status: "Visible",
   },
   {
-    id: '4',
-    tutorName: 'Prof. David Lee',
-    tutorId: 'tutor-004',
-    studentName: 'Sophie Davis',
-    studentId: 'student-004',
+    id: "4",
+    tutorName: "Prof. David Lee",
+    tutorId: "tutor-004",
+    studentName: "Sophie Davis",
+    studentId: "student-004",
     rating: 1,
-    reviewText: 'Terrible experience. The tutor was rude and inappropriate.',
-    dateSubmitted: '2024-03-12',
-    status: 'Hidden',
-    adminNotes: 'Hidden due to inappropriate language'
+    reviewText: "Terrible experience. The tutor was rude and inappropriate.",
+    dateSubmitted: "2024-03-12",
+    status: "Hidden",
+    adminNotes: "Hidden due to inappropriate language",
   },
   {
-    id: '5',
-    tutorName: 'Dr. Anna Martinez',
-    tutorId: 'tutor-005',
-    studentName: 'Ryan Johnson',
-    studentId: 'student-005',
+    id: "5",
+    tutorName: "Dr. Anna Martinez",
+    tutorId: "tutor-005",
+    studentName: "Ryan Johnson",
+    studentId: "student-005",
     rating: 5,
-    reviewText: 'Amazing tutor! Made chemistry so much easier to understand.',
-    dateSubmitted: '2024-03-11',
-    status: 'Visible'
-  }
+    reviewText: "Amazing tutor! Made chemistry so much easier to understand.",
+    dateSubmitted: "2024-03-11",
+    status: "Visible",
+  },
 ];
 
 export default function RatingsReviews() {
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [ratingFilter, setRatingFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedReviews, setSelectedReviews] = useState<string[]>([]);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentReview, setCurrentReview] = useState<Review | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
+  const [adminNotes, setAdminNotes] = useState("");
 
-  const filteredReviews = reviews.filter(review => {
-    const matchesSearch = review.tutorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         review.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         review.reviewText.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRating = ratingFilter === 'all' || review.rating.toString() === ratingFilter;
-    const matchesStatus = statusFilter === 'all' || review.status === statusFilter;
-    
+  const filteredReviews = reviews.filter((review) => {
+    const matchesSearch =
+      review.tutorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      review.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      review.reviewText.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRating =
+      ratingFilter === "all" || review.rating.toString() === ratingFilter;
+    const matchesStatus =
+      statusFilter === "all" || review.status === statusFilter;
+
     return matchesSearch && matchesRating && matchesStatus;
   });
 
@@ -117,8 +167,8 @@ export default function RatingsReviews() {
             key={star}
             className={`h-4 w-4 ${
               star <= rating
-                ? 'text-yellow-400 fill-yellow-400'
-                : 'text-gray-300'
+                ? "text-yellow-400 fill-yellow-400"
+                : "text-gray-300"
             }`}
           />
         ))}
@@ -129,7 +179,7 @@ export default function RatingsReviews() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedReviews(filteredReviews.map(review => review.id));
+      setSelectedReviews(filteredReviews.map((review) => review.id));
     } else {
       setSelectedReviews([]);
     }
@@ -139,93 +189,104 @@ export default function RatingsReviews() {
     if (checked) {
       setSelectedReviews([...selectedReviews, reviewId]);
     } else {
-      setSelectedReviews(selectedReviews.filter(id => id !== reviewId));
+      setSelectedReviews(selectedReviews.filter((id) => id !== reviewId));
     }
   };
 
   const handleBulkApprove = () => {
-    setReviews(reviews.map(review => 
-      selectedReviews.includes(review.id) 
-        ? { ...review, status: 'Visible' as const }
-        : review
-    ));
+    setReviews(
+      reviews.map((review) =>
+        selectedReviews.includes(review.id)
+          ? { ...review, status: "Visible" as const }
+          : review,
+      ),
+    );
     setSelectedReviews([]);
   };
 
   const handleBulkReject = () => {
-    setReviews(reviews.map(review => 
-      selectedReviews.includes(review.id) 
-        ? { ...review, status: 'Hidden' as const }
-        : review
-    ));
+    setReviews(
+      reviews.map((review) =>
+        selectedReviews.includes(review.id)
+          ? { ...review, status: "Hidden" as const }
+          : review,
+      ),
+    );
     setSelectedReviews([]);
   };
 
   const handleApproveReview = (reviewId: string) => {
-    setReviews(reviews.map(review => 
-      review.id === reviewId 
-        ? { ...review, status: 'Visible' as const }
-        : review
-    ));
+    setReviews(
+      reviews.map((review) =>
+        review.id === reviewId
+          ? { ...review, status: "Visible" as const }
+          : review,
+      ),
+    );
   };
 
   const handleRejectReview = (reviewId: string) => {
-    setReviews(reviews.map(review => 
-      review.id === reviewId 
-        ? { ...review, status: 'Hidden' as const }
-        : review
-    ));
+    setReviews(
+      reviews.map((review) =>
+        review.id === reviewId
+          ? { ...review, status: "Hidden" as const }
+          : review,
+      ),
+    );
   };
 
   const openViewDialog = (review: Review) => {
     setCurrentReview(review);
-    setAdminNotes(review.adminNotes || '');
+    setAdminNotes(review.adminNotes || "");
     setIsViewDialogOpen(true);
   };
 
   const openEditDialog = (review: Review) => {
     setCurrentReview(review);
-    setAdminNotes(review.adminNotes || '');
+    setAdminNotes(review.adminNotes || "");
     setIsEditDialogOpen(true);
   };
 
   const handleSaveAdminNotes = () => {
     if (!currentReview) return;
-    
-    setReviews(reviews.map(review => 
-      review.id === currentReview.id 
-        ? { ...review, adminNotes }
-        : review
-    ));
+
+    setReviews(
+      reviews.map((review) =>
+        review.id === currentReview.id ? { ...review, adminNotes } : review,
+      ),
+    );
     setIsEditDialogOpen(false);
     setCurrentReview(null);
-    setAdminNotes('');
+    setAdminNotes("");
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'Visible':
-        return 'default';
-      case 'Hidden':
-        return 'destructive';
-      case 'Pending':
-        return 'secondary';
+      case "Visible":
+        return "default";
+      case "Hidden":
+        return "destructive";
+      case "Pending":
+        return "secondary";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Ratings & Reviews Moderation</h2>
+        <h2 className="text-3xl font-bold tracking-tight">
+          Ratings & Reviews Moderation
+        </h2>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Review Management</CardTitle>
           <CardDescription>
-            Monitor and moderate tutor ratings and student reviews to ensure quality and appropriateness.
+            Monitor and moderate tutor ratings and student reviews to ensure
+            quality and appropriateness.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -278,7 +339,11 @@ export default function RatingsReviews() {
                 <Check className="mr-1 h-3 w-3" />
                 Approve
               </Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkReject}>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleBulkReject}
+              >
                 <X className="mr-1 h-3 w-3" />
                 Reject
               </Button>
@@ -292,7 +357,10 @@ export default function RatingsReviews() {
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
-                      checked={selectedReviews.length === filteredReviews.length && filteredReviews.length > 0}
+                      checked={
+                        selectedReviews.length === filteredReviews.length &&
+                        filteredReviews.length > 0
+                      }
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
@@ -311,7 +379,9 @@ export default function RatingsReviews() {
                     <TableCell>
                       <Checkbox
                         checked={selectedReviews.includes(review.id)}
-                        onCheckedChange={(checked) => handleSelectReview(review.id, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleSelectReview(review.id, checked as boolean)
+                        }
                       />
                     </TableCell>
                     <TableCell>
@@ -348,25 +418,34 @@ export default function RatingsReviews() {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border shadow-lg">
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-white dark:bg-gray-800 border shadow-lg"
+                        >
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openViewDialog(review)}>
+                          <DropdownMenuItem
+                            onClick={() => openViewDialog(review)}
+                          >
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEditDialog(review)}>
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(review)}
+                          >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Notes
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {review.status !== 'Visible' && (
-                            <DropdownMenuItem onClick={() => handleApproveReview(review.id)}>
+                          {review.status !== "Visible" && (
+                            <DropdownMenuItem
+                              onClick={() => handleApproveReview(review.id)}
+                            >
                               <Check className="mr-2 h-4 w-4" />
                               Approve
                             </DropdownMenuItem>
                           )}
-                          {review.status !== 'Hidden' && (
-                            <DropdownMenuItem 
+                          {review.status !== "Hidden" && (
+                            <DropdownMenuItem
                               onClick={() => handleRejectReview(review.id)}
                               className="text-red-600"
                             >
@@ -432,7 +511,10 @@ export default function RatingsReviews() {
                 </div>
                 <div>
                   <Label className="font-semibold">Status</Label>
-                  <Badge variant={getStatusBadgeVariant(currentReview.status)} className="w-fit mt-1">
+                  <Badge
+                    variant={getStatusBadgeVariant(currentReview.status)}
+                    className="w-fit mt-1"
+                  >
                     {currentReview.status}
                   </Badge>
                 </div>
@@ -477,7 +559,11 @@ export default function RatingsReviews() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="button" onClick={handleSaveAdminNotes}>

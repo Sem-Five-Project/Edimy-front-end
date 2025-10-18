@@ -1,35 +1,39 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { 
-  getDisputes, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  getDisputes,
   resolveDispute,
-  type PaymentDispute, 
+  type PaymentDispute,
   type DisputeFilters,
-  type DisputeStatus
-} from '@/lib/paymentsData';
+  type DisputeStatus,
+} from "@/lib/paymentsData";
 
-type ResolutionAction = 'refund_approved' | 'refund_denied' | 'partial_refund' | 'escalated';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+type ResolutionAction =
+  | "refund_approved"
+  | "refund_denied"
+  | "partial_refund"
+  | "escalated";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +41,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +51,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Search,
   Filter,
@@ -64,8 +68,8 @@ import {
   RefreshCw,
   Flag,
   TrendingUp,
-  Users
-} from 'lucide-react';
+  Users,
+} from "lucide-react";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -75,32 +79,35 @@ export default function PaymentDisputesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalDisputes, setTotalDisputes] = useState(0);
   const [stats, setStats] = useState<any>(null);
-  
+
   // Filters
   const [filters, setFilters] = useState<DisputeFilters>({
-    studentName: '',
-    tutorName: '',
+    studentName: "",
+    tutorName: "",
     disputeType: undefined,
     status: undefined,
     priority: undefined,
-    dateFrom: '',
-    dateTo: '',
+    dateFrom: "",
+    dateTo: "",
     page: 1,
-    limit: ITEMS_PER_PAGE
+    limit: ITEMS_PER_PAGE,
   });
-  
+
   // Dialog states
-  const [selectedDispute, setSelectedDispute] = useState<PaymentDispute | null>(null);
+  const [selectedDispute, setSelectedDispute] = useState<PaymentDispute | null>(
+    null,
+  );
   const [showDisputeDetail, setShowDisputeDetail] = useState(false);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
-  
+
   // Resolution form states
-  const [resolutionAction, setResolutionAction] = useState<ResolutionAction>('refund_approved');
+  const [resolutionAction, setResolutionAction] =
+    useState<ResolutionAction>("refund_approved");
   const [resolutionAmount, setResolutionAmount] = useState<number>(0);
-  const [resolutionReasoning, setResolutionReasoning] = useState('');
-  const [compensationOffered, setCompensationOffered] = useState('');
-  const [escalationReason, setEscalationReason] = useState('');
+  const [resolutionReasoning, setResolutionReasoning] = useState("");
+  const [compensationOffered, setCompensationOffered] = useState("");
+  const [escalationReason, setEscalationReason] = useState("");
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   useEffect(() => {
@@ -109,7 +116,7 @@ export default function PaymentDisputesPage() {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setFilters(prev => ({ ...prev, page: 1 }));
+      setFilters((prev) => ({ ...prev, page: 1 }));
       setCurrentPage(1);
       fetchDisputes();
     }, 500);
@@ -122,7 +129,7 @@ export default function PaymentDisputesPage() {
     filters.status,
     filters.priority,
     filters.dateFrom,
-    filters.dateTo
+    filters.dateTo,
   ]);
 
   const fetchDisputes = async () => {
@@ -131,13 +138,13 @@ export default function PaymentDisputesPage() {
       const response = await getDisputes({
         ...filters,
         page: currentPage,
-        limit: ITEMS_PER_PAGE
+        limit: ITEMS_PER_PAGE,
       });
       setDisputes(response.disputes);
       setTotalDisputes(response.total);
       setStats(response.stats);
     } catch (error) {
-      console.error('Error fetching disputes:', error);
+      console.error("Error fetching disputes:", error);
     } finally {
       setLoading(false);
     }
@@ -145,22 +152,22 @@ export default function PaymentDisputesPage() {
 
   const handleResolveDispute = async () => {
     if (!selectedDispute) return;
-    
+
     setIsActionLoading(true);
     try {
-      const resolution: PaymentDispute['resolution'] = {
+      const resolution: PaymentDispute["resolution"] = {
         action: resolutionAction,
         amount: resolutionAmount > 0 ? resolutionAmount : undefined,
         reasoning: resolutionReasoning,
-        compensationOffered: compensationOffered || undefined
+        compensationOffered: compensationOffered || undefined,
       };
-      
-      await resolveDispute(selectedDispute.id, resolution, 'admin-001');
+
+      await resolveDispute(selectedDispute.id, resolution, "admin-001");
       setShowResolveDialog(false);
       resetResolutionForm();
       fetchDisputes();
     } catch (error) {
-      console.error('Error resolving dispute:', error);
+      console.error("Error resolving dispute:", error);
     } finally {
       setIsActionLoading(false);
     }
@@ -168,55 +175,73 @@ export default function PaymentDisputesPage() {
 
   const handleEscalateDispute = async () => {
     if (!selectedDispute || !escalationReason) return;
-    
+
     setIsActionLoading(true);
     try {
-      console.log(`Escalated dispute ${selectedDispute.id}: ${escalationReason}`);
+      console.log(
+        `Escalated dispute ${selectedDispute.id}: ${escalationReason}`,
+      );
       setShowEscalateDialog(false);
-      setEscalationReason('');
+      setEscalationReason("");
       fetchDisputes();
     } catch (error) {
-      console.error('Error escalating dispute:', error);
+      console.error("Error escalating dispute:", error);
     } finally {
       setIsActionLoading(false);
     }
   };
 
   const resetResolutionForm = () => {
-    setResolutionAction('refund_approved');
+    setResolutionAction("refund_approved");
     setResolutionAmount(0);
-    setResolutionReasoning('');
-    setCompensationOffered('');
+    setResolutionReasoning("");
+    setCompensationOffered("");
   };
 
   const getStatusBadgeColor = (status: DisputeStatus) => {
     switch (status) {
-      case 'Open': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'Resolved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'Escalated': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'Closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case "Open":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      case "Resolved":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "Escalated":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "Closed":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
-  const getPriorityBadgeColor = (priority: PaymentDispute['priority']) => {
+  const getPriorityBadgeColor = (priority: PaymentDispute["priority"]) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case "urgent":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      case "high":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "low":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
-  const getDisputeTypeColor = (type: PaymentDispute['disputeType']) => {
+  const getDisputeTypeColor = (type: PaymentDispute["disputeType"]) => {
     switch (type) {
-      case 'refund_request': return 'bg-blue-100 text-blue-800';
-      case 'service_issue': return 'bg-red-100 text-red-800';
-      case 'billing_error': return 'bg-yellow-100 text-yellow-800';
-      case 'fraud_claim': return 'bg-purple-100 text-purple-800';
-      case 'quality_issue': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "refund_request":
+        return "bg-blue-100 text-blue-800";
+      case "service_issue":
+        return "bg-red-100 text-red-800";
+      case "billing_error":
+        return "bg-yellow-100 text-yellow-800";
+      case "fraud_claim":
+        return "bg-purple-100 text-purple-800";
+      case "quality_issue":
+        return "bg-orange-100 text-orange-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -262,19 +287,23 @@ export default function PaymentDisputesPage() {
               <div className="flex items-center">
                 <AlertTriangle className="w-8 h-8 text-red-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Open Disputes</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Open Disputes
+                  </p>
                   <p className="text-2xl font-bold">{stats.openDisputes}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Check className="w-8 h-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Resolved</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Resolved
+                  </p>
                   <p className="text-2xl font-bold">{stats.resolvedDisputes}</p>
                 </div>
               </div>
@@ -286,8 +315,12 @@ export default function PaymentDisputesPage() {
               <div className="flex items-center">
                 <DollarSign className="w-8 h-8 text-yellow-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Disputed Amount</p>
-                  <p className="text-2xl font-bold">${stats.totalDisputedAmount.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Disputed Amount
+                  </p>
+                  <p className="text-2xl font-bold">
+                    ${stats.totalDisputedAmount.toLocaleString()}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -298,8 +331,12 @@ export default function PaymentDisputesPage() {
               <div className="flex items-center">
                 <Clock className="w-8 h-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Avg Resolution</p>
-                  <p className="text-2xl font-bold">{stats.averageResolutionTime}d</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Avg Resolution
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {stats.averageResolutionTime}d
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -322,22 +359,38 @@ export default function PaymentDisputesPage() {
               <Input
                 placeholder="Search student..."
                 value={filters.studentName}
-                onChange={(e) => setFilters(prev => ({ ...prev, studentName: e.target.value }))}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    studentName: e.target.value,
+                  }))
+                }
               />
             </div>
-            
+
             <div>
               <Label>Tutor Name</Label>
               <Input
                 placeholder="Search tutor..."
                 value={filters.tutorName}
-                onChange={(e) => setFilters(prev => ({ ...prev, tutorName: e.target.value }))}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, tutorName: e.target.value }))
+                }
               />
             </div>
-            
+
             <div>
               <Label>Dispute Type</Label>
-              <Select value={filters.disputeType || undefined} onValueChange={(value) => setFilters(prev => ({ ...prev, disputeType: value as PaymentDispute['disputeType'] || undefined }))}>
+              <Select
+                value={filters.disputeType || undefined}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    disputeType:
+                      (value as PaymentDispute["disputeType"]) || undefined,
+                  }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
@@ -350,10 +403,18 @@ export default function PaymentDisputesPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label>Status</Label>
-              <Select value={filters.status || undefined} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value as DisputeStatus || undefined }))}>
+              <Select
+                value={filters.status || undefined}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    status: (value as DisputeStatus) || undefined,
+                  }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
@@ -365,10 +426,19 @@ export default function PaymentDisputesPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label>Priority</Label>
-              <Select value={filters.priority || undefined} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value as PaymentDispute['priority'] || undefined }))}>
+              <Select
+                value={filters.priority || undefined}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    priority:
+                      (value as PaymentDispute["priority"]) || undefined,
+                  }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All priorities" />
                 </SelectTrigger>
@@ -388,16 +458,20 @@ export default function PaymentDisputesPage() {
               <Input
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, dateFrom: e.target.value }))
+                }
               />
             </div>
-            
+
             <div>
               <Label>Date To</Label>
               <Input
                 type="date"
                 value={filters.dateTo}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, dateTo: e.target.value }))
+                }
               />
             </div>
           </div>
@@ -442,14 +516,20 @@ export default function PaymentDisputesPage() {
                     </td>
                     <td className="p-4">
                       <div>
-                        <div className="font-medium">{dispute.student.name}</div>
-                        <div className="text-sm text-muted-foreground">{dispute.student.email}</div>
+                        <div className="font-medium">
+                          {dispute.student.name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {dispute.student.email}
+                        </div>
                       </div>
                     </td>
                     <td className="p-4">
                       <div>
                         <div className="font-medium">{dispute.tutor.name}</div>
-                        <div className="text-sm text-muted-foreground">{dispute.tutor.email}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {dispute.tutor.email}
+                        </div>
                       </div>
                     </td>
                     <td className="p-4">
@@ -466,12 +546,16 @@ export default function PaymentDisputesPage() {
                       <div className="font-bold">${dispute.amount}</div>
                     </td>
                     <td className="p-4">
-                      <Badge className={getDisputeTypeColor(dispute.disputeType)}>
-                        {dispute.disputeType.replace('_', ' ')}
+                      <Badge
+                        className={getDisputeTypeColor(dispute.disputeType)}
+                      >
+                        {dispute.disputeType.replace("_", " ")}
                       </Badge>
                     </td>
                     <td className="p-4">
-                      <Badge className={getPriorityBadgeColor(dispute.priority)}>
+                      <Badge
+                        className={getPriorityBadgeColor(dispute.priority)}
+                      >
                         {dispute.priority}
                       </Badge>
                     </td>
@@ -487,7 +571,10 @@ export default function PaymentDisputesPage() {
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-background border border-border shadow-md">
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-background border border-border shadow-md"
+                        >
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedDispute(dispute);
@@ -497,7 +584,7 @@ export default function PaymentDisputesPage() {
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          {dispute.status === 'Open' && (
+                          {dispute.status === "Open" && (
                             <>
                               <DropdownMenuItem
                                 onClick={() => {
@@ -530,12 +617,14 @@ export default function PaymentDisputesPage() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalDisputes)} of {totalDisputes} disputes
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
+                {Math.min(currentPage * ITEMS_PER_PAGE, totalDisputes)} of{" "}
+                {totalDisputes} disputes
               </div>
               <div className="flex gap-2">
                 <Button
@@ -543,7 +632,7 @@ export default function PaymentDisputesPage() {
                   size="sm"
                   onClick={() => {
                     setCurrentPage(currentPage - 1);
-                    setFilters(prev => ({ ...prev, page: currentPage - 1 }));
+                    setFilters((prev) => ({ ...prev, page: currentPage - 1 }));
                   }}
                   disabled={currentPage === 1}
                 >
@@ -554,7 +643,7 @@ export default function PaymentDisputesPage() {
                   size="sm"
                   onClick={() => {
                     setCurrentPage(currentPage + 1);
-                    setFilters(prev => ({ ...prev, page: currentPage + 1 }));
+                    setFilters((prev) => ({ ...prev, page: currentPage + 1 }));
                   }}
                   disabled={currentPage === totalPages}
                 >
@@ -577,37 +666,59 @@ export default function PaymentDisputesPage() {
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Student</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Student
+                  </Label>
                   <p className="font-medium">{selectedDispute.student.name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedDispute.student.email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedDispute.student.email}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Tutor</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Tutor
+                  </Label>
                   <p className="font-medium">{selectedDispute.tutor.name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedDispute.tutor.email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedDispute.tutor.email}
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-4 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Amount
+                  </Label>
                   <p className="font-bold text-lg">${selectedDispute.amount}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                  <Badge className={getDisputeTypeColor(selectedDispute.disputeType)}>
-                    {selectedDispute.disputeType.replace('_', ' ')}
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Type
+                  </Label>
+                  <Badge
+                    className={getDisputeTypeColor(selectedDispute.disputeType)}
+                  >
+                    {selectedDispute.disputeType.replace("_", " ")}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Priority</Label>
-                  <Badge className={getPriorityBadgeColor(selectedDispute.priority)}>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Priority
+                  </Label>
+                  <Badge
+                    className={getPriorityBadgeColor(selectedDispute.priority)}
+                  >
                     {selectedDispute.priority}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Status</Label>
-                  <Badge className={getStatusBadgeColor(selectedDispute.status)}>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Status
+                  </Label>
+                  <Badge
+                    className={getStatusBadgeColor(selectedDispute.status)}
+                  >
                     {selectedDispute.status}
                   </Badge>
                 </div>
@@ -615,36 +726,65 @@ export default function PaymentDisputesPage() {
 
               {/* Description */}
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Description</Label>
-                <p className="bg-muted p-3 rounded mt-1">{selectedDispute.description}</p>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Description
+                </Label>
+                <p className="bg-muted p-3 rounded mt-1">
+                  {selectedDispute.description}
+                </p>
               </div>
 
               {/* Evidence */}
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Evidence & Documentation</Label>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Evidence & Documentation
+                </Label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                   <div>
-                    <h4 className="font-medium text-sm mb-2">Student Evidence</h4>
+                    <h4 className="font-medium text-sm mb-2">
+                      Student Evidence
+                    </h4>
                     <div className="space-y-1">
-                      {selectedDispute.evidence.studentEvidence?.map((evidence, index) => (
-                        <p key={index} className="text-sm bg-blue-50 p-2 rounded">{evidence}</p>
-                      ))}
+                      {selectedDispute.evidence.studentEvidence?.map(
+                        (evidence, index) => (
+                          <p
+                            key={index}
+                            className="text-sm bg-blue-50 p-2 rounded"
+                          >
+                            {evidence}
+                          </p>
+                        ),
+                      )}
                     </div>
                   </div>
                   <div>
                     <h4 className="font-medium text-sm mb-2">Tutor Evidence</h4>
                     <div className="space-y-1">
-                      {selectedDispute.evidence.tutorEvidence?.map((evidence, index) => (
-                        <p key={index} className="text-sm bg-green-50 p-2 rounded">{evidence}</p>
-                      ))}
+                      {selectedDispute.evidence.tutorEvidence?.map(
+                        (evidence, index) => (
+                          <p
+                            key={index}
+                            className="text-sm bg-green-50 p-2 rounded"
+                          >
+                            {evidence}
+                          </p>
+                        ),
+                      )}
                     </div>
                   </div>
                   <div>
                     <h4 className="font-medium text-sm mb-2">Admin Notes</h4>
                     <div className="space-y-1">
-                      {selectedDispute.evidence.adminNotes?.map((note, index) => (
-                        <p key={index} className="text-sm bg-gray-50 p-2 rounded">{note}</p>
-                      ))}
+                      {selectedDispute.evidence.adminNotes?.map(
+                        (note, index) => (
+                          <p
+                            key={index}
+                            className="text-sm bg-gray-50 p-2 rounded"
+                          >
+                            {note}
+                          </p>
+                        ),
+                      )}
                     </div>
                   </div>
                 </div>
@@ -652,19 +792,29 @@ export default function PaymentDisputesPage() {
 
               {/* Timeline */}
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Timeline</Label>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Timeline
+                </Label>
                 <div className="mt-2 space-y-3">
                   {selectedDispute.timeline.map((event, index) => (
-                    <div key={index} className="flex gap-3 p-3 bg-muted rounded">
+                    <div
+                      key={index}
+                      className="flex gap-3 p-3 bg-muted rounded"
+                    >
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-medium text-sm">{event.action}</p>
-                            <p className="text-sm text-muted-foreground">by {event.performedBy}</p>
+                            <p className="font-medium text-sm">
+                              {event.action}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              by {event.performedBy}
+                            </p>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(event.timestamp).toLocaleDateString()} {new Date(event.timestamp).toLocaleTimeString()}
+                            {new Date(event.timestamp).toLocaleDateString()}{" "}
+                            {new Date(event.timestamp).toLocaleTimeString()}
                           </p>
                         </div>
                         <p className="text-sm mt-1">{event.details}</p>
@@ -677,22 +827,32 @@ export default function PaymentDisputesPage() {
               {/* Resolution (if resolved) */}
               {selectedDispute.resolution && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Resolution</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Resolution
+                  </Label>
                   <div className="bg-green-50 p-4 rounded mt-2">
                     <div className="grid grid-cols-2 gap-4 mb-2">
                       <div>
-                        <p className="text-sm font-medium">Action: {selectedDispute.resolution.action.replace('_', ' ')}</p>
+                        <p className="text-sm font-medium">
+                          Action:{" "}
+                          {selectedDispute.resolution.action.replace("_", " ")}
+                        </p>
                       </div>
                       {selectedDispute.resolution.amount && (
                         <div>
-                          <p className="text-sm font-medium">Amount: ${selectedDispute.resolution.amount}</p>
+                          <p className="text-sm font-medium">
+                            Amount: ${selectedDispute.resolution.amount}
+                          </p>
                         </div>
                       )}
                     </div>
-                    <p className="text-sm">{selectedDispute.resolution.reasoning}</p>
+                    <p className="text-sm">
+                      {selectedDispute.resolution.reasoning}
+                    </p>
                     {selectedDispute.resolution.compensationOffered && (
                       <p className="text-sm mt-2">
-                        <strong>Compensation:</strong> {selectedDispute.resolution.compensationOffered}
+                        <strong>Compensation:</strong>{" "}
+                        {selectedDispute.resolution.compensationOffered}
                       </p>
                     )}
                   </div>
@@ -701,7 +861,10 @@ export default function PaymentDisputesPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDisputeDetail(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDisputeDetail(false)}
+            >
               Close
             </Button>
           </DialogFooter>
@@ -720,20 +883,32 @@ export default function PaymentDisputesPage() {
           <div className="space-y-4">
             <div>
               <Label>Resolution Action</Label>
-              <Select value={resolutionAction} onValueChange={(value) => setResolutionAction(value as ResolutionAction)}>
+              <Select
+                value={resolutionAction}
+                onValueChange={(value) =>
+                  setResolutionAction(value as ResolutionAction)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="refund_approved">Approve Full Refund</SelectItem>
-                  <SelectItem value="partial_refund">Approve Partial Refund</SelectItem>
+                  <SelectItem value="refund_approved">
+                    Approve Full Refund
+                  </SelectItem>
+                  <SelectItem value="partial_refund">
+                    Approve Partial Refund
+                  </SelectItem>
                   <SelectItem value="refund_denied">Deny Refund</SelectItem>
-                  <SelectItem value="escalated">Escalate to Higher Authority</SelectItem>
+                  <SelectItem value="escalated">
+                    Escalate to Higher Authority
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {(resolutionAction === 'refund_approved' || resolutionAction === 'partial_refund') && (
+            {(resolutionAction === "refund_approved" ||
+              resolutionAction === "partial_refund") && (
               <div>
                 <Label>Refund Amount</Label>
                 <Input
@@ -741,7 +916,9 @@ export default function PaymentDisputesPage() {
                   step="0.01"
                   max={selectedDispute?.amount}
                   value={resolutionAmount}
-                  onChange={(e) => setResolutionAmount(parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setResolutionAmount(parseFloat(e.target.value) || 0)
+                  }
                 />
                 <p className="text-sm text-muted-foreground mt-1">
                   Maximum refund: ${selectedDispute?.amount}
@@ -769,21 +946,27 @@ export default function PaymentDisputesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowResolveDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowResolveDialog(false)}
+            >
               Cancel
             </Button>
-            <Button 
-              onClick={handleResolveDispute} 
+            <Button
+              onClick={handleResolveDispute}
               disabled={!resolutionReasoning || isActionLoading}
             >
-              {isActionLoading ? 'Resolving...' : 'Resolve Dispute'}
+              {isActionLoading ? "Resolving..." : "Resolve Dispute"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Escalate Dispute Dialog */}
-      <AlertDialog open={showEscalateDialog} onOpenChange={setShowEscalateDialog}>
+      <AlertDialog
+        open={showEscalateDialog}
+        onOpenChange={setShowEscalateDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Escalate Dispute</AlertDialogTitle>
@@ -807,7 +990,7 @@ export default function PaymentDisputesPage() {
               disabled={!escalationReason.trim() || isActionLoading}
               className="bg-yellow-600 text-white hover:bg-yellow-700"
             >
-              {isActionLoading ? 'Escalating...' : 'Escalate Dispute'}
+              {isActionLoading ? "Escalating..." : "Escalate Dispute"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

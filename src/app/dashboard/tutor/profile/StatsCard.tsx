@@ -22,17 +22,20 @@ const StatsCard: React.FC<StatsCardProps> = ({ stats }) => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-800 mt-1">{stat.value}</p>
+                <p className="text-gray-600 text-sm font-medium">
+                  {stat.label}
+                </p>
+                <p className="text-3xl font-bold text-gray-800 mt-1">
+                  {stat.value}
+                </p>
               </div>
-              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
+              <div
+                className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}
+              >
                 <Icon className="text-white" size={24} />
               </div>
             </div>
-            <div className="mt-4 flex items-center text-green-600">
-              <TrendingUp size={14} className="mr-1" />
-              <span className="text-sm font-medium">+12% this week</span>
-            </div>
+      
           </div>
         );
       })}

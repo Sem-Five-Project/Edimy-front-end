@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 //import { useNavigate } from 'react-router-dom';
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Switch } from '@/components/ui/switch';
-import { Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
-import { authAPI } from '@/lib/api';
-import { useDebounce } from '@/hooks/useDebounce';
-import { RegisterData } from '@/types';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
+import { authAPI } from "@/lib/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { RegisterData } from "@/types";
 
 interface PasswordStrength {
   score: number;
@@ -20,20 +26,25 @@ interface PasswordStrength {
 
 export const Register: React.FC = () => {
   const [formData, setFormData] = useState<RegisterData>({
-    fullName: '',
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    userType: 'STUDENT',
+    fullName: "",
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    userType: "STUDENT",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
-  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({ score: 0, feedback: [] });
+  const [error, setError] = useState("");
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "taken"
+  >("idle");
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
+    score: 0,
+    feedback: [],
+  });
 
   const debouncedUsername = useDebounce(formData.username, 500);
   const router = useRouter();
@@ -42,7 +53,7 @@ export const Register: React.FC = () => {
     if (debouncedUsername && debouncedUsername.length >= 3) {
       checkUsernameAvailability(debouncedUsername);
     } else {
-      setUsernameStatus('idle');
+      setUsernameStatus("idle");
     }
   }, [debouncedUsername]);
 
@@ -55,14 +66,14 @@ export const Register: React.FC = () => {
   }, [formData.password]);
 
   const checkUsernameAvailability = async (username: string) => {
-    setUsernameStatus('checking');
+    setUsernameStatus("checking");
     try {
       const response = await authAPI.checkUsername(username);
       if (response.success) {
-        setUsernameStatus(response.data.available ? 'available' : 'taken');
+        setUsernameStatus(response.data.available ? "available" : "taken");
       }
     } catch (error) {
-      setUsernameStatus('idle');
+      setUsernameStatus("idle");
     }
   };
 
@@ -73,31 +84,31 @@ export const Register: React.FC = () => {
     if (password.length >= 8) {
       score += 1;
     } else {
-      feedback.push('At least 8 characters');
+      feedback.push("At least 8 characters");
     }
 
     if (/[A-Z]/.test(password)) {
       score += 1;
     } else {
-      feedback.push('One uppercase letter');
+      feedback.push("One uppercase letter");
     }
 
     if (/[a-z]/.test(password)) {
       score += 1;
     } else {
-      feedback.push('One lowercase letter');
+      feedback.push("One lowercase letter");
     }
 
     if (/\d/.test(password)) {
       score += 1;
     } else {
-      feedback.push('One number');
+      feedback.push("One number");
     }
 
     if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
       score += 1;
     } else {
-      feedback.push('One special character');
+      feedback.push("One special character");
     }
 
     setPasswordStrength({ score, feedback });
@@ -105,52 +116,52 @@ export const Register: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setError('');
+    setError("");
 
-    if (name === 'username') {
-      setUsernameStatus('idle');
+    if (name === "username") {
+      setUsernameStatus("idle");
     }
   };
 
   const handleUserTypeToggle = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      userType: checked ? 'TUTOR' : 'STUDENT',
+      userType: checked ? "TUTOR" : "STUDENT",
     }));
   };
 
   const validateForm = (): boolean => {
     if (!formData.fullName.trim()) {
-      setError('Full name is required');
+      setError("Full name is required");
       return false;
     }
 
     if (!formData.username.trim() || formData.username.length < 3) {
-      setError('Username must be at least 3 characters');
+      setError("Username must be at least 3 characters");
       return false;
     }
 
-    if (usernameStatus === 'taken') {
-      setError('Username is already taken');
+    if (usernameStatus === "taken") {
+      setError("Username is already taken");
       return false;
     }
 
     if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return false;
     }
 
     if (passwordStrength.score < 3) {
-      setError('Password is too weak');
+      setError("Password is too weak");
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return false;
     }
 
@@ -159,13 +170,13 @@ export const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       // Rate limiting implementation (commented for backend)
@@ -175,18 +186,22 @@ export const Register: React.FC = () => {
       // }
 
       const response = await authAPI.register(formData);
-      
+
       if (response.success && response.data) {
-        localStorage.setItem('pendingUser', JSON.stringify(response.data.user));
+        localStorage.setItem("pendingUser", JSON.stringify(response.data.user));
         if (response.accessToken) {
-          localStorage.setItem('authToken', response.accessToken);
+          localStorage.setItem("authToken", response.accessToken);
         }
-        router.push('/verify-email');
+        router.push("/verify-email");
       } else {
-        setError(response.error || 'Registration failed');
+        setError(response.error || "Registration failed");
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -194,11 +209,11 @@ export const Register: React.FC = () => {
 
   const getUsernameIcon = () => {
     switch (usernameStatus) {
-      case 'checking':
+      case "checking":
         return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
-      case 'available':
+      case "available":
         return <Check className="h-4 w-4 text-green-500" />;
-      case 'taken':
+      case "taken":
         return <X className="h-4 w-4 text-red-500" />;
       default:
         return null;
@@ -206,22 +221,24 @@ export const Register: React.FC = () => {
   };
 
   const getPasswordStrengthColor = () => {
-    if (passwordStrength.score <= 2) return 'bg-red-500';
-    if (passwordStrength.score <= 3) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (passwordStrength.score <= 2) return "bg-red-500";
+    if (passwordStrength.score <= 3) return "bg-yellow-500";
+    return "bg-green-500";
   };
 
   const getPasswordStrengthText = () => {
-    if (passwordStrength.score <= 2) return 'Weak';
-    if (passwordStrength.score <= 3) return 'Medium';
-    return 'Strong';
+    if (passwordStrength.score <= 2) return "Weak";
+    if (passwordStrength.score <= 3) return "Medium";
+    return "Strong";
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">
+            Create Account
+          </CardTitle>
           <CardDescription className="text-center">
             Join our platform to connect with tutors or start teaching
           </CardDescription>
@@ -264,13 +281,15 @@ export const Register: React.FC = () => {
                   {getUsernameIcon()}
                 </div>
               </div>
-              {usernameStatus === 'checking' && (
+              {usernameStatus === "checking" && (
                 <p className="text-sm text-blue-600">Checking...</p>
               )}
-              {usernameStatus === 'taken' && (
-                <p className="text-sm text-red-600">Username is already taken</p>
+              {usernameStatus === "taken" && (
+                <p className="text-sm text-red-600">
+                  Username is already taken
+                </p>
               )}
-              {usernameStatus === 'available' && (
+              {usernameStatus === "available" && (
                 <p className="text-sm text-green-600">Username is available</p>
               )}
             </div>
@@ -291,11 +310,12 @@ export const Register: React.FC = () => {
             <div className="flex items-center space-x-2">
               <Switch
                 id="userType"
-                checked={formData.userType === 'TUTOR'}
+                checked={formData.userType === "TUTOR"}
                 onCheckedChange={handleUserTypeToggle}
               />
               <Label htmlFor="userType" className="cursor-pointer">
-                I want to be a {formData.userType === 'TUTOR' ? 'Tutor' : 'Student'}
+                I want to be a{" "}
+                {formData.userType === "TUTOR" ? "Tutor" : "Student"}
               </Label>
             </div>
 
@@ -305,7 +325,7 @@ export const Register: React.FC = () => {
                 <Input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Create a password"
@@ -319,20 +339,28 @@ export const Register: React.FC = () => {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
-              
+
               {formData.password && (
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${getPasswordStrengthColor()}`}
-                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                        style={{
+                          width: `${(passwordStrength.score / 5) * 100}%`,
+                        }}
                       />
                     </div>
-                    <span className="text-sm font-medium">{getPasswordStrengthText()}</span>
+                    <span className="text-sm font-medium">
+                      {getPasswordStrengthText()}
+                    </span>
                   </div>
                   {passwordStrength.feedback.length > 0 && (
                     <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
@@ -354,7 +382,7 @@ export const Register: React.FC = () => {
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   placeholder="Confirm your password"
@@ -368,33 +396,42 @@ export const Register: React.FC = () => {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
-              {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                <p className="text-sm text-red-600">Passwords do not match</p>
-              )}
+              {formData.confirmPassword &&
+                formData.password !== formData.confirmPassword && (
+                  <p className="text-sm text-red-600">Passwords do not match</p>
+                )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading || usernameStatus === 'checking'}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || usernameStatus === "checking"}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating Account...
                 </>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </Button>
 
             <div className="text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Already have an account?{' '}
+                Already have an account?{" "}
                 <Button
                   type="button"
                   variant="link"
                   className="p-0 font-semibold"
-                  onClick={() => router.push('/login')}
+                  onClick={() => router.push("/login")}
                 >
                   Sign in
                 </Button>

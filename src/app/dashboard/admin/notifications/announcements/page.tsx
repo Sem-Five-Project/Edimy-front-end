@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,8 +37,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Megaphone,
   Plus,
@@ -58,14 +58,14 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface Announcement {
   id: string;
   title: string;
   message: string;
-  audience: 'students' | 'tutors' | 'both';
-  status: 'active' | 'scheduled' | 'expired' | 'draft';
+  audience: "students" | "tutors" | "both";
+  status: "active" | "scheduled" | "expired" | "draft";
   createdDate: string;
   scheduledDate?: string;
   expiryDate?: string;
@@ -80,28 +80,32 @@ interface Announcement {
 }
 
 const AUDIENCE_OPTIONS = [
-  { value: 'students', label: 'Students Only', icon: Users },
-  { value: 'tutors', label: 'Tutors Only', icon: GraduationCap },
-  { value: 'both', label: 'Students & Tutors', icon: Users },
+  { value: "students", label: "Students Only", icon: Users },
+  { value: "tutors", label: "Tutors Only", icon: GraduationCap },
+  { value: "both", label: "Students & Tutors", icon: Users },
 ];
 
 export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [filteredAnnouncements, setFilteredAnnouncements] = useState<Announcement[]>([]);
+  const [filteredAnnouncements, setFilteredAnnouncements] = useState<
+    Announcement[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAudience, setSelectedAudience] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAudience, setSelectedAudience] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
-  const [viewingAnnouncement, setViewingAnnouncement] = useState<Announcement | null>(null);
+  const [editingAnnouncement, setEditingAnnouncement] =
+    useState<Announcement | null>(null);
+  const [viewingAnnouncement, setViewingAnnouncement] =
+    useState<Announcement | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    message: '',
-    audience: 'both' as Announcement['audience'],
-    scheduledDate: '',
-    expiryDate: '',
+    title: "",
+    message: "",
+    audience: "both" as Announcement["audience"],
+    scheduledDate: "",
+    expiryDate: "",
   });
 
   useEffect(() => {
@@ -115,19 +119,20 @@ export default function AnnouncementsPage() {
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const mockAnnouncements: Announcement[] = [
         {
-          id: 'announcement-1',
-          title: 'Platform Maintenance Scheduled',
-          message: 'We will be performing scheduled maintenance on our platform this Sunday from 2 AM to 6 AM EST. During this time, the platform will be temporarily unavailable. We apologize for any inconvenience and appreciate your understanding.',
-          audience: 'both',
-          status: 'active',
-          createdDate: '2024-01-15',
-          scheduledDate: '2024-01-20',
-          expiryDate: '2024-01-21',
-          createdBy: 'Admin',
+          id: "announcement-1",
+          title: "Platform Maintenance Scheduled",
+          message:
+            "We will be performing scheduled maintenance on our platform this Sunday from 2 AM to 6 AM EST. During this time, the platform will be temporarily unavailable. We apologize for any inconvenience and appreciate your understanding.",
+          audience: "both",
+          status: "active",
+          createdDate: "2024-01-15",
+          scheduledDate: "2024-01-20",
+          expiryDate: "2024-01-21",
+          createdBy: "Admin",
           sentCount: 1456,
           deliveryStatus: {
             sent: 1456,
@@ -137,13 +142,14 @@ export default function AnnouncementsPage() {
           },
         },
         {
-          id: 'announcement-2',
-          title: 'New Subject Categories Available',
-          message: 'We are excited to announce the addition of new subject categories including Advanced Mathematics, Computer Programming, and Language Arts. Tutors can now update their profiles to include these new subjects.',
-          audience: 'tutors',
-          status: 'active',
-          createdDate: '2024-01-12',
-          createdBy: 'Admin',
+          id: "announcement-2",
+          title: "New Subject Categories Available",
+          message:
+            "We are excited to announce the addition of new subject categories including Advanced Mathematics, Computer Programming, and Language Arts. Tutors can now update their profiles to include these new subjects.",
+          audience: "tutors",
+          status: "active",
+          createdDate: "2024-01-12",
+          createdBy: "Admin",
           sentCount: 156,
           deliveryStatus: {
             sent: 156,
@@ -153,24 +159,26 @@ export default function AnnouncementsPage() {
           },
         },
         {
-          id: 'announcement-3',
-          title: 'Student Referral Program Launch',
-          message: 'Refer a friend and get $10 credit! Our new referral program allows students to earn credits for every successful referral. Share your unique referral code and start earning today.',
-          audience: 'students',
-          status: 'scheduled',
-          createdDate: '2024-01-10',
-          scheduledDate: '2024-01-25',
-          createdBy: 'Marketing Team',
+          id: "announcement-3",
+          title: "Student Referral Program Launch",
+          message:
+            "Refer a friend and get $10 credit! Our new referral program allows students to earn credits for every successful referral. Share your unique referral code and start earning today.",
+          audience: "students",
+          status: "scheduled",
+          createdDate: "2024-01-10",
+          scheduledDate: "2024-01-25",
+          createdBy: "Marketing Team",
         },
         {
-          id: 'announcement-4',
-          title: 'Holiday Schedule Updates',
-          message: 'Please note that our customer support hours will be modified during the upcoming holiday season. Support will be available from 9 AM to 5 PM EST instead of our regular 24/7 service.',
-          audience: 'both',
-          status: 'expired',
-          createdDate: '2023-12-20',
-          expiryDate: '2024-01-05',
-          createdBy: 'Support Team',
+          id: "announcement-4",
+          title: "Holiday Schedule Updates",
+          message:
+            "Please note that our customer support hours will be modified during the upcoming holiday season. Support will be available from 9 AM to 5 PM EST instead of our regular 24/7 service.",
+          audience: "both",
+          status: "expired",
+          createdDate: "2023-12-20",
+          expiryDate: "2024-01-05",
+          createdBy: "Support Team",
           sentCount: 2341,
           deliveryStatus: {
             sent: 2341,
@@ -180,19 +188,20 @@ export default function AnnouncementsPage() {
           },
         },
         {
-          id: 'announcement-5',
-          title: 'New Payment Methods Available',
-          message: 'We now accept Apple Pay and Google Pay for all transactions. Update your payment preferences in your account settings to take advantage of these convenient payment options.',
-          audience: 'both',
-          status: 'draft',
-          createdDate: '2024-01-08',
-          createdBy: 'Product Team',
+          id: "announcement-5",
+          title: "New Payment Methods Available",
+          message:
+            "We now accept Apple Pay and Google Pay for all transactions. Update your payment preferences in your account settings to take advantage of these convenient payment options.",
+          audience: "both",
+          status: "draft",
+          createdDate: "2024-01-08",
+          createdBy: "Product Team",
         },
       ];
 
       setAnnouncements(mockAnnouncements);
     } catch (error) {
-      console.error('Error fetching announcements:', error);
+      console.error("Error fetching announcements:", error);
     } finally {
       setLoading(false);
     }
@@ -202,18 +211,23 @@ export default function AnnouncementsPage() {
     let filtered = announcements;
 
     if (searchTerm) {
-      filtered = filtered.filter(announcement =>
-        announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        announcement.message.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (announcement) =>
+          announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          announcement.message.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
-    if (selectedAudience !== 'all') {
-      filtered = filtered.filter(announcement => announcement.audience === selectedAudience);
+    if (selectedAudience !== "all") {
+      filtered = filtered.filter(
+        (announcement) => announcement.audience === selectedAudience,
+      );
     }
 
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter(announcement => announcement.status === selectedStatus);
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter(
+        (announcement) => announcement.status === selectedStatus,
+      );
     }
 
     setFilteredAnnouncements(filtered);
@@ -222,11 +236,11 @@ export default function AnnouncementsPage() {
   const handleCreateAnnouncement = () => {
     setEditingAnnouncement(null);
     setFormData({
-      title: '',
-      message: '',
-      audience: 'both',
-      scheduledDate: '',
-      expiryDate: '',
+      title: "",
+      message: "",
+      audience: "both",
+      scheduledDate: "",
+      expiryDate: "",
     });
     setShowCreateDialog(true);
   };
@@ -237,8 +251,8 @@ export default function AnnouncementsPage() {
       title: announcement.title,
       message: announcement.message,
       audience: announcement.audience,
-      scheduledDate: announcement.scheduledDate || '',
-      expiryDate: announcement.expiryDate || '',
+      scheduledDate: announcement.scheduledDate || "",
+      expiryDate: announcement.expiryDate || "",
     });
     setShowCreateDialog(true);
   };
@@ -246,49 +260,57 @@ export default function AnnouncementsPage() {
   const handleSaveAnnouncement = () => {
     if (editingAnnouncement) {
       // Update existing announcement
-      setAnnouncements(prev => prev.map(announcement => 
-        announcement.id === editingAnnouncement.id 
-          ? { 
-              ...announcement, 
-              ...formData, 
-              status: formData.scheduledDate ? 'scheduled' : 'draft' as Announcement['status']
-            }
-          : announcement
-      ));
+      setAnnouncements((prev) =>
+        prev.map((announcement) =>
+          announcement.id === editingAnnouncement.id
+            ? {
+                ...announcement,
+                ...formData,
+                status: formData.scheduledDate
+                  ? "scheduled"
+                  : ("draft" as Announcement["status"]),
+              }
+            : announcement,
+        ),
+      );
     } else {
       // Create new announcement
       const newAnnouncement: Announcement = {
         id: `announcement-${Date.now()}`,
         ...formData,
-        status: formData.scheduledDate ? 'scheduled' : 'draft',
-        createdDate: new Date().toISOString().split('T')[0],
-        createdBy: 'Admin',
+        status: formData.scheduledDate ? "scheduled" : "draft",
+        createdDate: new Date().toISOString().split("T")[0],
+        createdBy: "Admin",
       };
-      setAnnouncements(prev => [newAnnouncement, ...prev]);
+      setAnnouncements((prev) => [newAnnouncement, ...prev]);
     }
     setShowCreateDialog(false);
   };
 
   const handlePublishAnnouncement = (announcementId: string) => {
-    setAnnouncements(prev => prev.map(announcement => 
-      announcement.id === announcementId 
-        ? { 
-            ...announcement, 
-            status: 'active' as Announcement['status'],
-            sentCount: Math.floor(Math.random() * 1000) + 500,
-            deliveryStatus: {
-              sent: Math.floor(Math.random() * 1000) + 500,
-              delivered: Math.floor(Math.random() * 950) + 450,
-              opened: Math.floor(Math.random() * 800) + 300,
-              failed: Math.floor(Math.random() * 50) + 5,
+    setAnnouncements((prev) =>
+      prev.map((announcement) =>
+        announcement.id === announcementId
+          ? {
+              ...announcement,
+              status: "active" as Announcement["status"],
+              sentCount: Math.floor(Math.random() * 1000) + 500,
+              deliveryStatus: {
+                sent: Math.floor(Math.random() * 1000) + 500,
+                delivered: Math.floor(Math.random() * 950) + 450,
+                opened: Math.floor(Math.random() * 800) + 300,
+                failed: Math.floor(Math.random() * 50) + 5,
+              },
             }
-          }
-        : announcement
-    ));
+          : announcement,
+      ),
+    );
   };
 
   const handleDeleteAnnouncement = (announcementId: string) => {
-    setAnnouncements(prev => prev.filter(announcement => announcement.id !== announcementId));
+    setAnnouncements((prev) =>
+      prev.filter((announcement) => announcement.id !== announcementId),
+    );
   };
 
   const handleViewAnnouncement = (announcement: Announcement) => {
@@ -298,13 +320,13 @@ export default function AnnouncementsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case "active":
         return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case 'scheduled':
+      case "scheduled":
         return <Badge className="bg-blue-100 text-blue-800">Scheduled</Badge>;
-      case 'expired':
+      case "expired":
         return <Badge className="bg-gray-100 text-gray-800">Expired</Badge>;
-      case 'draft':
+      case "draft":
         return <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
@@ -312,9 +334,9 @@ export default function AnnouncementsPage() {
   };
 
   const getAudienceBadge = (audience: string) => {
-    const audienceConfig = AUDIENCE_OPTIONS.find(a => a.value === audience);
+    const audienceConfig = AUDIENCE_OPTIONS.find((a) => a.value === audience);
     const IconComponent = audienceConfig?.icon || Users;
-    
+
     return (
       <div className="flex items-center gap-1">
         <IconComponent className="w-4 h-4" />
@@ -325,13 +347,13 @@ export default function AnnouncementsPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active':
+      case "active":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'scheduled':
+      case "scheduled":
         return <Clock className="w-4 h-4 text-blue-600" />;
-      case 'expired':
+      case "expired":
         return <XCircle className="w-4 h-4 text-gray-600" />;
-      case 'draft':
+      case "draft":
         return <AlertCircle className="w-4 h-4 text-yellow-600" />;
       default:
         return null;
@@ -380,7 +402,9 @@ export default function AnnouncementsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Announcements</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Announcements
+                </p>
                 <p className="text-2xl font-bold">{announcements.length}</p>
               </div>
               <Megaphone className="w-8 h-8 text-blue-600" />
@@ -391,9 +415,11 @@ export default function AnnouncementsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active
+                </p>
                 <p className="text-2xl font-bold">
-                  {announcements.filter(a => a.status === 'active').length}
+                  {announcements.filter((a) => a.status === "active").length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-600" />
@@ -404,9 +430,11 @@ export default function AnnouncementsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Scheduled
+                </p>
                 <p className="text-2xl font-bold">
-                  {announcements.filter(a => a.status === 'scheduled').length}
+                  {announcements.filter((a) => a.status === "scheduled").length}
                 </p>
               </div>
               <Clock className="w-8 h-8 text-blue-600" />
@@ -417,9 +445,13 @@ export default function AnnouncementsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Sent</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Sent
+                </p>
                 <p className="text-2xl font-bold">
-                  {announcements.reduce((sum, a) => sum + (a.sentCount || 0), 0).toLocaleString()}
+                  {announcements
+                    .reduce((sum, a) => sum + (a.sentCount || 0), 0)
+                    .toLocaleString()}
                 </p>
               </div>
               <Send className="w-8 h-8 text-purple-600" />
@@ -453,13 +485,16 @@ export default function AnnouncementsPage() {
             </div>
             <div>
               <Label htmlFor="audience">Audience</Label>
-              <Select value={selectedAudience} onValueChange={setSelectedAudience}>
+              <Select
+                value={selectedAudience}
+                onValueChange={setSelectedAudience}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-gray-800 border shadow-lg">
                   <SelectItem value="all">All Audiences</SelectItem>
-                  {AUDIENCE_OPTIONS.map(audience => (
+                  {AUDIENCE_OPTIONS.map((audience) => (
                     <SelectItem key={audience.value} value={audience.value}>
                       {audience.label}
                     </SelectItem>
@@ -515,7 +550,9 @@ export default function AnnouncementsPage() {
                       {announcement.title}
                     </div>
                   </TableCell>
-                  <TableCell>{getAudienceBadge(announcement.audience)}</TableCell>
+                  <TableCell>
+                    {getAudienceBadge(announcement.audience)}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(announcement.status)}
@@ -523,8 +560,10 @@ export default function AnnouncementsPage() {
                     </div>
                   </TableCell>
                   <TableCell>{announcement.createdDate}</TableCell>
-                  <TableCell>{announcement.scheduledDate || '-'}</TableCell>
-                  <TableCell>{announcement.sentCount?.toLocaleString() || '-'}</TableCell>
+                  <TableCell>{announcement.scheduledDate || "-"}</TableCell>
+                  <TableCell>
+                    {announcement.sentCount?.toLocaleString() || "-"}
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -532,25 +571,39 @@ export default function AnnouncementsPage() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border shadow-lg">
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-white dark:bg-gray-800 border shadow-lg"
+                      >
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleViewAnnouncement(announcement)}>
+                        <DropdownMenuItem
+                          onClick={() => handleViewAnnouncement(announcement)}
+                        >
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditAnnouncement(announcement)}>
+                        <DropdownMenuItem
+                          onClick={() => handleEditAnnouncement(announcement)}
+                        >
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        {(announcement.status === 'draft' || announcement.status === 'scheduled') && (
-                          <DropdownMenuItem onClick={() => handlePublishAnnouncement(announcement.id)}>
+                        {(announcement.status === "draft" ||
+                          announcement.status === "scheduled") && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handlePublishAnnouncement(announcement.id)
+                            }
+                          >
                             <Send className="mr-2 h-4 w-4" />
                             Publish Now
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleDeleteAnnouncement(announcement.id)}
+                          onClick={() =>
+                            handleDeleteAnnouncement(announcement.id)
+                          }
                           className="text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -571,10 +624,14 @@ export default function AnnouncementsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}
+              {editingAnnouncement
+                ? "Edit Announcement"
+                : "Create New Announcement"}
             </DialogTitle>
             <DialogDescription>
-              {editingAnnouncement ? 'Update your announcement' : 'Create a new announcement for your users'}
+              {editingAnnouncement
+                ? "Update your announcement"
+                : "Create a new announcement for your users"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -583,23 +640,25 @@ export default function AnnouncementsPage() {
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
                 placeholder="Enter announcement title"
               />
             </div>
             <div>
               <Label htmlFor="audience">Audience</Label>
-              <Select 
-                value={formData.audience} 
-                onValueChange={(value: Announcement['audience']) => 
-                  setFormData(prev => ({ ...prev, audience: value }))
+              <Select
+                value={formData.audience}
+                onValueChange={(value: Announcement["audience"]) =>
+                  setFormData((prev) => ({ ...prev, audience: value }))
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {AUDIENCE_OPTIONS.map(audience => (
+                  {AUDIENCE_OPTIONS.map((audience) => (
                     <SelectItem key={audience.value} value={audience.value}>
                       <div className="flex items-center gap-2">
                         <audience.icon className="w-4 h-4" />
@@ -615,7 +674,9 @@ export default function AnnouncementsPage() {
               <Textarea
                 id="message"
                 value={formData.message}
-                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, message: e.target.value }))
+                }
                 placeholder="Enter announcement message..."
                 rows={6}
               />
@@ -627,7 +688,12 @@ export default function AnnouncementsPage() {
                   id="scheduledDate"
                   type="datetime-local"
                   value={formData.scheduledDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      scheduledDate: e.target.value,
+                    }))
+                  }
                 />
               </div>
               <div>
@@ -636,17 +702,25 @@ export default function AnnouncementsPage() {
                   id="expiryDate"
                   type="date"
                   value={formData.expiryDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      expiryDate: e.target.value,
+                    }))
+                  }
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateDialog(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleSaveAnnouncement}>
-              {editingAnnouncement ? 'Update' : 'Create'} Announcement
+              {editingAnnouncement ? "Update" : "Create"} Announcement
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -677,18 +751,22 @@ export default function AnnouncementsPage() {
                 </div>
                 <div>
                   <Label>Audience</Label>
-                  <div className="mt-1">{getAudienceBadge(viewingAnnouncement.audience)}</div>
+                  <div className="mt-1">
+                    {getAudienceBadge(viewingAnnouncement.audience)}
+                  </div>
                 </div>
                 <div>
                   <Label>Created By</Label>
                   <p className="font-medium">{viewingAnnouncement.createdBy}</p>
                 </div>
               </div>
-              
+
               <div>
                 <Label>Message</Label>
                 <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                  <p className="whitespace-pre-wrap">{viewingAnnouncement.message}</p>
+                  <p className="whitespace-pre-wrap">
+                    {viewingAnnouncement.message}
+                  </p>
                 </div>
               </div>
 

@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -29,18 +29,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   LineChart,
   Line,
@@ -54,7 +45,7 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from "recharts";
 import {
   Mail,
   TrendingUp,
@@ -75,7 +66,7 @@ import {
   Globe,
   Key,
   Bell,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface EmailStats {
   totalSent: number;
@@ -95,7 +86,13 @@ interface EmailActivity {
   id: string;
   email: string;
   template: string;
-  status: 'delivered' | 'bounced' | 'opened' | 'clicked' | 'spam' | 'unsubscribed';
+  status:
+    | "delivered"
+    | "bounced"
+    | "opened"
+    | "clicked"
+    | "spam"
+    | "unsubscribed";
   timestamp: string;
   subject: string;
   bounceReason?: string;
@@ -103,8 +100,8 @@ interface EmailActivity {
 
 interface DomainStatus {
   domain: string;
-  status: 'verified' | 'pending' | 'failed';
-  type: 'sending' | 'tracking';
+  status: "verified" | "pending" | "failed";
+  type: "sending" | "tracking";
   lastChecked: string;
 }
 
@@ -112,7 +109,7 @@ interface WebhookConfig {
   id: string;
   url: string;
   events: string[];
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   lastResponse: number;
 }
 
@@ -125,7 +122,7 @@ interface TrendData {
   bounced: number;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 export default function SendGridDashboardPage() {
   const [stats, setStats] = useState<EmailStats | null>(null);
@@ -134,12 +131,12 @@ export default function SendGridDashboardPage() {
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [trendData, setTrendData] = useState<TrendData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedTimeframe, setSelectedTimeframe] = useState("7d");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [newApiKey, setNewApiKey] = useState('');
+  const [apiKey, setApiKey] = useState("");
+  const [newApiKey, setNewApiKey] = useState("");
 
   useEffect(() => {
     fetchSendGridData();
@@ -148,8 +145,8 @@ export default function SendGridDashboardPage() {
   const fetchSendGridData = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Mock email statistics
       const mockStats: EmailStats = {
         totalSent: 15847,
@@ -166,60 +163,78 @@ export default function SendGridDashboardPage() {
       };
 
       // Mock email activity
-      const mockActivities: EmailActivity[] = Array.from({ length: 20 }, (_, i) => {
-        const statuses: EmailActivity['status'][] = ['delivered', 'bounced', 'opened', 'clicked', 'spam'];
-        const templates = ['Session Confirmation', 'Payment Receipt', 'Welcome Email', 'Password Reset', 'Newsletter'];
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
-        const timestamp = new Date();
-        timestamp.setHours(timestamp.getHours() - Math.floor(Math.random() * 48));
-        
-        return {
-          id: `activity-${i + 1}`,
-          email: `user${i + 1}@example.com`,
-          template: templates[Math.floor(Math.random() * templates.length)],
-          status,
-          timestamp: timestamp.toISOString(),
-          subject: 'Your session has been confirmed',
-          bounceReason: status === 'bounced' ? 'Invalid email address' : undefined,
-        };
-      });
+      const mockActivities: EmailActivity[] = Array.from(
+        { length: 20 },
+        (_, i) => {
+          const statuses: EmailActivity["status"][] = [
+            "delivered",
+            "bounced",
+            "opened",
+            "clicked",
+            "spam",
+          ];
+          const templates = [
+            "Session Confirmation",
+            "Payment Receipt",
+            "Welcome Email",
+            "Password Reset",
+            "Newsletter",
+          ];
+          const status = statuses[Math.floor(Math.random() * statuses.length)];
+          const timestamp = new Date();
+          timestamp.setHours(
+            timestamp.getHours() - Math.floor(Math.random() * 48),
+          );
+
+          return {
+            id: `activity-${i + 1}`,
+            email: `user${i + 1}@example.com`,
+            template: templates[Math.floor(Math.random() * templates.length)],
+            status,
+            timestamp: timestamp.toISOString(),
+            subject: "Your session has been confirmed",
+            bounceReason:
+              status === "bounced" ? "Invalid email address" : undefined,
+          };
+        },
+      );
 
       // Mock domain status
       const mockDomains: DomainStatus[] = [
         {
-          domain: 'mail.eduplatform.com',
-          status: 'verified',
-          type: 'sending',
-          lastChecked: '2024-01-15T10:00:00Z',
+          domain: "mail.eduplatform.com",
+          status: "verified",
+          type: "sending",
+          lastChecked: "2024-01-15T10:00:00Z",
         },
         {
-          domain: 'eduplatform.com',
-          status: 'verified',
-          type: 'tracking',
-          lastChecked: '2024-01-15T10:00:00Z',
+          domain: "eduplatform.com",
+          status: "verified",
+          type: "tracking",
+          lastChecked: "2024-01-15T10:00:00Z",
         },
         {
-          domain: 'test.eduplatform.com',
-          status: 'pending',
-          type: 'sending',
-          lastChecked: '2024-01-15T09:30:00Z',
+          domain: "test.eduplatform.com",
+          status: "pending",
+          type: "sending",
+          lastChecked: "2024-01-15T09:30:00Z",
         },
       ];
 
       // Mock webhook configurations
       const mockWebhooks: WebhookConfig[] = [
         {
-          id: 'webhook-1',
-          url: 'https://api.eduplatform.com/webhooks/sendgrid',
-          events: ['delivered', 'opened', 'clicked', 'bounced'],
-          status: 'active',
+          id: "webhook-1",
+          url: "https://api.eduplatform.com/webhooks/sendgrid",
+          events: ["delivered", "opened", "clicked", "bounced"],
+          status: "active",
           lastResponse: 200,
         },
         {
-          id: 'webhook-2',
-          url: 'https://analytics.eduplatform.com/email-events',
-          events: ['spam_report', 'unsubscribe'],
-          status: 'active',
+          id: "webhook-2",
+          url: "https://analytics.eduplatform.com/email-events",
+          events: ["spam_report", "unsubscribe"],
+          status: "active",
           lastResponse: 200,
         },
       ];
@@ -229,7 +244,10 @@ export default function SendGridDashboardPage() {
         const date = new Date();
         date.setDate(date.getDate() - (6 - i));
         return {
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          date: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
           sent: Math.floor(Math.random() * 1000) + 500,
           delivered: Math.floor(Math.random() * 900) + 450,
           opened: Math.floor(Math.random() * 400) + 200,
@@ -243,37 +261,41 @@ export default function SendGridDashboardPage() {
       setDomains(mockDomains);
       setWebhooks(mockWebhooks);
       setTrendData(mockTrendData);
-      setApiKey('SG.****************************');
+      setApiKey("SG.****************************");
     } catch (error) {
-      console.error('Error fetching SendGrid data:', error);
+      console.error("Error fetching SendGrid data:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredActivities = activities.filter(activity => {
-    const matchesSearch = searchTerm === '' || 
+  const filteredActivities = activities.filter((activity) => {
+    const matchesSearch =
+      searchTerm === "" ||
       activity.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.template.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'all' || activity.status === selectedStatus;
-    
+    const matchesStatus =
+      selectedStatus === "all" || activity.status === selectedStatus;
+
     return matchesSearch && matchesStatus;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'delivered':
+      case "delivered":
         return <Badge className="bg-green-100 text-green-800">Delivered</Badge>;
-      case 'opened':
+      case "opened":
         return <Badge className="bg-blue-100 text-blue-800">Opened</Badge>;
-      case 'clicked':
+      case "clicked":
         return <Badge className="bg-purple-100 text-purple-800">Clicked</Badge>;
-      case 'bounced':
+      case "bounced":
         return <Badge className="bg-red-100 text-red-800">Bounced</Badge>;
-      case 'spam':
+      case "spam":
         return <Badge className="bg-orange-100 text-orange-800">Spam</Badge>;
-      case 'unsubscribed':
-        return <Badge className="bg-gray-100 text-gray-800">Unsubscribed</Badge>;
+      case "unsubscribed":
+        return (
+          <Badge className="bg-gray-100 text-gray-800">Unsubscribed</Badge>
+        );
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -281,11 +303,11 @@ export default function SendGridDashboardPage() {
 
   const getDomainStatusBadge = (status: string) => {
     switch (status) {
-      case 'verified':
+      case "verified":
         return <Badge className="bg-green-100 text-green-800">Verified</Badge>;
-      case 'pending':
+      case "pending":
         return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case 'failed':
+      case "failed":
         return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
@@ -294,17 +316,19 @@ export default function SendGridDashboardPage() {
 
   const handleUpdateApiKey = () => {
     setApiKey(newApiKey);
-    setNewApiKey('');
+    setNewApiKey("");
     setShowApiKeyDialog(false);
   };
 
-  const pieChartData = stats ? [
-    { name: 'Delivered', value: stats.delivered, color: '#00C49F' },
-    { name: 'Opened', value: stats.opened, color: '#0088FE' },
-    { name: 'Clicked', value: stats.clicked, color: '#FFBB28' },
-    { name: 'Bounced', value: stats.bounced, color: '#FF8042' },
-    { name: 'Spam', value: stats.spamReports, color: '#8884D8' },
-  ] : [];
+  const pieChartData = stats
+    ? [
+        { name: "Delivered", value: stats.delivered, color: "#00C49F" },
+        { name: "Opened", value: stats.opened, color: "#0088FE" },
+        { name: "Clicked", value: stats.clicked, color: "#FFBB28" },
+        { name: "Bounced", value: stats.bounced, color: "#FF8042" },
+        { name: "Spam", value: stats.spamReports, color: "#8884D8" },
+      ]
+    : [];
 
   if (loading) {
     return (
@@ -327,7 +351,10 @@ export default function SendGridDashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+          <Select
+            value={selectedTimeframe}
+            onValueChange={setSelectedTimeframe}
+          >
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -355,8 +382,12 @@ export default function SendGridDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Sent</p>
-                  <p className="text-2xl font-bold">{stats.totalSent.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Sent
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {stats.totalSent.toLocaleString()}
+                  </p>
                   <div className="flex items-center mt-1">
                     <TrendingUp className="w-4 h-4 text-green-600" />
                     <span className="text-sm ml-1 text-green-600">+12.5%</span>
@@ -370,7 +401,9 @@ export default function SendGridDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Open Rate</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Open Rate
+                  </p>
                   <p className="text-2xl font-bold">{stats.openRate}%</p>
                   <div className="flex items-center mt-1">
                     <TrendingUp className="w-4 h-4 text-green-600" />
@@ -385,7 +418,9 @@ export default function SendGridDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Click Rate</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Click Rate
+                  </p>
                   <p className="text-2xl font-bold">{stats.clickRate}%</p>
                   <div className="flex items-center mt-1">
                     <TrendingDown className="w-4 h-4 text-red-600" />
@@ -400,7 +435,9 @@ export default function SendGridDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Bounce Rate</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Bounce Rate
+                  </p>
                   <p className="text-2xl font-bold">{stats.bounceRate}%</p>
                   <div className="flex items-center mt-1">
                     <TrendingDown className="w-4 h-4 text-green-600" />
@@ -437,9 +474,27 @@ export default function SendGridDashboardPage() {
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip />
-                    <Line type="monotone" dataKey="sent" stroke="#8884d8" strokeWidth={2} name="Sent" />
-                    <Line type="monotone" dataKey="delivered" stroke="#82ca9d" strokeWidth={2} name="Delivered" />
-                    <Line type="monotone" dataKey="opened" stroke="#ffc658" strokeWidth={2} name="Opened" />
+                    <Line
+                      type="monotone"
+                      dataKey="sent"
+                      stroke="#8884d8"
+                      strokeWidth={2}
+                      name="Sent"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="delivered"
+                      stroke="#82ca9d"
+                      strokeWidth={2}
+                      name="Delivered"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="opened"
+                      stroke="#ffc658"
+                      strokeWidth={2}
+                      name="Opened"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -458,7 +513,9 @@ export default function SendGridDashboardPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                      label={(entry: any) =>
+                        `${entry.name} ${(entry.percent * 100).toFixed(0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -483,20 +540,32 @@ export default function SendGridDashboardPage() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm font-medium text-blue-900">Delivered</p>
-                    <p className="text-2xl font-bold text-blue-600">{stats.delivered.toLocaleString()}</p>
+                    <p className="text-sm font-medium text-blue-900">
+                      Delivered
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {stats.delivered.toLocaleString()}
+                    </p>
                   </div>
                   <div className="p-4 bg-green-50 rounded-lg">
                     <p className="text-sm font-medium text-green-900">Opened</p>
-                    <p className="text-2xl font-bold text-green-600">{stats.opened.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {stats.opened.toLocaleString()}
+                    </p>
                   </div>
                   <div className="p-4 bg-purple-50 rounded-lg">
-                    <p className="text-sm font-medium text-purple-900">Clicked</p>
-                    <p className="text-2xl font-bold text-purple-600">{stats.clicked.toLocaleString()}</p>
+                    <p className="text-sm font-medium text-purple-900">
+                      Clicked
+                    </p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {stats.clicked.toLocaleString()}
+                    </p>
                   </div>
                   <div className="p-4 bg-red-50 rounded-lg">
                     <p className="text-sm font-medium text-red-900">Bounced</p>
-                    <p className="text-2xl font-bold text-red-600">{stats.bounced.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {stats.bounced.toLocaleString()}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -530,7 +599,10 @@ export default function SendGridDashboardPage() {
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <Select
+                    value={selectedStatus}
+                    onValueChange={setSelectedStatus}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -551,7 +623,9 @@ export default function SendGridDashboardPage() {
           {/* Recent Activity Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Email Activity ({filteredActivities.length})</CardTitle>
+              <CardTitle>
+                Recent Email Activity ({filteredActivities.length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -567,13 +641,19 @@ export default function SendGridDashboardPage() {
                 <TableBody>
                   {filteredActivities.slice(0, 10).map((activity) => (
                     <TableRow key={activity.id}>
-                      <TableCell className="font-medium">{activity.email}</TableCell>
+                      <TableCell className="font-medium">
+                        {activity.email}
+                      </TableCell>
                       <TableCell>{activity.template}</TableCell>
                       <TableCell>{getStatusBadge(activity.status)}</TableCell>
-                      <TableCell>{new Date(activity.timestamp).toLocaleString()}</TableCell>
+                      <TableCell>
+                        {new Date(activity.timestamp).toLocaleString()}
+                      </TableCell>
                       <TableCell>
                         {activity.bounceReason && (
-                          <span className="text-sm text-red-600">{activity.bounceReason}</span>
+                          <span className="text-sm text-red-600">
+                            {activity.bounceReason}
+                          </span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -609,7 +689,8 @@ export default function SendGridDashboardPage() {
                   <Shield className="h-4 w-4" />
                   <AlertTitle>Security Note</AlertTitle>
                   <AlertDescription>
-                    Keep your API key secure and never share it publicly. Rotate it regularly for enhanced security.
+                    Keep your API key secure and never share it publicly. Rotate
+                    it regularly for enhanced security.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -638,14 +719,20 @@ export default function SendGridDashboardPage() {
                 <TableBody>
                   {domains.map((domain) => (
                     <TableRow key={domain.domain}>
-                      <TableCell className="font-medium">{domain.domain}</TableCell>
+                      <TableCell className="font-medium">
+                        {domain.domain}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {domain.type === 'sending' ? 'Sending' : 'Tracking'}
+                          {domain.type === "sending" ? "Sending" : "Tracking"}
                         </Badge>
                       </TableCell>
-                      <TableCell>{getDomainStatusBadge(domain.status)}</TableCell>
-                      <TableCell>{new Date(domain.lastChecked).toLocaleString()}</TableCell>
+                      <TableCell>
+                        {getDomainStatusBadge(domain.status)}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(domain.lastChecked).toLocaleString()}
+                      </TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm">
                           <RefreshCw className="w-4 h-4 mr-2" />
@@ -687,7 +774,11 @@ export default function SendGridDashboardPage() {
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {webhook.events.slice(0, 2).map((event) => (
-                            <Badge key={event} variant="outline" className="text-xs">
+                            <Badge
+                              key={event}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {event}
                             </Badge>
                           ))}
@@ -700,18 +791,30 @@ export default function SendGridDashboardPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {webhook.status === 'active' ? (
+                          {webhook.status === "active" ? (
                             <CheckCircle className="w-4 h-4 text-green-600" />
                           ) : (
                             <XCircle className="w-4 h-4 text-red-600" />
                           )}
-                          <Badge className={webhook.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          <Badge
+                            className={
+                              webhook.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }
+                          >
                             {webhook.status}
                           </Badge>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={webhook.lastResponse === 200 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                        <Badge
+                          className={
+                            webhook.lastResponse === 200
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }
+                        >
                           {webhook.lastResponse}
                         </Badge>
                       </TableCell>
@@ -744,7 +847,9 @@ export default function SendGridDashboardPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-medium">High Bounce Rate Alert</Label>
+                        <Label className="text-base font-medium">
+                          High Bounce Rate Alert
+                        </Label>
                         <p className="text-sm text-muted-foreground">
                           Alert when bounce rate exceeds 5%
                         </p>
@@ -753,7 +858,9 @@ export default function SendGridDashboardPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-medium">Spam Report Alert</Label>
+                        <Label className="text-base font-medium">
+                          Spam Report Alert
+                        </Label>
                         <p className="text-sm text-muted-foreground">
                           Alert when spam reports exceed 0.5%
                         </p>
@@ -762,7 +869,9 @@ export default function SendGridDashboardPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-medium">Delivery Failure Alert</Label>
+                        <Label className="text-base font-medium">
+                          Delivery Failure Alert
+                        </Label>
                         <p className="text-sm text-muted-foreground">
                           Alert when delivery rate drops below 95%
                         </p>
@@ -773,7 +882,9 @@ export default function SendGridDashboardPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-medium">Volume Spike Alert</Label>
+                        <Label className="text-base font-medium">
+                          Volume Spike Alert
+                        </Label>
                         <p className="text-sm text-muted-foreground">
                           Alert when send volume increases by 200%
                         </p>
@@ -782,7 +893,9 @@ export default function SendGridDashboardPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-medium">Webhook Failure Alert</Label>
+                        <Label className="text-base font-medium">
+                          Webhook Failure Alert
+                        </Label>
                         <p className="text-sm text-muted-foreground">
                           Alert when webhooks fail to respond
                         </p>
@@ -791,7 +904,9 @@ export default function SendGridDashboardPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-medium">Domain Issues Alert</Label>
+                        <Label className="text-base font-medium">
+                          Domain Issues Alert
+                        </Label>
                         <p className="text-sm text-muted-foreground">
                           Alert when domain verification fails
                         </p>
@@ -815,24 +930,33 @@ export default function SendGridDashboardPage() {
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>High Bounce Rate Detected</AlertTitle>
                   <AlertDescription>
-                    Bounce rate has increased to 6.2% in the last hour. Consider reviewing your email list.
-                    <span className="text-xs text-muted-foreground ml-2">2 hours ago</span>
+                    Bounce rate has increased to 6.2% in the last hour. Consider
+                    reviewing your email list.
+                    <span className="text-xs text-muted-foreground ml-2">
+                      2 hours ago
+                    </span>
                   </AlertDescription>
                 </Alert>
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertTitle>Domain Verification Successful</AlertTitle>
                   <AlertDescription>
-                    Domain mail.eduplatform.com has been successfully verified for sending.
-                    <span className="text-xs text-muted-foreground ml-2">1 day ago</span>
+                    Domain mail.eduplatform.com has been successfully verified
+                    for sending.
+                    <span className="text-xs text-muted-foreground ml-2">
+                      1 day ago
+                    </span>
                   </AlertDescription>
                 </Alert>
                 <Alert>
                   <Clock className="h-4 w-4" />
                   <AlertTitle>Webhook Response Delay</AlertTitle>
                   <AlertDescription>
-                    Webhook endpoint is responding slowly (avg 5.2s). Consider optimizing your endpoint.
-                    <span className="text-xs text-muted-foreground ml-2">2 days ago</span>
+                    Webhook endpoint is responding slowly (avg 5.2s). Consider
+                    optimizing your endpoint.
+                    <span className="text-xs text-muted-foreground ml-2">
+                      2 days ago
+                    </span>
                   </AlertDescription>
                 </Alert>
               </div>
@@ -847,7 +971,8 @@ export default function SendGridDashboardPage() {
           <DialogHeader>
             <DialogTitle>Update SendGrid API Key</DialogTitle>
             <DialogDescription>
-              Enter your new SendGrid API key. Make sure it has the necessary permissions.
+              Enter your new SendGrid API key. Make sure it has the necessary
+              permissions.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -864,12 +989,13 @@ export default function SendGridDashboardPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowApiKeyDialog(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpdateApiKey}>
-              Update API Key
-            </Button>
+            <Button onClick={handleUpdateApiKey}>Update API Key</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

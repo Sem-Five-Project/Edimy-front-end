@@ -26,7 +26,10 @@ export default function UploadForm() {
         type="file"
         onChange={(e) => setFile(e.target.files?.[0] || null)}
       />
-      <button onClick={handleUpload} className="bg-blue-500 text-white p-2 mt-2">
+      <button
+        onClick={handleUpload}
+        className="bg-blue-500 text-white p-2 mt-2"
+      >
         Upload
       </button>
     </div>

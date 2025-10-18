@@ -17,7 +17,12 @@ export default function TutorMeeting() {
       <button onClick={createMeeting}>Create Meeting</button>
       {meeting && (
         <div>
-          <p>Start Link (Host): <a href={meeting.start_url} target="_blank">{meeting.start_url}</a></p>
+          <p>
+            Start Link (Host):{" "}
+            <a href={meeting.start_url} target="_blank">
+              {meeting.start_url}
+            </a>
+          </p>
           <p>Share with Students (Join Link): {meeting.join_url}</p>
         </div>
       )}

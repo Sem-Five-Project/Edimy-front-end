@@ -1,119 +1,178 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { PlusIcon, Search, Filter, MoreHorizontal, Edit, Trash2, Eye, Tag } from "lucide-react";
+import {
+  PlusIcon,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Eye,
+  Tag,
+} from "lucide-react";
 
 interface Tag {
   id: string;
   name: string;
   associatedSubjects: string[];
-  status: 'Active' | 'Inactive';
+  status: "Active" | "Inactive";
   createdDate: string;
   updatedDate: string;
 }
 
 const SUBJECTS = [
-  'Advanced Calculus',
-  'Organic Chemistry',
-  'Spanish Grammar',
-  'Data Structures',
-  'Digital Art',
-  'Linear Algebra',
-  'Physics',
-  'English Literature',
-  'Web Development',
-  'Photography'
+  "Advanced Calculus",
+  "Organic Chemistry",
+  "Spanish Grammar",
+  "Data Structures",
+  "Digital Art",
+  "Linear Algebra",
+  "Physics",
+  "English Literature",
+  "Web Development",
+  "Photography",
 ];
 
 const mockTags: Tag[] = [
   {
-    id: '1',
-    name: 'Beginner Friendly',
-    associatedSubjects: ['Spanish Grammar', 'Digital Art', 'Photography'],
-    status: 'Active',
-    createdDate: '2024-01-15',
-    updatedDate: '2024-03-20'
+    id: "1",
+    name: "Beginner Friendly",
+    associatedSubjects: ["Spanish Grammar", "Digital Art", "Photography"],
+    status: "Active",
+    createdDate: "2024-01-15",
+    updatedDate: "2024-03-20",
   },
   {
-    id: '2',
-    name: 'Advanced Level',
-    associatedSubjects: ['Advanced Calculus', 'Organic Chemistry', 'Data Structures'],
-    status: 'Active',
-    createdDate: '2024-01-20',
-    updatedDate: '2024-02-15'
+    id: "2",
+    name: "Advanced Level",
+    associatedSubjects: [
+      "Advanced Calculus",
+      "Organic Chemistry",
+      "Data Structures",
+    ],
+    status: "Active",
+    createdDate: "2024-01-20",
+    updatedDate: "2024-02-15",
   },
   {
-    id: '3',
-    name: 'STEM',
-    associatedSubjects: ['Advanced Calculus', 'Organic Chemistry', 'Data Structures', 'Linear Algebra', 'Physics'],
-    status: 'Active',
-    createdDate: '2024-02-01',
-    updatedDate: '2024-02-28'
+    id: "3",
+    name: "STEM",
+    associatedSubjects: [
+      "Advanced Calculus",
+      "Organic Chemistry",
+      "Data Structures",
+      "Linear Algebra",
+      "Physics",
+    ],
+    status: "Active",
+    createdDate: "2024-02-01",
+    updatedDate: "2024-02-28",
   },
   {
-    id: '4',
-    name: 'Creative',
-    associatedSubjects: ['Digital Art', 'Photography', 'English Literature'],
-    status: 'Active',
-    createdDate: '2024-02-10',
-    updatedDate: '2024-03-15'
+    id: "4",
+    name: "Creative",
+    associatedSubjects: ["Digital Art", "Photography", "English Literature"],
+    status: "Active",
+    createdDate: "2024-02-10",
+    updatedDate: "2024-03-15",
   },
   {
-    id: '5',
-    name: 'Programming',
-    associatedSubjects: ['Data Structures', 'Web Development'],
-    status: 'Inactive',
-    createdDate: '2024-02-20',
-    updatedDate: '2024-03-01'
+    id: "5",
+    name: "Programming",
+    associatedSubjects: ["Data Structures", "Web Development"],
+    status: "Inactive",
+    createdDate: "2024-02-20",
+    updatedDate: "2024-03-01",
   },
   {
-    id: '6',
-    name: 'Mathematics',
-    associatedSubjects: ['Advanced Calculus', 'Linear Algebra'],
-    status: 'Active',
-    createdDate: '2024-03-01',
-    updatedDate: '2024-03-10'
-  }
+    id: "6",
+    name: "Mathematics",
+    associatedSubjects: ["Advanced Calculus", "Linear Algebra"],
+    status: "Active",
+    createdDate: "2024-03-01",
+    updatedDate: "2024-03-10",
+  },
 ];
 
 export default function TagManagement() {
   const [tags, setTags] = useState<Tag[]>(mockTags);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [subjectFilter, setSubjectFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [currentTag, setCurrentTag] = useState<Tag | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
+    name: "",
     associatedSubjects: [] as string[],
-    status: true
+    status: true,
   });
 
-  const filteredTags = tags.filter(tag => {
-    const matchesSearch = tag.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSubject = subjectFilter === 'all' || !subjectFilter || tag.associatedSubjects.includes(subjectFilter);
-    const matchesStatus = statusFilter === 'all' || !statusFilter || tag.status === statusFilter;
-    
+  const filteredTags = tags.filter((tag) => {
+    const matchesSearch = tag.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesSubject =
+      subjectFilter === "all" ||
+      !subjectFilter ||
+      tag.associatedSubjects.includes(subjectFilter);
+    const matchesStatus =
+      statusFilter === "all" || !statusFilter || tag.status === statusFilter;
+
     return matchesSearch && matchesSubject && matchesStatus;
   });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTags(filteredTags.map(tag => tag.id));
+      setSelectedTags(filteredTags.map((tag) => tag.id));
     } else {
       setSelectedTags([]);
     }
@@ -123,30 +182,42 @@ export default function TagManagement() {
     if (checked) {
       setSelectedTags([...selectedTags, tagId]);
     } else {
-      setSelectedTags(selectedTags.filter(id => id !== tagId));
+      setSelectedTags(selectedTags.filter((id) => id !== tagId));
     }
   };
 
   const handleBulkActivate = () => {
-    setTags(tags.map(tag => 
-      selectedTags.includes(tag.id) 
-        ? { ...tag, status: 'Active' as const, updatedDate: new Date().toISOString().split('T')[0] }
-        : tag
-    ));
+    setTags(
+      tags.map((tag) =>
+        selectedTags.includes(tag.id)
+          ? {
+              ...tag,
+              status: "Active" as const,
+              updatedDate: new Date().toISOString().split("T")[0],
+            }
+          : tag,
+      ),
+    );
     setSelectedTags([]);
   };
 
   const handleBulkDeactivate = () => {
-    setTags(tags.map(tag => 
-      selectedTags.includes(tag.id) 
-        ? { ...tag, status: 'Inactive' as const, updatedDate: new Date().toISOString().split('T')[0] }
-        : tag
-    ));
+    setTags(
+      tags.map((tag) =>
+        selectedTags.includes(tag.id)
+          ? {
+              ...tag,
+              status: "Inactive" as const,
+              updatedDate: new Date().toISOString().split("T")[0],
+            }
+          : tag,
+      ),
+    );
     setSelectedTags([]);
   };
 
   const handleBulkDelete = () => {
-    setTags(tags.filter(tag => !selectedTags.includes(tag.id)));
+    setTags(tags.filter((tag) => !selectedTags.includes(tag.id)));
     setSelectedTags([]);
   };
 
@@ -155,11 +226,11 @@ export default function TagManagement() {
       id: Date.now().toString(),
       name: formData.name,
       associatedSubjects: formData.associatedSubjects,
-      status: formData.status ? 'Active' : 'Inactive',
-      createdDate: new Date().toISOString().split('T')[0],
-      updatedDate: new Date().toISOString().split('T')[0]
+      status: formData.status ? "Active" : "Inactive",
+      createdDate: new Date().toISOString().split("T")[0],
+      updatedDate: new Date().toISOString().split("T")[0],
     };
-    
+
     setTags([...tags, newTag]);
     setIsCreateDialogOpen(false);
     resetForm();
@@ -167,32 +238,34 @@ export default function TagManagement() {
 
   const handleUpdateTag = () => {
     if (!currentTag) return;
-    
-    setTags(tags.map(tag => 
-      tag.id === currentTag.id 
-        ? {
-            ...tag,
-            name: formData.name,
-            associatedSubjects: formData.associatedSubjects,
-            status: formData.status ? 'Active' : 'Inactive',
-            updatedDate: new Date().toISOString().split('T')[0]
-          }
-        : tag
-    ));
+
+    setTags(
+      tags.map((tag) =>
+        tag.id === currentTag.id
+          ? {
+              ...tag,
+              name: formData.name,
+              associatedSubjects: formData.associatedSubjects,
+              status: formData.status ? "Active" : "Inactive",
+              updatedDate: new Date().toISOString().split("T")[0],
+            }
+          : tag,
+      ),
+    );
     setIsEditDialogOpen(false);
     resetForm();
     setCurrentTag(null);
   };
 
   const handleDeleteTag = (tagId: string) => {
-    setTags(tags.filter(tag => tag.id !== tagId));
+    setTags(tags.filter((tag) => tag.id !== tagId));
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
+      name: "",
       associatedSubjects: [],
-      status: true
+      status: true,
     });
   };
 
@@ -206,7 +279,7 @@ export default function TagManagement() {
     setFormData({
       name: tag.name,
       associatedSubjects: tag.associatedSubjects,
-      status: tag.status === 'Active'
+      status: tag.status === "Active",
     });
     setIsEditDialogOpen(true);
   };
@@ -220,12 +293,14 @@ export default function TagManagement() {
     if (checked) {
       setFormData({
         ...formData,
-        associatedSubjects: [...formData.associatedSubjects, subject]
+        associatedSubjects: [...formData.associatedSubjects, subject],
       });
     } else {
       setFormData({
         ...formData,
-        associatedSubjects: formData.associatedSubjects.filter(s => s !== subject)
+        associatedSubjects: formData.associatedSubjects.filter(
+          (s) => s !== subject,
+        ),
       });
     }
   };
@@ -246,7 +321,8 @@ export default function TagManagement() {
         <CardHeader>
           <CardTitle>Content Tags</CardTitle>
           <CardDescription>
-            Manage content tags, filters, and search optimization for better content discovery.
+            Manage content tags, filters, and search optimization for better
+            content discovery.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -270,7 +346,9 @@ export default function TagManagement() {
               <SelectContent className="bg-white dark:bg-gray-800 border shadow-lg">
                 <SelectItem value="all">All Subjects</SelectItem>
                 {SUBJECTS.map((subject) => (
-                  <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                  <SelectItem key={subject} value={subject}>
+                    {subject}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -295,10 +373,18 @@ export default function TagManagement() {
               <Button size="sm" onClick={handleBulkActivate}>
                 Activate
               </Button>
-              <Button size="sm" variant="outline" onClick={handleBulkDeactivate}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBulkDeactivate}
+              >
                 Deactivate
               </Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleBulkDelete}
+              >
                 Delete
               </Button>
             </div>
@@ -311,7 +397,10 @@ export default function TagManagement() {
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
-                      checked={selectedTags.length === filteredTags.length && filteredTags.length > 0}
+                      checked={
+                        selectedTags.length === filteredTags.length &&
+                        filteredTags.length > 0
+                      }
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
@@ -329,7 +418,9 @@ export default function TagManagement() {
                     <TableCell>
                       <Checkbox
                         checked={selectedTags.includes(tag.id)}
-                        onCheckedChange={(checked) => handleSelectTag(tag.id, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleSelectTag(tag.id, checked as boolean)
+                        }
                       />
                     </TableCell>
                     <TableCell className="font-medium">
@@ -340,11 +431,17 @@ export default function TagManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1 max-w-md">
-                        {tag.associatedSubjects.slice(0, 3).map((subject, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {subject}
-                          </Badge>
-                        ))}
+                        {tag.associatedSubjects
+                          .slice(0, 3)
+                          .map((subject, index) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {subject}
+                            </Badge>
+                          ))}
                         {tag.associatedSubjects.length > 3 && (
                           <Badge variant="outline" className="text-xs">
                             +{tag.associatedSubjects.length - 3} more
@@ -353,7 +450,11 @@ export default function TagManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={tag.status === 'Active' ? 'default' : 'secondary'}>
+                      <Badge
+                        variant={
+                          tag.status === "Active" ? "default" : "secondary"
+                        }
+                      >
                         {tag.status}
                       </Badge>
                     </TableCell>
@@ -366,7 +467,10 @@ export default function TagManagement() {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border shadow-lg">
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-white dark:bg-gray-800 border shadow-lg"
+                        >
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => openViewDialog(tag)}>
                             <Eye className="mr-2 h-4 w-4" />
@@ -377,7 +481,7 @@ export default function TagManagement() {
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleDeleteTag(tag.id)}
                             className="text-red-600"
                           >
@@ -416,7 +520,9 @@ export default function TagManagement() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Enter tag name"
               />
             </div>
@@ -428,7 +534,9 @@ export default function TagManagement() {
                     <Checkbox
                       id={`subject-${subject}`}
                       checked={formData.associatedSubjects.includes(subject)}
-                      onCheckedChange={(checked) => handleSubjectToggle(subject, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleSubjectToggle(subject, checked as boolean)
+                      }
                     />
                     <Label htmlFor={`subject-${subject}`} className="text-sm">
                       {subject}
@@ -444,13 +552,19 @@ export default function TagManagement() {
               <Switch
                 id="status"
                 checked={formData.status}
-                onCheckedChange={(checked) => setFormData({ ...formData, status: checked })}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, status: checked })
+                }
               />
               <Label htmlFor="status">Active</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="button" onClick={handleCreateTag}>
@@ -475,7 +589,9 @@ export default function TagManagement() {
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Enter tag name"
               />
             </div>
@@ -487,9 +603,14 @@ export default function TagManagement() {
                     <Checkbox
                       id={`edit-subject-${subject}`}
                       checked={formData.associatedSubjects.includes(subject)}
-                      onCheckedChange={(checked) => handleSubjectToggle(subject, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleSubjectToggle(subject, checked as boolean)
+                      }
                     />
-                    <Label htmlFor={`edit-subject-${subject}`} className="text-sm">
+                    <Label
+                      htmlFor={`edit-subject-${subject}`}
+                      className="text-sm"
+                    >
                       {subject}
                     </Label>
                   </div>
@@ -503,13 +624,19 @@ export default function TagManagement() {
               <Switch
                 id="edit-status"
                 checked={formData.status}
-                onCheckedChange={(checked) => setFormData({ ...formData, status: checked })}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, status: checked })
+                }
               />
               <Label htmlFor="edit-status">Active</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="button" onClick={handleUpdateTag}>
@@ -544,12 +671,19 @@ export default function TagManagement() {
                   ))}
                 </div>
                 {currentTag.associatedSubjects.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No subjects associated</p>
+                  <p className="text-sm text-muted-foreground">
+                    No subjects associated
+                  </p>
                 )}
               </div>
               <div className="grid gap-2">
                 <Label className="font-semibold">Status</Label>
-                <Badge variant={currentTag.status === 'Active' ? 'default' : 'secondary'} className="w-fit">
+                <Badge
+                  variant={
+                    currentTag.status === "Active" ? "default" : "secondary"
+                  }
+                  className="w-fit"
+                >
                   {currentTag.status}
                 </Badge>
               </div>
