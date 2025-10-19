@@ -228,9 +228,9 @@ export default function MonthlyClassBookingFlow({
                   <div className="text-sm text-gray-600">Total Classes</div>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
+                  {/* <div className="text-2xl font-bold text-green-600">
                     {bookingData.patterns.length}
-                  </div>
+                  </div> */}
                   <div className="text-sm text-gray-600">Weekly Patterns</div>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
@@ -244,7 +244,7 @@ export default function MonthlyClassBookingFlow({
               <div className="mt-6">
                 <h4 className="font-medium mb-3">Weekly Schedule:</h4>
                 <div className="space-y-2">
-                  {bookingData.patterns.map((pattern, index) => (
+                  {/* {bookingData.patterns.map((pattern, index) => (
                     <div
                       key={pattern.id || index}
                       className="flex items-center gap-3 p-3 bg-gray-50 rounded"
@@ -277,7 +277,7 @@ export default function MonthlyClassBookingFlow({
                         )}
                       </div>
                     </div>
-                  ))}
+                  ))} */}
                 </div>
               </div>
             </CardContent>

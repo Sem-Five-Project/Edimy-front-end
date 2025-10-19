@@ -277,7 +277,6 @@ api.interceptors.response.use(
 export const refreshAccessToken = async () => {
   try {
     const response = await plainAxios.post("/auth/refresh");
-    console.log("Refreshed access token111111111", response.data.accessToken);
     return response.data;
   } catch (error) {
     throw error;
@@ -1067,7 +1066,7 @@ export const studentAPI = {
     try {
       console.log("studentId in loadStudentAcademicInfo :", studentId);
       const response = await api.get(
-        `/student/profile/${studentId}/academic-info`,
+        `/students/${studentId}/academic-info`,
       );
       console.log("response of loadStudentAcademicInfo :", response);
 
@@ -1087,6 +1086,234 @@ export const studentAPI = {
       };
     }
   },
+    getMyClasses: async (studentId: number): Promise<ApiResponse<{ classes: Array<{
+    classId: number;
+    className: string | null;
+    tutorId: number;
+    subjectId: number;
+    tutorName?: string | null;
+    subjectName?: string | null;
+    languageName?: string | null;
+    classType?: 'ONE_TIME' | 'MONTHLY' | string | null;
+    monthlySlots?: Array<{ date: string; status: string }>;
+    date: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    comment: string | null;
+    linkForMeeting: string | null;
+    docs: any[];
+  }> }>> => {
+    try {
+          console.log("getMyClasses")
+
+      console.log("Fetching classes for student:", studentId);
+      if (!studentId && studentId !== 0) {
+        return { success: true, data: { classes: [] } } as ApiResponse<any>;
+      }
+      const response = await api.get(`/students/${studentId}/get-all-class-details`, { timeout: 20000 });
+      console.log("response of getMyClasses :", response);
+      const raw = response.data                                                     ;
+
+      // Normalize various possible backend shapes into UI-consumable classes[]
+      const normalize = (input: any): any[] => {
+        if (!input) return [];
+        // If already in our ApiResponse shape
+        if (typeof input === 'object' && 'success' in input && (input as any).success) {
+          const payload = (input as any).data;
+          const dataArr = Array.isArray(payload?.classes)
+            ? payload.classes
+            : Array.isArray(payload) ? payload : [];
+          return normalize(dataArr);
+        }
+        // If array already, try to detect if it's raw class items or normalized
+        if (Array.isArray(input)) {
+          return input.map((it: any) => it);
+        }
+        // Handle custom shape: data.get_student_classes_with_details
+        const maybe = (input?.data ?? input)?.get_student_classes_with_details;
+        if (Array.isArray(maybe)) return maybe.map((it: any) => it);
+        // Handle shape: { classes: [...] }
+        if (Array.isArray(input?.classes)) return input.classes;
+        return [];
+      };
+
+      const rawItems = normalize(raw);
+      // Map raw backend items to the UI's expected fields
+      const classes = rawItems.map((item: any) => {
+        // Flatten all slot dates from nested structure, if present
+        const monthlySlots = Array.isArray(item?.class_slots)
+          ? item.class_slots.flatMap((grp: any) =>
+              Array.isArray(grp?.slots)
+                ? grp.slots.map((s: any) => ({
+                    date: String(s?.date ?? ''),
+                    status: String((s?.status ?? '')).toUpperCase() === 'UPCOMMING' ? 'UPCOMING' : String(s?.status ?? ''),
+                  }))
+                : []
+            )
+          : [];
+
+        // Decide class type: treat multi-slot as MONTHLY otherwise ONE_TIME, fallback to trimmed backend value
+        const backendType = String(item?.class_type ?? '').trim();
+        const inferredType = monthlySlots.length > 1 ? 'MONTHLY' : (backendType ? backendType.toUpperCase() : 'ONE_TIME');
+
+        // Compute a next date hint from slots if not provided
+  const nextSlot = monthlySlots.find((s: { date: string; status: string }) => String(s.status).toUpperCase() === 'UPCOMING') || monthlySlots[0];
+
+        return {
+          classId: Number(item?.class_id ?? item?.id ?? 0),
+          className: item?.class_name ?? null,
+          tutorId: Number(item?.tutor_id ?? 0),
+          subjectId: Number(item?.subject_id ?? 0),
+          tutorName: item?.tutor_name ?? null,
+          subjectName: item?.subject ?? null,
+          languageName: item?.language ?? null,
+          classType: inferredType,
+          monthlySlots,
+          date: item?.date ?? nextSlot?.date ?? null,
+          startTime: item?.start_time ?? null,
+          endTime: item?.end_time ?? null,
+          comment: item?.comment ?? null,
+          linkForMeeting: item?.class_link ?? item?.linkForMeeting ?? null,
+          docs: Array.isArray(item?.class_docs) ? item.class_docs : [],
+        };
+      });
+
+      return { success: true, data: { classes } } as ApiResponse<any>;
+    } catch (error: any) {
+      console.error('getMyClasses failed:', error?.response?.data || error?.message || error);
+      return { success: false, data: { classes: [] }, error: error?.message || 'Failed to load classes' };
+    }
+  },
+  // Fetch enriched class details for a specific student (tutor/subject names, language, class type, monthly slots)
+  getAllClassDetails: async (studentId: number): Promise<ApiResponse<{ classes: any[] }>> => {
+    try {
+                console.log("getAllClassDetails")
+
+      // Exact endpoint requested: /students/{studentId}/get-all-class-details
+      const resp = await api.get(`/students/${studentId}/get-all-class-details`, { timeout: 20000 });
+      const raw = resp.data;
+
+      // Reuse the same normalization as getMyClasses so both paths are consistent
+      const extractItems = (input: any): any[] => {
+        if (!input) return [];
+        if (typeof input === 'object' && 'success' in input && (input as any).success) {
+          const payload = (input as any).data;
+          const dataArr = Array.isArray(payload?.classes)
+            ? payload.classes
+            : Array.isArray(payload) ? payload : [];
+          return extractItems(dataArr);
+        }
+        if (Array.isArray(input)) return input;
+        const maybe = (input?.data ?? input)?.get_student_classes_with_details;
+        if (Array.isArray(maybe)) return maybe;
+        if (Array.isArray(input?.classes)) return input.classes;
+        return [];
+      };
+
+      const rawItems = extractItems(raw);
+      const classes = rawItems.map((item: any) => {
+        const monthlySlots = Array.isArray(item?.class_slots)
+          ? item.class_slots.flatMap((grp: any) =>
+              Array.isArray(grp?.slots)
+                ? grp.slots.map((s: any) => ({
+                    date: String(s?.date ?? ''),
+                    status: String((s?.status ?? '')).toUpperCase() === 'UPCOMMING' ? 'UPCOMING' : String(s?.status ?? ''),
+                  }))
+                : []
+            )
+          : [];
+        const backendType = String(item?.class_type ?? '').trim();
+        const inferredType = monthlySlots.length > 1 ? 'MONTHLY' : (backendType ? backendType.toUpperCase() : 'ONE_TIME');
+  const nextSlot = monthlySlots.find((s: { date: string; status: string }) => String(s.status).toUpperCase() === 'UPCOMING') || monthlySlots[0];
+        return {
+          classId: Number(item?.class_id ?? item?.id ?? 0),
+          className: item?.class_name ?? null,
+          tutorId: Number(item?.tutor_id ?? 0),
+          subjectId: Number(item?.subject_id ?? 0),
+          languageId: Number(item?.language_id ?? 0),
+          hourlyRate: Number(item?.hourly_rate ?? 0),
+          tutorName: item?.tutor_name ?? null,
+          subjectName: item?.subject ?? null,
+          languageName: item?.language ?? null,
+          classType: inferredType,
+          monthlySlots,
+          date: item?.date ?? nextSlot?.date ?? null,
+          startTime: item?.start_time ?? null,
+          endTime: item?.end_time ?? null,
+          comment: item?.comment ?? null,
+          linkForMeeting: item?.class_link ?? item?.linkForMeeting ?? null,
+          docs: Array.isArray(item?.class_docs) ? item.class_docs : [],
+          rating: item?.rating ?? null,
+        };
+      });
+
+      return { success: true, data: { classes } };
+    } catch (e) {
+      console.warn('getAllClassDetails failed, falling back to getMyClasses:', (e as any)?.message || e);
+      // Fallback to basic classes
+      try {
+        const fallback = await studentAPI.getMyClasses(studentId);
+        if (fallback.success) return fallback as ApiResponse<{ classes: any[] }>;
+        return { success: true, data: { classes: [] } };
+      } catch (e2) {
+        return { success: true, data: { classes: [] } };
+      }
+    }
+  },
+  // Fetch upcoming classes within next 30 minutes for a specific student
+  getUpcomingClasses: async (
+    studentId: number
+  ): Promise<ApiResponse<{ upcoming: boolean; classes: Array<{
+    classId: number;
+    tutorName?: string | null;
+    subjectName?: string | null;
+    languageName?: string | null;
+    classType?: string | null;
+    linkForMeeting?: string | null;
+    docs: Array<{ link?: string; class_doc_id?: number; doc_type?: string }>; 
+  }> }>> => {
+    try {
+      if (!studentId && studentId !== 0) {
+        return { success: true, data: { upcoming: false, classes: [] } } as ApiResponse<any>;
+      }
+      const resp = await api.get(`/students/${studentId}/upcoming-classes`, { timeout: 15000 });
+      const raw = resp.data;
+      const upcoming = !!(raw?.upcoming);
+      const list = Array.isArray(raw?.get_student_upcoming_classes)
+        ? raw.get_student_upcoming_classes
+        : [];
+      const classes = list.map((item: any) => ({
+        classId: Number(item?.class_id ?? 0),
+        tutorName: item?.tutor_name ?? null,
+        subjectName: item?.subject ?? null,
+        languageName: item?.language ?? null,
+        classType: String(item?.class_type ?? '').trim().toUpperCase() || null,
+        linkForMeeting: item?.class_link ?? null,
+        docs: Array.isArray(item?.class_docs) ? item.class_docs : [],
+      }));
+      return { success: true, data: { upcoming, classes } };
+    } catch (error: any) {
+      console.error('getUpcomingClasses failed:', error?.response?.data || error?.message || error);
+      return { success: false, data: { upcoming: false, classes: [] }, error: error?.message || 'Failed to load upcoming classes' };
+    }
+  },
+  // Set rating for a class
+  setRating: async (studentId: number, ratingData: { ratingValue: number; tutorId: number; class_id: number; feedback: string }): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post(`/students/${studentId}/set-rating`, ratingData);
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error: any) {
+      console.error('setRating failed:', error?.response?.data || error?.message || error);
+      return {
+        success: false,
+        data: { message: '' },
+        error: error?.response?.data?.message || error?.message || 'Failed to set rating',
+      };
+    }
+  },  
   loadStudentProfileInfo: async (
     studentId: number,
   ): Promise<
@@ -1099,7 +1326,7 @@ export const studentAPI = {
   > => {
     try {
       const response = await api.get(
-        `/student/profile/${studentId}/profile-info`,
+        `/students/${studentId}/profile-info`,
       );
       console.log("response of loadStudentProfileInfo :", response);
 
@@ -1121,27 +1348,17 @@ export const studentAPI = {
       };
     }
   },
-  loadStudentProfilePayment: async (
-    studentId: string,
-    timeFilter: string,
-  ): Promise<
-    ApiResponse<{
-      amount: number | 0;
-      tutorName: string | null;
-      subject: string | null;
-      status: string | null;
-      paymentTime: Timestamp | null;
-    }>
-  > => {
+     loadStudentProfilePayment: async (
+studentId: string, timeFilter: string  ): Promise<ApiResponse<{ amount: number | 0; tutorName: string | null; subject: string | null; status: string | null; paymentTime: Timestamp | null;}>> => {
     try {
-      const response = await api.get(
-        `/student/profile/${studentId}/profile-payment`,
+     const response = await api.get(
+        `/students/${studentId}/profile-payment`
       );
       console.log("response of loadStudentProfilePayment :", response);
 
       return {
         success: true,
-        data: response.data,
+        data: response.data, 
       };
     } catch (error) {
       console.error("Load student profile info failed:", error);
@@ -1151,13 +1368,50 @@ export const studentAPI = {
         data: {
           amount: 0,
           tutorName: null,
-          subject: null,
-          status: null,
-          paymentTime: null,
+          subject:null,
+          status:null,
+          paymentTime:null
         },
       };
     }
   },
+  // loadStudentProfilePayment: async (
+  //   studentId: string,
+  //   timeFilter: string,
+  // ): Promise<
+  //   ApiResponse<{
+  //     amount: number | 0;
+  //     tutorName: string | null;
+  //     subject: string | null;
+  //     status: string | null;
+  //     paymentTime: Timestamp | null;
+  //   }>
+  // > => {
+  //   try {
+  //     const response = await api.get(
+  //       `/student/profile/${studentId}/profile-payment`,
+  //     );
+  //     console.log("response of loadStudentProfilePayment :", response);
+
+  //     return {
+  //       success: true,
+  //       data: response.data,
+  //     };
+  //   } catch (error) {
+  //     console.error("Load student profile info failed:", error);
+  //     // Mock data for frontend testing
+  //     return {
+  //       success: true,
+  //       data: {
+  //         amount: 0,
+  //         tutorName: null,
+  //         subject: null,
+  //         status: null,
+  //         paymentTime: null,
+  //       },
+  //     };
+  //   }
+  // },
 };
 
 export const bookingAPI = {
@@ -1173,6 +1427,52 @@ export const bookingAPI = {
         success: false,
         data: { booking: {} as Booking, paymentUrl: "" },
         error: "Failed to create booking",
+      };
+    }
+  },
+    getStudentBookingDetails: async (studentId: number): Promise<ApiResponse<any[]>> => {
+    try {
+      const response = await api.get(`/student/bookings/booking-details?studentId=${studentId}`);
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('Get student booking details failed:', error);
+      return {
+        success: false,
+        data: [],
+        error: 'Failed to fetch booking details',
+      };
+    }
+  },
+    cancelBooking: async (paymentId: string, shouldRefund: boolean = false): Promise<ApiResponse<{ 
+    success: boolean; 
+    refund_reference?: string; 
+    message: string; 
+    status?: number 
+  }>> => {
+    try {
+      console.log('Cancelling booking with paymentId:', paymentId, 'shouldRefund:', shouldRefund);
+      const response = await api.post('/payment/refund', { 
+        paymentId,
+        should_refund: shouldRefund 
+      });
+      console.log('Cancel booking response:', response.data);
+      
+      return {
+        success: response.data.success || false,
+        data: response.data.process_refund,
+      };
+    } catch (error: any) {
+      console.error('Cancel booking failed:', error);
+      return {
+        success: false,
+        data: {
+          success: false,
+          message: error?.response?.data?.message || 'Failed to cancel booking',
+        },
+        error: error?.response?.data?.message || 'Failed to cancel booking',
       };
     }
   },
@@ -1286,7 +1586,123 @@ export const bookingAPI = {
       };
     }
   },
+  //  validatePaymentWindow: async (
+  //   paymentId: string
+  // ): Promise<ApiResponse<ValidatePayHereWindowRes>> => {
+  //   try {
+  //     console.log("API: Validating payment window for paymentId:", paymentId);
+      
+  //     // Try both possible endpoints
+  //     let response;
+  //     try {
+  //       console.log("API: Trying endpoint: `/payments/validate?paymentId=${paymentId}`");
+  //       const response = await api.post("/payment/validate", { payment_id: paymentId });
+  //             console.log("API: Payment validation response:", response.data);
+  //     return { success: true, data: response.data };
+  //     } catch (firstError: any) {
+  //       console.log("error :",firstError)
+  //     }
+      
+
+  //   } catch (e: any) {
+  //     console.error("API: Payment validation error:", e?.response?.data || e.message);
+  //     console.error("API: Full error object:", e);
+      
+  //     // If validation fails, let's continue with a warning rather than blocking payment
+  //     if (e?.response?.status === 500) {
+  //       console.warn("API: Server error during validation - allowing payment to proceed with warning");
+  //       return {
+  //         success: true,
+  //         data: {
+  //           valid: true, // Assume valid if server error
+  //           expired: false,
+  //           expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes from now
+  //           remainingSeconds: 15 * 60 // 15 minutes in seconds
+  //         }
+  //       };
+  //     }
+      
+  //     return {
+  //       success: false,
+  //       data: {} as ValidatePayHereWindowRes,
+  //       error: e?.response?.data?.message || e?.response?.data?.error || "Failed to validate payment window",
+  //     };
+  //   }
+  // },
+
   validatePaymentWindow: async (
+  paymentId: string
+): Promise<ApiResponse<ValidatePayHereWindowRes>> => {
+  try {
+    console.log("API: Validating payment window for paymentId:", paymentId);
+
+    const response = await api.post("/payment/validate", { payment_id: paymentId });
+
+    console.log("API: Payment validation response:", response.data);
+    return { success: true, data: response.data };
+  } catch (e: any) {
+    console.error("API: Payment validation error:", e?.response?.data || e.message);
+    return {
+      success: false,
+      data: {} as ValidatePayHereWindowRes,
+      error: e?.response?.data?.message || "Failed to validate payment window",
+    };
+  }
+},
+
+  getPaymentStatus: async (
+    orderId: string
+  ): Promise<ApiResponse<{ orderId: string; status: string; payherePaymentId?: string }>> => {
+    try {
+      console.log('API: getPaymentStatus called with orderId:', orderId);
+
+      const response = await api.get('/payment/status', {
+        params: { orderId },
+      });
+      console.log('API: getPaymentStatus response:', response);
+      const payload = response?.data ?? {};
+      const order = payload?.data ?? payload;
+
+      if (order?.orderId || order?.order_id) {
+        return {
+          success: true,
+          data: {
+            orderId: order.orderId ?? order.order_id,
+            status: order.status,
+            payherePaymentId: order.payherePaymentId ?? order.paymentId ?? order.payhere_payment_id,
+          },
+        };
+      }
+
+      return {
+        success: false,
+        data: { orderId, status: 'UNKNOWN', payherePaymentId: undefined },
+        error: 'Unexpected payment status response',
+      };
+    } catch (error: any) {
+      console.error('API: getPaymentStatus error:', error?.response?.data || error);
+      return {
+        success: false,
+        data: { orderId, status: 'ERROR', payherePaymentId: undefined },
+        error: error?.response?.data?.message || error.message || 'Failed to fetch payment status',
+      };
+    }
+  },
+
+updateBookingDetails: async (data: BookingUpdateData): Promise<{ success: boolean; bookingId: string }> => {
+  try {
+    // Using axios; body is passed as data, not nested with JSON.stringify
+    const response = await api.post('/bookings/confirm', data);
+    if (response?.data) {
+      return response.data;
+    }
+    throw new Error('Failed to update booking details');
+  } catch (error) {
+    console.error('Error updating booking details:', error);
+    throw error;
+  }
+},
+  validatePaymentWindoww: async (
     paymentId: string,
   ): Promise<ApiResponse<ValidatePayHereWindowRes>> => {
     try {
@@ -1296,9 +1712,9 @@ export const bookingAPI = {
       let response;
       try {
         console.log(
-          "API: Trying endpoint: `/payments/validate?paymentId=${paymentId}`",
+          "API: Trying endpoint: `/payment/validate?paymentId=${paymentId}`",
         );
-        response = await api.get(`/payments/validate?paymentId=${paymentId}`);
+        response = await api.get(`/payment/validate?paymentId=${paymentId}`);
       } catch (firstError: any) {
         if (firstError?.response?.status === 404) {
           console.log(
@@ -1346,7 +1762,7 @@ export const bookingAPI = {
     }
   },
 
-  updateBookingDetails: async (
+  updateBookingDetailss: async (
     data: BookingUpdateData,
   ): Promise<{ success: boolean; bookingId: string }> => {
     try {
@@ -1361,7 +1777,7 @@ export const bookingAPI = {
       throw error;
     }
   },
-  validateSlotAvailability: async (slotId: string): Promise<boolean> => {
+  validateSlotAvailabilityy: async (slotId: string): Promise<boolean> => {
     try {
       const response = await fetch(`/api/slots/${slotId}/validate`, {
         method: "GET",
@@ -1932,7 +2348,7 @@ export const bookingAPI = {
     notifyUrl?: string;
   }): Promise<ApiResponse<{ payment: Record<string, unknown> }>> => {
     try {
-      const response = await api.post("/payments/payhere/init", payload);
+      const response = await api.post("/payment/payhere/init", payload);
       return response.data;
     } catch (error) {
       console.error("Init PayHere failed:", error);
