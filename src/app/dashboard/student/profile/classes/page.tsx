@@ -776,6 +776,7 @@ const handleCloseRatingModal = () => {
 
 const handleSubmitRating = async () => {
   if (!currentClassForRating || !effectiveStudentId) return;
+
   try {
     const response = await studentAPI.setRating(Number(effectiveStudentId), {
       ratingValue: currentRating,
@@ -783,17 +784,28 @@ const handleSubmitRating = async () => {
       class_id: currentClassForRating.classId,
       feedback: currentFeedback,
     });
+
+    console.log("Rating response:", response);
+
+    // Use the inner data.success to determine outcome
     if (response.success) {
       queryClient.invalidateQueries({ queryKey: ["myClasses", effectiveStudentId] });
-      setRatingResponse({ success: true, message: "Successfully added rating!" });
+      if(response.data?.message=="first need to attend the class"){
+        alert("You need to attend the class before submitting a rating.");
+        handleCloseRatingModal();
+        return;
+      }
+      alert("Successfully added rating!");
       handleCloseRatingModal();
     } else {
-      setRatingResponse({ success: false, message: response.error || "Failed to add rating." });
+      alert(response.data?.message || "Failed to add rating.");
     }
   } catch (error) {
-    setRatingResponse({ success: false, message: "Error setting rating." });
+    alert("Error setting rating.");
+    console.error(error);
   }
 };
+
   // Real-time upcoming classes (within next 30 minutes)
   const {
     data: upcomingData,
@@ -897,7 +909,90 @@ const handleSubmitRating = async () => {
 
     prefetchClasses()
   }, [effectiveStudentId, queryClient])
+// A new skeleton component that mimics your actual card layout
+const ClassCardSkeleton = () => (
+  <Card className="border-0 bg-white shadow-lg rounded-2xl flex flex-col animate-pulse">
+    {/* Decorative gradient bar */}
+    <div className="absolute top-0 left-0 right-0 h-1 bg-slate-200"></div>
 
+    <CardHeader className="pb-4 pt-6">
+      <div className="flex items-start gap-4">
+        <Skeleton className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex-shrink-0" />
+        <div className="flex-1 min-w-0 space-y-3">
+          <Skeleton className="h-5 w-48" />
+          
+          {/* Skeleton for Info Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+              <Skeleton className="w-8 h-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-12" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+              <Skeleton className="w-8 h-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-12" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+              <Skeleton className="w-8 h-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-12" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+              <Skeleton className="w-8 h-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-12" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </CardHeader>
+    <CardContent className="space-y-4 pb-6 flex-1 flex flex-col">
+      {/* Skeleton for Schedule Info */}
+      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl gap-4">
+        <div className="flex items-center gap-3 flex-1">
+          <Skeleton className="w-10 h-10 rounded-lg" />
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        </div>
+        <Skeleton className="h-8 w-24 rounded-lg" />
+      </div>
+
+      {/* Skeleton for Monthly Slots (simplified) */}
+      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+        <Skeleton className="h-4 w-32" />
+        <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-10 gap-2">
+          {[...Array(8)].map((_, i) => (
+            <Skeleton key={i} className="h-8 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+      
+      {/* Skeleton for Action Buttons */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Skeleton className="h-11 sm:h-10 w-full rounded-xl" />
+        <Skeleton className="h-11 sm:h-10 w-full rounded-xl" />
+        <Skeleton className="h-11 sm:h-10 w-full rounded-xl" />
+      </div>
+
+      {/* Skeleton for Rating Bar */}
+      <div className="w-full border-t border-slate-100 mt-6 pt-4 flex items-center justify-between gap-3 bg-slate-50 rounded-b-2xl px-4 py-3">
+        <Skeleton className="h-6 w-36" />
+        <Skeleton className="h-8 w-24 rounded-md" />
+      </div>
+    </CardContent>
+  </Card>
+);
   const totalClasses = classes.length
   const totalSessions = classes.reduce((total, classInfo) => {
     return total + (classInfo.monthlySlots?.filter(slot => slot.status === 'COMPLETED').length || 0)
@@ -974,31 +1069,8 @@ const handleSubmitRating = async () => {
     router.push(`/dashboard/student/pay-for-next-month?classId=${classIdNum}`)
   }
 
-  const handlePayment = () => {
-    setPaymentDialogOpen(false)
-  }
 
-  const getMaterialIcon = (type: ClassMaterial["type"]) => {
-    switch (type) {
-      case "video":
-        return <Video className="h-4 w-4 text-red-600" />
-      case "document":
-        return <FileText className="h-4 w-4 text-blue-600" />
-      case "assignment":
-        return <BookOpen className="h-4 w-4 text-purple-600" />
-    }
-  }
 
-  const getMaterialBadge = (type: ClassMaterial["type"]) => {
-    switch (type) {
-      case "video":
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-300">Video</Badge>
-      case "document":
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300">Document</Badge>
-      case "assignment":
-        return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300">Assignment</Badge>
-    }
-  }
 
   const StarRating = ({ 
     rating: currentRating, 
@@ -1052,61 +1124,6 @@ const handleSubmitRating = async () => {
             </div>
 
             {/* Upcoming class highlight (only when backend says upcoming=true) */}
-{upcomingData?.upcoming && upcomingData?.classes?.length > 0 && (
-  <Card className="mb-8 border-emerald-200 bg-emerald-50/60 shadow-md">
-    <CardHeader className="flex flex-row items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-          <Clock className="w-5 h-5 text-emerald-700" />
-        </div>
-        <CardTitle className="text-emerald-800">Starting soon </CardTitle>
-      </div>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => refetchUpcoming()}
-        disabled={fetchingUpcoming}
-        className="border-emerald-300 text-emerald-700 p-2"
-      >
-        <RefreshCw
-          className={`w-4 h-4 ${fetchingUpcoming ? 'animate-spin text-emerald-700' : 'text-emerald-700'}`}
-        />
-      </Button>
-    </CardHeader>
-    <CardContent>
-      {upcomingData.classes.slice(0, 1).map((c: any) => (
-        <div
-          key={c.classId}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white rounded-xl border border-emerald-200"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-emerald-700" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-slate-800">{c.subjectName || 'Class'}</div>
-              <div className="text-xs text-slate-600">{c.tutorName} • {c.languageName}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {c.linkForMeeting ? (
-              <Button
-                size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => window.open(c.linkForMeeting, '_blank')}
-              >
-                <Video className="w-4 h-4 mr-2" /> Join Now
-              </Button>
-            ) : (
-              <Badge variant="outline" className="border-emerald-300 text-emerald-700">No Link</Badge>
-            )}
-          </div>
-        </div>
-      ))}
-    </CardContent>
-  </Card>
-)}
-
             {error && (
               <Button 
                 variant="outline" 
@@ -1132,32 +1149,108 @@ const handleSubmitRating = async () => {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="border-blue-200 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white text-lg flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                Total Classes Joined
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-white">{totalClasses}</p>
-              <p className="text-blue-100 text-sm mt-1">Active enrollments</p>
-            </CardContent>
-          </Card>
+  {/* Total Classes Card */}
+  <Card className="border-blue-200 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-white text-lg flex items-center gap-2">
+        <GraduationCap className="h-5 w-5" />
+        Total Classes Joined
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-4xl font-bold text-white">{totalClasses}</p>
+      <p className="text-blue-100 text-sm mt-1">Active enrollments</p>
+    </CardContent>
+  </Card>
 
-          <Card className="border-slate-200 bg-white shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-slate-900 text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-green-600" />
-                Total Sessions Completed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-slate-900">{totalSessions}</p>
-              <p className="text-slate-600 text-sm mt-1">Learning hours accumulated</p>
-            </CardContent>
-          </Card>
+  {/* Starting Soon Card - Enhanced Design */}
+  {upcomingData?.upcoming && upcomingData?.classes?.length > 0 && (
+    <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] relative overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-200 rounded-full -translate-y-10 translate-x-10 opacity-60"></div>
+      <div className="absolute bottom-0 left-0 w-16 h-16 bg-green-200 rounded-full translate-y-8 -translate-x-8 opacity-40"></div>
+      
+      <CardHeader className="flex flex-row items-center justify-between relative z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-md">
+            <Clock className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <CardTitle className="text-emerald-900 text-lg">Starting Soon</CardTitle>
+            <p className="text-emerald-600 text-sm">Your next class</p>
+          </div>
         </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => refetchUpcoming()}
+          disabled={fetchingUpcoming}
+          className="border-emerald-300 bg-white/80 backdrop-blur-sm text-emerald-700 hover:bg-emerald-50 transition-colors"
+        >
+          <RefreshCw
+            className={`w-4 h-4 ${fetchingUpcoming ? 'animate-spin' : ''}`}
+          />
+        </Button>
+      </CardHeader>
+      
+      <CardContent className="relative z-10">
+        {upcomingData.classes.slice(0, 1).map((c: any) => (
+          <div
+            key={c.classId}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-emerald-200/60 shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center border border-emerald-200/50">
+                <BookOpen className="w-6 h-6 text-emerald-700" />
+              </div>
+              <div className="flex-1">
+                <div className="text-base font-semibold text-slate-800 line-clamp-1">
+                  {c.subjectName || 'Class'}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-full">
+                    {c.tutorName}
+                  </span>
+                  <span className="text-xs text-slate-500">•</span>
+                  <span className="text-xs text-slate-600">{c.languageName}</span>
+                </div>
+                {c.startTime && (
+                  <div className="flex items-center gap-1 mt-2 text-xs text-emerald-700 font-medium">
+                    <Clock className="w-3 h-3" />
+                    Starts in {c.startTime}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {c.linkForMeeting ? (
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 px-4 py-2"
+                  onClick={() => window.open(c.linkForMeeting, '_blank')}
+                >
+                  <Video className="w-4 h-4 mr-2" /> 
+                  Join Now
+                </Button>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50">
+                    No Link Available
+                  </Badge>
+                  <span className="text-xs text-slate-500">Check back later</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        
+        {/* Additional upcoming classes indicator */}
+
+      </CardContent>
+    </Card>
+  )}
+</div>
 
         {/* Classes List */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -1172,20 +1265,11 @@ const handleSubmitRating = async () => {
 
           <TabsContent value="ongoing" className="space-y-6">
             {loading ? (
-              <div className="space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="p-6 border border-slate-200 rounded-xl bg-white">
-                    <div className="flex items-center gap-4">
-                      <Skeleton className="h-16 w-16 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-5 w-48" />
-                        <Skeleton className="h-4 w-64" />
-                      </div>
-                      <Skeleton className="h-10 w-32" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <ClassCardSkeleton key={i} />
+              ))}
+            </div>
             ) : filteredClasses.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {filteredClasses.map((classInfo) => {
@@ -1469,53 +1553,94 @@ return (
     </Card>
 
     {/* Rating Modal */}
-    {isRatingModalOpen && (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
-          <div className="flex items-center justify-between p-6 border-b">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Rate Your Class</h3>
-              {currentClassForRating && (
-                <p className="text-sm text-gray-600 mt-1">
-                  {currentClassForRating.className || `Class #${currentClassForRating.classId}`} with {currentClassForRating.tutorName || `Tutor #${currentClassForRating.tutorId}`}
-                </p>
-              )}
-            </div>
-            <button onClick={handleCloseRatingModal} className="p-1 rounded-full hover:bg-gray-100">
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-          <div className="p-6 space-y-5">
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">How was your experience?</p>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <button key={value} onClick={() => setCurrentRating(value)} className="p-1 transition-transform hover:scale-110">
-                    <Star className={`w-8 h-8 ${value <= currentRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label htmlFor="feedback" className="text-sm font-medium text-gray-700">Additional Feedback (Optional)</label>
-              <textarea id="feedback" rows={4} className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value={currentFeedback} onChange={(e) => setCurrentFeedback(e.target.value)} placeholder="Tell us more about your experience..." />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 p-6 border-t bg-gray-50 rounded-b-2xl">
-            <Button variant="outline" onClick={handleCloseRatingModal}>Cancel</Button>
-            <Button onClick={handleSubmitRating} disabled={currentRating === 0}>Submit Rating</Button>
+{isRatingModalOpen && (
+  <div className="fixed inset-0  backdrop-blur-sm flex items-center justify-center z-50 p-4">
+<div className="bg-gradient-to-br from-white to-blue-50/80 border border-blue-400/80 rounded-3xl w-full max-w-md animate-scaleIn relative overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+          Rate Your Class
+        </h3>
+        <button
+          onClick={handleCloseRatingModal}
+          className="p-2 rounded-full hover:bg-gray-100 transition"
+        >
+          <X className="w-5 h-5 text-gray-500" />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 space-y-6">
+        <div className="text-center">
+          <p className="text-sm font-medium text-gray-700 mb-3">
+            How was your experience?
+          </p>
+          <div className="flex justify-center gap-3">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <button
+                key={value}
+                onClick={() => setCurrentRating(value)}
+                className="transition-transform hover:scale-110"
+              >
+                <Star
+                  className={`w-9 h-9 ${
+                    value <= currentRating
+                      ? "fill-yellow-400 text-yellow-400 drop-shadow-md"
+                      : "text-gray-300"
+                  }`}
+                />
+              </button>
+            ))}
           </div>
         </div>
+
+        <div>
+          <label
+            htmlFor="feedback"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Additional Feedback (Optional)
+          </label>
+          <textarea
+            id="feedback"
+            rows={4}
+            className="block w-full rounded-xl border border-gray-300 bg-white/80 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition resize-none p-3 text-sm text-gray-700"
+            value={currentFeedback}
+            onChange={(e) => setCurrentFeedback(e.target.value)}
+            placeholder="Tell us more about your experience..."
+          />
+        </div>
       </div>
-    )}
+
+      {/* Footer */}
+      <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-3xl">
+        <button
+          onClick={handleCloseRatingModal}
+          className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmitRating}
+          disabled={currentRating === 0}
+          className={`px-5 py-2 rounded-lg font-medium text-white shadow-md transition
+            ${
+              currentRating === 0
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+            }`}
+        >
+          Submit Rating
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
     {/* Rating Response Message */}
-    {ratingResponse && (
-      <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg text-base font-semibold transition-all duration-300 ${ratingResponse.success ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}`}>
-        {ratingResponse.message}
-        <button className="ml-4 text-sm underline" onClick={() => setRatingResponse(null)}>Close</button>
-      </div>
-    )}
+
   </React.Fragment>
 );
                 })}

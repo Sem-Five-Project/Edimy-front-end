@@ -1248,9 +1248,11 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
       const metadataBaseDate = monthlyBookingData?.startDate
         ? new Date(monthlyBookingData.startDate)
         : selectedDate;
+
   // Prefer context-provided nextMonth/nextYear for repay/next-month flows; fallback to current selection month
-  const metadataMonth = (ctxNextMonth ?? (isMonthly ? metadataBaseDate.getMonth() + 1 : null)) as number | null;
-  const metadataYear = (ctxNextYear ?? (isMonthly ? metadataBaseDate.getFullYear() : null)) as number | null;
+      const metadataMonth = (ctxNextMonth ?? (isMonthly ? metadataBaseDate.getMonth() + 1 : null)) as number | null;
+      const metadataYear = (ctxNextYear ?? (isMonthly ? metadataBaseDate.getFullYear() : null)) as number | null;
+      console.log("isMonthly ? metadataBaseDate.getMonth() + 1 :", (metadataBaseDate.getMonth()),"ctxNextMonth :",ctxNextMonth)
       // Build slots payload: prefer availability map, then lockedSlotIds, then nextMonthSlots as a fallback (repay case)
       const metadataSlots: Record<string, number[]> = (() => {
         console.log("availabilitySlotsMap :",availabilitySlotsMap)
@@ -1307,7 +1309,7 @@ export const PayHerePayment: React.FC<PayHerePaymentProps> = ({
         merchant_id: hashResponse.data.merchantId || "1228143", // Fallback to sandbox merchant ID
         return_url: `${window.location.origin}/payment/return`,
         cancel_url: `${window.location.origin}/payment/cancel`,
-        notify_url: `https://95b150d28080.ngrok-free.app/api/payment/payhere/notify`,
+        notify_url: `https://166b25fe75d1.ngrok-free.app/api/payment/payhere/notify`,
         order_id: orderMeta.orderId || orderMeta.order_id || `EDIMY-${Date.now()}`,
         items: isMonthly 
           ? `${bookingPreferences.selectedSubject?.subjectName || "Tutoring"} - Monthly (${monthlyBookingData?.totalSlots || 0} slots)`
