@@ -864,7 +864,7 @@ const results = await Promise.all(
 
     return { all: occurrences.sort((a,b) => a.dateTime.localeCompare(b.dateTime)), weeks };
   };
-  console.log("dummyBookingPrefs.selectedClassType?.name :",dummyBookingPrefs.selectedClassType?.name)
+  //console.log("dummyBookingPrefs.selectedClassType?.name :",dummyBookingPrefs.selectedClassType?.name)
 const isMonthlyClassType = classType !== "ONE_TIME";
 
 // Line 391: Update payload for monthly booking data
