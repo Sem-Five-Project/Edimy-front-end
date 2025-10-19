@@ -20,11 +20,11 @@ export interface User {
   accountNonLocked?: boolean;
   credentialsNonExpired?: boolean;
   enabled?: boolean;
-  educationLevel?: string | undefined;
+  educationLevel?: string | undefined|null;
   membership?: string | null;
   password?: string;
   updatedAt?: string;
-  stream?: string | undefined;
+  stream?: string | undefined |null;
 }
 
 export interface Subject {
@@ -60,7 +60,26 @@ export interface Tutor extends User {
   totalClasses?: number;
   completedClasses?: number;
 }
+export interface RecurringSlot {
+  id: string; // Unique identifier combining pattern info
+  dateTime: string; // Full ISO datetime
+  dayOfWeek: number; // 1-7 (Monday-Sunday)  
+  time: string; // e.g., '08:00'
+  isAvailable: boolean;
+  isLocked?: boolean;
+  patternId: string; // Reference to parent pattern
+}
 
+export interface OccurrenceSlot {
+  id: string;
+  dateTime: string;
+  date: string;
+  start: string;
+  end: string;
+  dayOfWeek: number;
+  isAvailable?: boolean;
+  isLocked?: boolean;
+}
 export interface TimeSlot {
   slotId: number;
   availabilityId: number;
@@ -395,46 +414,36 @@ export interface ValidatePayHereWindowRes {
 
 export interface SelectedSlotPattern {
   dayOfWeek: number; // 1-7 (Monday-Sunday)
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
-  id?: string;
-  times?: string[];
+  //startTime: string; // HH:mm format
+  //endTime: string; // HH:mm format
+  id: string;
+  times: string[];
   generatedSlots?: OccurrenceSlot[];
 }
 
 export interface WeekBreakdown {
   weekStartDate: string; // YYYY-MM-DD
-  date: string; // YYYY-MM-DD (alias for weekStartDate for backward compatibility)
-  slots: SelectedSlotPattern[];
-  total: number;
+  //date: string; // YYYY-MM-DD (alias for weekStartDate for backward compatibility)
+  slots: RecurringSlot[];
+ // total: number;
   totalSlots: number; // alias for total for backward compatibility
 }
 
 export interface MonthlyClassBooking {
-  id: string;
-  tutorId: string;
-  subjectId: string;
-  languageId: string;
-  patterns: SelectedSlotPattern[];
-  weekBreakdown: WeekBreakdown[];
+  // id: string;
+  // tutorId: string;
+  // subjectId: string;
+  // languageId: string;
+  // patterns: SelectedSlotPattern[];
+  // weekBreakdown: WeekBreakdown[];
   totalSlots: number;
   totalCost: number;
-  status: "PENDING" | "CONFIRMED" | "FAILED" | "CANCELLED";
-  createdAt?: string;
+  // status: "PENDING" | "CONFIRMED" | "FAILED" | "CANCELLED";
+  // createdAt?: string;
   startDate: string;
   endDate: string;
 }
 
-export interface OccurrenceSlot {
-  id: string;
-  dateTime: string;
-  date: string;
-  start: string;
-  end: string;
-  dayOfWeek: number;
-  isAvailable?: boolean;
-  isLocked?: boolean;
-}
 
 export interface BookMonthlyClassReq {
   tutorId: string;

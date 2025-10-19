@@ -90,8 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      console.log("🔍 Starting authentication check...");
-
+ 
       // Try to refresh the access token using the refresh token cookie
       const newToken = await refreshAccessToken();
       setToken(newToken.accessToken);
@@ -101,7 +100,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authAPI.getCurrentUser();
       if (response?.data?.user) {
         setUser(normalizeUser(response.data.user));
-        console.log("✅ User authenticated successfully");
       }
     } catch (err) {
       console.error("❌ Auth check failed:", err);
@@ -158,6 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       setAcademicLoading(true);
+      console.log("Loading student academic info for user:", user);
       if (user.studentId) {
         const res = await studentAPI.loadStudentAcademicInfo(user.studentId);
         if (res?.success && res.data) {
