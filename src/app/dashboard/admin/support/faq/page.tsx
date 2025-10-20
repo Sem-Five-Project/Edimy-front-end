@@ -492,22 +492,22 @@ export default function FAQManagementPage() {
 
       {/* Create FAQ Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 shadow-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Create New FAQ</DialogTitle>
-            <DialogDescription className="text-gray-300">
+            <DialogTitle>Create New FAQ</DialogTitle>
+            <DialogDescription>
               Add a new frequently asked question to help users
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 bg-gray-800 p-4 rounded-lg">
+          <div className="space-y-4">
             {error && (
-              <div className="text-red-500 text-sm bg-red-900/20 p-2 rounded">
+              <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
                 {error}
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="question" className="text-gray-300 font-medium">
+              <Label htmlFor="question">
                 Question
               </Label>
               <Input
@@ -517,11 +517,10 @@ export default function FAQManagementPage() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, question: e.target.value }))
                 }
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="answer" className="text-gray-300 font-medium">
+              <Label htmlFor="answer">
                 Answer
               </Label>
               <Textarea
@@ -532,11 +531,10 @@ export default function FAQManagementPage() {
                   setFormData((prev) => ({ ...prev, answer: e.target.value }))
                 }
                 rows={5}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category" className="text-gray-300 font-medium">
+              <Label htmlFor="category">
                 Category
               </Label>
               <Select
@@ -565,7 +563,7 @@ export default function FAQManagementPage() {
                   setFormData((prev) => ({ ...prev, isActive: checked }))
                 }
               />
-              <Label htmlFor="status" className="text-gray-300">
+              <Label htmlFor="status">
                 Active
               </Label>
             </div>
@@ -575,7 +573,6 @@ export default function FAQManagementPage() {
             <Button
               variant="outline"
               onClick={() => setShowCreateDialog(false)}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
             >
               Cancel
             </Button>
@@ -584,7 +581,6 @@ export default function FAQManagementPage() {
               disabled={
                 !formData.question || !formData.answer || !formData.category
               }
-              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               Create FAQ
             </Button>
@@ -594,25 +590,22 @@ export default function FAQManagementPage() {
 
       {/* Edit FAQ Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 shadow-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Edit FAQ</DialogTitle>
-            <DialogDescription className="text-gray-300">
+            <DialogTitle>Edit FAQ</DialogTitle>
+            <DialogDescription>
               Update the FAQ question and answer
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 bg-gray-800 p-4 rounded-lg">
+          <div className="space-y-4">
             {error && (
-              <div className="text-red-500 text-sm bg-red-900/20 p-2 rounded">
+              <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
                 {error}
               </div>
             )}
             <div className="space-y-2">
-              <Label
-                htmlFor="edit-question"
-                className="text-gray-300 font-medium"
-              >
+              <Label htmlFor="edit-question">
                 Question
               </Label>
               <Input
@@ -622,14 +615,10 @@ export default function FAQManagementPage() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, question: e.target.value }))
                 }
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label
-                htmlFor="edit-answer"
-                className="text-gray-300 font-medium"
-              >
+              <Label htmlFor="edit-answer">
                 Answer
               </Label>
               <Textarea
@@ -640,14 +629,10 @@ export default function FAQManagementPage() {
                   setFormData((prev) => ({ ...prev, answer: e.target.value }))
                 }
                 rows={5}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label
-                htmlFor="edit-category"
-                className="text-gray-300 font-medium"
-              >
+              <Label htmlFor="edit-category">
                 Category
               </Label>
               <Select
@@ -676,7 +661,7 @@ export default function FAQManagementPage() {
                   setFormData((prev) => ({ ...prev, isActive: checked }))
                 }
               />
-              <Label htmlFor="edit-status" className="text-gray-300">
+              <Label htmlFor="edit-status">
                 Active
               </Label>
             </div>
@@ -686,14 +671,10 @@ export default function FAQManagementPage() {
             <Button
               variant="outline"
               onClick={() => setShowEditDialog(false)}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleEditFAQ}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <Button onClick={handleEditFAQ}>
               Update FAQ
             </Button>
           </DialogFooter>
@@ -702,33 +683,33 @@ export default function FAQManagementPage() {
 
       {/* Preview FAQ Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 shadow-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">FAQ Preview</DialogTitle>
-            <DialogDescription className="text-gray-300">
+            <DialogTitle>FAQ Preview</DialogTitle>
+            <DialogDescription>
               How this FAQ will appear to users
             </DialogDescription>
           </DialogHeader>
 
           {selectedFaq && (
-            <div className="space-y-4 bg-gray-800 p-4 rounded-lg">
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
                 {getCategoryBadge(selectedFaq.category)}
                 {getStatusBadge(selectedFaq.isActive)}
               </div>
 
               <Accordion type="single" defaultValue="item-1" className="w-full">
-                <AccordionItem value="item-1" className="border-gray-600">
-                  <AccordionTrigger className="text-white hover:text-gray-300">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>
                     {selectedFaq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-gray-300">
+                  <AccordionContent>
                     {selectedFaq.answer}
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
-              <div className="flex items-center justify-between text-sm text-gray-400 p-4 bg-gray-700 rounded-lg">
+              <div className="flex items-center justify-between text-sm text-muted-foreground p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-4">
                   <span>FAQ ID: {selectedFaq.faqId}</span>
                 </div>
@@ -744,7 +725,6 @@ export default function FAQManagementPage() {
             <Button
               variant="outline"
               onClick={() => setShowPreviewDialog(false)}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
             >
               Close
             </Button>
