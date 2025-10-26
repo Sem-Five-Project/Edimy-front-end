@@ -20,7 +20,7 @@ export default function TutorDashboard() {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg p-6">
         <h1 className="text-2xl font-bold mb-2">
-          Welcome back, {user?.firstName} {user?.lastName}!
+          Welcome back, {user?.firstName} {user?.lastName}! {user?.role}
         </h1>
         <p className="text-purple-100">Ready to start teaching today?</p>
       </div>

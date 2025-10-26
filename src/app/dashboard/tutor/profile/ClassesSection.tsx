@@ -8,7 +8,7 @@ interface ClassesSectionProps {
   subjects: TutorSubject[];
   classDocs: Record<number, ClassDoc[]>;
   classAPI: any;
-  tutorId: number;
+  tutorId: number | null;
   setSelectedDocClass: (id: number) => void;
   setShowAddDocModal: (show: boolean) => void;
   classDocAPI: any;

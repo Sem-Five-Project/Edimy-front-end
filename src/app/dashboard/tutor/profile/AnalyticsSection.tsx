@@ -1,9 +1,12 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import React, { use, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Award, Star, TrendingUp } from "lucide-react";
 import { Subject, TutorSubject } from "@/types";
+import {
+  ratingAPI
+} from "@/lib/api";
 
 interface AnalyticsSectionProps {
   subjects: TutorSubject[];
@@ -20,12 +23,15 @@ interface PaymentsOverview {
 }
 
 const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
+  const {user} = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newSubject, setNewSubject] = useState("");
 
   // Payments state (client-side fallback/mock). In future this can be passed as a prop or fetched
   const [payments, setPayments] = useState<PaymentsOverview | null>(null);
   const [timeframe, setTimeframe] = useState<'monthly' | 'yearly'>('monthly');
+
+  const [totalPaidSessions, setTotalPaidSessions] = useState<number[]>([]);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
@@ -40,26 +46,25 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
   };
 
   useEffect(() => {
-    // Mock data for monthly payments (values in full currency units)
-    const mockMonthly = [
-      { x: 'Jan', y: 0 },
-      { x: 'Feb', y: 0 },
-      { x: 'Mar', y: 0 },
-      { x: 'Apr', y: 0 },
-      { x: 'May', y: 16800 },
-      { x: 'Jun', y: 19400 },
-      { x: 'Jul', y: 21000 },
-      { x: 'Aug', y: 17800 },
-      { x: 'Sep', y: 22000 },
-      { x: 'Oct', y: 24000 },
-      { x: 'Nov', y: 0 },
-      { x: 'Dec', y: 0 },
-    ];
+    // fetch payments analytics
+    const fetchAnalytics = async () => {
+      const tutorId = Number(user?.tutorId ?? 0);
+      if (!tutorId) return;
+      try {
+        const res = await ratingAPI.getTutorEarningsAnalytics(tutorId);
+        const payload = (res as any).data ?? (res as any).payload ?? (res as any);
+        const monthlyPayment = (payload.monthlyEarnings) as DataPoint[];
+        const total = payload.totalEarnings ?? monthlyPayment.reduce((sum, p) => sum + (p.y || 0), 0);
+        setPayments({ totalReceived: total, monthlySeries: monthlyPayment, currency: payload.currency ?? 'LKR' });
+        console.log('Fetched payments analytic***********:', { totalReceived: total, monthlySeries: monthlyPayment, currency: payload.currency ?? 'LKR' });
+      } catch (err) {
+        // failed to load analytics — fallback to zeros
+        setPayments({ totalReceived: 0, monthlySeries: monthNames.map((m) => ({ x: m, y: 0 })), currency: 'LKR' });
+      }
+    };
 
-    const total = mockMonthly.reduce((acc, p) => acc + p.y, 0);
-
-    setPayments({ totalReceived: total, monthlySeries: mockMonthly, currency: 'LKR' });
-  }, []);
+    fetchAnalytics();
+  }, [user?.tutorId]);
 
   // helpers
   const formatCurrency = (value: number, currency = 'LKR') => {
@@ -104,9 +109,28 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
       ]
     : [];
 
-  // Mock sessions-paid data (number of paid sessions per month)
-  const mockSessions = [0, 0, 0, 0, 13, 17, 20, 14, 19, 22, 0, 0];
-  const totalSessions = mockSessions.reduce((a, b) => a + b, 0);
+  
+
+
+  useEffect(() => {
+    const fetchPaidSessions = async () => {
+      const tutorId = Number(user?.tutorId ?? 0);
+      if (!tutorId) {
+        setTotalPaidSessions([]);
+        return;
+      }
+      try {
+        const res = await ratingAPI.getTutorTotalPaidSessions(tutorId);  
+        console.log('Fetched total paid sessions******:', res);      
+        setTotalPaidSessions(res.totalPaidSessions ?? []);
+      } catch (err) {
+        setTotalPaidSessions([]);
+      }
+    };
+    fetchPaidSessions();
+  }, [user?.tutorId]);
+
+  const totalSessions = totalPaidSessions.reduce((a, b) => a + b, 0);
 
   const sessionsChartOptions: any = {
     chart: { id: 'sessions-chart', toolbar: { show: false } },
@@ -117,7 +141,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
     colors: ['#0ea5e9'],
   };
 
-  const sessionsChartSeries = [{ name: 'Paid sessions', data: mockSessions }];
+  const sessionsChartSeries = [{ name: 'Paid sessions', data: totalPaidSessions }];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -233,12 +257,12 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
                 >
                   Monthly
                 </button>
-                <button
+                {/* <button
                   onClick={() => setTimeframe('yearly')}
                   className={`px-3 py-1 rounded-full text-sm ${timeframe === 'yearly' ? 'bg-gray-100' : 'bg-transparent'}`}
                 >
                   Yearly
-                </button>
+                </button> */}
               </div>
             </div>
 

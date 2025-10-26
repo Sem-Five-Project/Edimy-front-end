@@ -48,6 +48,7 @@ import {
 } from "@/types";
 import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
 import { get } from "http";
+import { getTutorEarnings } from "./tutorsData";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
@@ -2497,4 +2498,49 @@ export const ratingAPI = {
       };
     }
   },
+  //get tutor analytics
+  getTutorEarningsAnalytics: async (
+    tutorId: number,
+  ): Promise<
+    {
+      totalEarnings: number;
+      monthlyEarnings: { month: string; earnings: number }[];
+    }
+  > => {
+    try {
+      const response = await api.get(`analytics/tutor/${tutorId}/earnings`);
+      console.log("Get tutor earnings analytics response:", response);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to get tutor earnings analytics:", error);
+      return {
+       
+          totalEarnings: 0,
+          monthlyEarnings: [],
+        
+      };
+    }
+
+
+  },
+  //get totoal paid sessions by the tutor
+  getTutorTotalPaidSessions: async (
+    tutorId: number,
+  ): Promise<{ totalPaidSessions: number[] }> => {
+    try {
+      const response = await api.get(
+        `analytics/tutor/${tutorId}/sessions`,
+      );
+      console.log(
+        "Get tutor total paid sessions response:",
+        response,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to get tutor total paid sessions:", error);
+      return {
+        totalPaidSessions: [],
+      };
+    }
+  }
 };

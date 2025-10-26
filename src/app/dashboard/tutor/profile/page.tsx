@@ -43,8 +43,11 @@ export default function TutorProfilePage() {
   // State for selected file in document upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { user } = useAuth();
-  const tutorId = 1; // replace with user.userId when backend ready
+  // const tutorId = 1; // replace with user.userId when backend ready
+  const tutorIdstr =
+    user?.tutorId ?? null;
 
+  const tutorId = tutorIdstr ? Number(tutorIdstr) : null;
   // States
   const [file, setFile] = useState<File | null>(null);
 

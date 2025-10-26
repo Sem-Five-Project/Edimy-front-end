@@ -7,6 +7,9 @@ interface UserInfoProps {
 }
 
 const UserInfo: React.FC<UserInfoProps> = ({ user }) => {
+  // Derive tutorId robustly from possible shapes
+  const tutorId =
+    user?.tutorId ?? null;
   const [ratingSummary, setRatingSummary] = useState<{
     averageRating?: number;
     totalRatings?: number;
@@ -30,10 +33,10 @@ const UserInfo: React.FC<UserInfoProps> = ({ user }) => {
 
   useEffect(() => {
     const fetchRating = async () => {
-      if (user?.id) {
+      if (tutorId) {
         try {
           // use actual user id
-          const res = await ratingAPI.getRatingForTutor(Number(1));
+          const res = await ratingAPI.getRatingForTutor(Number(tutorId));
           console.log("Rating API response:***********", res);
 
           const responseData = res as any;
@@ -75,16 +78,16 @@ const UserInfo: React.FC<UserInfoProps> = ({ user }) => {
       }
     };
     fetchRating();
-  }, [user?.id]);
+  }, [tutorId]);
 
   const fetchRatings = useCallback(
     async (page = 1) => {
-      if (!user?.id) return;
+      if (!tutorId) return;
       setLoadingRatings(true);
       setRatingsError(null);
       try {
         // use actual user id; if your API supports page/limit params pass them accordingly
-        const res = await ratingAPI.getAllRatingsForTutor(Number(1));
+        const res = await ratingAPI.getAllRatingsForTutor(Number(tutorId));
         console.log("All Ratings API response:***********", res);
         const dataAny = res as any;
 
@@ -131,7 +134,7 @@ const UserInfo: React.FC<UserInfoProps> = ({ user }) => {
         setLoadingRatings(false);
       }
     },
-    [user?.id],
+    [tutorId, ratingsData.limit],
   );
 
   const openRatingsModal = () => {
@@ -170,8 +173,9 @@ const UserInfo: React.FC<UserInfoProps> = ({ user }) => {
               </div>
             )}
             <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2 flex-wrap">
                 Welcome back, {user.username}!
+                
               </h2>
               <div className="flex items-center space-x-6 text-blue-100">
                 <div className="flex items-center">
