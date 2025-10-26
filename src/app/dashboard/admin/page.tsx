@@ -1,9 +1,7 @@
 import { PaymentsOverview } from "@/components/Charts/payments-overview";
 import { WeeksProfit } from "@/components/Charts/weeks-profit";
 import { createTimeFrameExtractor } from "@/utils/timeframe-extractor";
-import { Suspense } from "react";
 import { OverviewCardsGroup } from "@/components/overview-cards";
-import { OverviewCardsSkeleton } from "@/components/overview-cards/skeleton";
 
 type PropsType = {
   searchParams: Promise<{
@@ -17,9 +15,7 @@ export default async function AdminDashboard({ searchParams }: PropsType) {
 
   return (
     <>
-      <Suspense fallback={<OverviewCardsSkeleton />}>
-        <OverviewCardsGroup />
-      </Suspense>
+      <OverviewCardsGroup />
 
       <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-9 2xl:gap-7.5 dark:text-white">
         <PaymentsOverview

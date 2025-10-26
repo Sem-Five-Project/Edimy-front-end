@@ -113,7 +113,7 @@ export default function BookingConfirmationPage() {
             Booking Confirmed! 🎉
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Your session with {tutor.firstName} has been successfully booked
+            Your session has been successfully booked
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export default function BookingConfirmationPage() {
         </div>
 
         {/* Booking ID Card */}
-        <Card className="animate-in slide-in-from-top-4 duration-500 delay-100 border-2 border-green-200 dark:border-green-800 bg-gradient-to-r from-green-50 to-white dark:from-green-950/20 dark:to-gray-900">
+        {/* <Card className="animate-in slide-in-from-top-4 duration-500 delay-100 border-2 border-green-200 dark:border-green-800 bg-gradient-to-r from-green-50 to-white dark:from-green-950/20 dark:to-gray-900">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -138,7 +138,7 @@ export default function BookingConfirmationPage() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Tutor Info Card */}
         <div className="animate-in fade-in-50 duration-500 delay-200">
@@ -156,47 +156,11 @@ export default function BookingConfirmationPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Date & Time */}
-              <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                      <Calendar className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Date
-                      </div>
-                      <div className="font-semibold text-gray-900 dark:text-white">
-                        {selectedDate?.toLocaleDateString("en-US", {
-                          weekday: "long",
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                      <Clock className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Time
-                      </div>
-                      <div className="font-semibold text-gray-900 dark:text-white">
-                        {oneTimeSlotDetail
-                          ? `${formatTime(oneTimeSlotDetail.startTime)} - ${formatTime(oneTimeSlotDetail.endTime)}`
-                          : "N/A"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
 
               {/* Session Info */}
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                {/* <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-500" />
                     <span className="text-gray-600 dark:text-gray-400">
@@ -206,7 +170,7 @@ export default function BookingConfirmationPage() {
                   <span className="font-medium text-gray-900 dark:text-white">
                     {tutor.firstName} {tutor.lastName}
                   </span>
-                </div>
+                </div> */}
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2">
@@ -246,7 +210,7 @@ export default function BookingConfirmationPage() {
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center py-2">
+                {/* <div className="flex justify-between items-center py-2">
                   <div className="flex items-center gap-2">
                     <Timer className="h-4 w-4 text-gray-500" />
                     <span className="text-gray-600 dark:text-gray-400">
@@ -256,7 +220,7 @@ export default function BookingConfirmationPage() {
                   <span className="font-medium text-gray-900 dark:text-white">
                     {slotHours} hour{slotHours !== 1 ? "s" : ""}
                   </span>
-                </div>
+                </div> */}
               </div>
 
               {/* Total Amount */}
@@ -320,20 +284,7 @@ export default function BookingConfirmationPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                  <div className="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
-                    3
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-1">
-                      Contact Your Tutor
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      You can message your tutor directly through our platform
-                      for any questions.
-                    </p>
-                  </div>
-                </div>
+
               </div>
 
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">

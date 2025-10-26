@@ -1,3 +1,5 @@
+import createServerApi from "@/lib/server-api";
+
 export async function getDevicesUsedData(
   timeFrame?: "monthly" | "yearly" | (string & {}),
 ) {
@@ -41,52 +43,9 @@ export async function getPaymentsOverviewData(
   timeFrame?: "monthly" | "yearly" | (string & {}),
 ) {
   try {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
-    
-    // Get cookies from the request headers for server-side authentication
-    const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
-    const cookieHeader = cookieStore.getAll()
-      .map(cookie => `${cookie.name}=${cookie.value}`)
-      .join('; ');
-    
-    // Try to refresh the access token first using the refresh token cookie
-    let accessToken = null;
-    try {
-      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(cookieHeader && { 'Cookie': cookieHeader }),
-        },
-        credentials: 'include',
-      });
-      
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        accessToken = refreshData.accessToken;
-      }
-    } catch (refreshError) {
-      console.error('Failed to refresh token on server:', refreshError);
-    }
-    
-    // Now fetch the homepage data with the access token
-    const response = await fetch(`${API_BASE_URL}/admin/homepage`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(cookieHeader && { 'Cookie': cookieHeader }),
-        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
-      },
-      credentials: 'include',
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch payments overview data");
-    }
-
-    const data = await response.json();
+    const serverApi = await createServerApi();
+    const response = await serverApi.get('/admin/homepage');
+    const data = response.data?.data ?? response.data;
 
     // Map month numbers to month names
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -150,52 +109,9 @@ export async function getPaymentsOverviewData(
 
 export async function getWeeksProfitData(timeFrame?: string) {
   try {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
-    
-    // Get cookies from the request headers for server-side authentication
-    const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
-    const cookieHeader = cookieStore.getAll()
-      .map(cookie => `${cookie.name}=${cookie.value}`)
-      .join('; ');
-    
-    // Try to refresh the access token first using the refresh token cookie
-    let accessToken = null;
-    try {
-      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(cookieHeader && { 'Cookie': cookieHeader }),
-        },
-        credentials: 'include',
-      });
-      
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        accessToken = refreshData.accessToken;
-      }
-    } catch (refreshError) {
-      console.error('Failed to refresh token on server:', refreshError);
-    }
-    
-    // Now fetch the homepage data with the access token
-    const response = await fetch(`${API_BASE_URL}/admin/homepage`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(cookieHeader && { 'Cookie': cookieHeader }),
-        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
-      },
-      credentials: 'include',
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch weeks profit data");
-    }
-
-    const data = await response.json();
+    const serverApi = await createServerApi();
+    const response = await serverApi.get('/admin/homepage');
+    const data = response.data?.data ?? response.data;
 
     // Use sessionsThisWeek or sessionsLastWeek based on timeFrame
     const sessionsData = timeFrame === "last week" ? data.sessionsLastWeek : data.sessionsThisWeek;
@@ -289,45 +205,4 @@ export async function getVisitorsAnalyticsData() {
   ].map((value, index) => ({ x: index + 1 + "", y: value }));
 }
 
-export async function getCostsPerInteractionData() {
-  return {
-    avg_cost: 560.93,
-    growth: 2.5,
-    chart: [
-      {
-        name: "Google Ads",
-        data: [
-          { x: "Sep", y: 15 },
-          { x: "Oct", y: 12 },
-          { x: "Nov", y: 61 },
-          { x: "Dec", y: 118 },
-          { x: "Jan", y: 78 },
-          { x: "Feb", y: 125 },
-          { x: "Mar", y: 165 },
-          { x: "Apr", y: 61 },
-          { x: "May", y: 183 },
-          { x: "Jun", y: 238 },
-          { x: "Jul", y: 237 },
-          { x: "Aug", y: 235 },
-        ],
-      },
-      {
-        name: "Facebook Ads",
-        data: [
-          { x: "Sep", y: 75 },
-          { x: "Oct", y: 77 },
-          { x: "Nov", y: 151 },
-          { x: "Dec", y: 72 },
-          { x: "Jan", y: 7 },
-          { x: "Feb", y: 58 },
-          { x: "Mar", y: 60 },
-          { x: "Apr", y: 185 },
-          { x: "May", y: 239 },
-          { x: "Jun", y: 135 },
-          { x: "Jul", y: 119 },
-          { x: "Aug", y: 124 },
-        ],
-      },
-    ],
-  };
-}
+
