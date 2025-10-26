@@ -53,7 +53,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
       try {
         const res = await ratingAPI.getTutorEarningsAnalytics(tutorId);
         const payload = (res as any).data ?? (res as any).payload ?? (res as any);
-        const monthlyPayment = (payload.monthlyEarnings) as DataPoint[];
+        const monthlyPayment = (payload.monthly) as DataPoint[];
         const total = payload.totalEarnings ?? monthlyPayment.reduce((sum, p) => sum + (p.y || 0), 0);
         setPayments({ totalReceived: total, monthlySeries: monthlyPayment, currency: payload.currency ?? 'LKR' });
         console.log('Fetched payments analytic***********:', { totalReceived: total, monthlySeries: monthlyPayment, currency: payload.currency ?? 'LKR' });
@@ -120,9 +120,9 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ subjects }) => {
         return;
       }
       try {
-        const res = await ratingAPI.getTutorTotalPaidSessions(tutorId);  
+        const res:any = await ratingAPI.getTutorTotalPaidSessions(tutorId);  
         console.log('Fetched total paid sessions******:', res);      
-        setTotalPaidSessions(res.totalPaidSessions ?? []);
+        setTotalPaidSessions(res);
       } catch (err) {
         setTotalPaidSessions([]);
       }
